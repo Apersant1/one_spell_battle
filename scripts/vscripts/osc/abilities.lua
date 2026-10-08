@@ -25,18 +25,78 @@ function OSC_Abilities.StripHero(hero)
     end
 end
 
-function OSC_Abilities.PickRandom(excludeName)
-    local pool = OSC_ABILITY_POOL
-    if #pool == 1 then
-        return pool[1]
+local function PickRandomFromPool(pool, excludeName, isAllowed)
+    local candidates = {}
+    local totalWeight = 0
+
+    local function GetWeight(entry)
+        local weight = entry.weight == nil and 4 or entry.weight
+        if type(weight) ~= "number" or weight <= 0 or weight ~= math.floor(weight) then
+            error("[OSC] Invalid weight for ability: " .. tostring(entry.name))
+        end
+        return weight
     end
 
-    local entry
-    repeat
-        entry = pool[RandomInt(1, #pool)]
-    until entry.name ~= excludeName  -- не выдаём ту же способность подряд
+    for _, entry in ipairs(pool) do
+        if entry.name ~= excludeName and (not isAllowed or isAllowed(entry)) then
+            table.insert(candidates, entry)
+            totalWeight = totalWeight + GetWeight(entry)
+        end
+    end
 
-    return entry
+    if #candidates == 0 then
+        if isAllowed then
+            error("[OSC] No eligible abilities in pool")
+        end
+        candidates = pool
+        for _, entry in ipairs(candidates) do
+            totalWeight = totalWeight + GetWeight(entry)
+        end
+    end
+
+    if totalWeight == 0 then
+        error("[OSC] Ability pool is empty")
+    end
+
+    local roll = RandomInt(1, totalWeight)
+    for _, entry in ipairs(candidates) do
+        roll = roll - GetWeight(entry)
+        if roll <= 0 then
+            return entry
+        end
+    end
+end
+
+function OSC_Abilities.PickRandom(excludeName)
+    return PickRandomFromPool(OSC_ABILITY_POOL, excludeName)
+end
+
+local function GetAlliedUltimateCount(hero, abilityName)
+    local count = 0
+    local team = hero:GetTeamNumber()
+
+    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
+        if PlayerResource:IsValidPlayerID(playerID) then
+            local teammate = PlayerResource:GetSelectedHeroEntity(playerID)
+            if teammate and teammate ~= hero and teammate:GetTeamNumber() == team
+                and teammate.osc_current_ultimate == abilityName then
+                count = count + 1
+            end
+        end
+    end
+
+    return count
+end
+
+function OSC_Abilities.PickRandomUltimate(excludeName, hero)
+    local maxDuplicates = OSC_CONFIG.MAX_DUPLICATE_ULTIMATES_PER_TEAM
+    if type(maxDuplicates) ~= "number" or maxDuplicates < 1 then
+        error("[OSC] MAX_DUPLICATE_ULTIMATES_PER_TEAM must be at least 1")
+    end
+
+    return PickRandomFromPool(OSC_ULTIMATE_POOL, excludeName, function(entry)
+        return GetAlliedUltimateCount(hero, entry.name) < maxDuplicates
+    end)
 end
 
 function OSC_Abilities.CopyFromOwner(unit, owner)
@@ -49,10 +109,26 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
     local ability = unit:AddAbility(name)
     if ability then
         ability:SetLevel(source and source:GetLevel() or 1)
+        ability:SetAbilityIndex(0)
         ability:SetHidden(false)
     end
 
     unit.osc_current_ability = name
+
+    local ultimateName = owner.osc_current_ultimate
+    unit.osc_current_ultimate = nil
+    if ultimateName then
+        local sourceUltimate = owner:FindAbilityByName(ultimateName)
+        local ultimate = unit:AddAbility(ultimateName)
+        if ultimate then
+            ultimate:SetLevel(sourceUltimate and sourceUltimate:GetLevel() or 1)
+            ultimate:SetAbilityIndex(5)
+            ultimate:SetHidden(false)
+            unit.osc_current_ultimate = ultimateName
+        else
+            print("[OSC] Failed to copy ultimate: " .. ultimateName)
+        end
+    end
 end
 
 
@@ -88,6 +164,36 @@ function OSC_Abilities.RemoveCurrent(hero)
     end
 end
 
+function OSC_Abilities.GiveRandomUltimate(hero, notify)
+    local oldName = hero.osc_current_ultimate
+    local entry = OSC_Abilities.PickRandomUltimate(oldName, hero)
+    local ability = hero:AddAbility(entry.name)
+    if not ability then
+        print("[OSC] Failed to add ultimate: " .. entry.name)
+        return nil
+    end
+
+    local old = oldName and hero:FindAbilityByName(oldName)
+    if old then
+        if old:IsChanneling() then
+            hero:InterruptChannel()
+        end
+        hero:RemoveAbilityByHandle(old)
+    end
+
+    ability:SetAbilityIndex(5)
+    ability:SetLevel(OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
+    ability:SetHidden(false)
+    ability:EndCooldown()
+    hero.osc_current_ultimate = entry.name
+
+    if notify then
+        OSC_Abilities.Notify(hero, entry)
+    end
+
+    return entry
+end
+
 function OSC_Abilities.GiveRandom(hero, notify)
     local oldName = hero.osc_current_ability
     OSC_Abilities.RemoveCurrent(hero)
@@ -101,6 +207,7 @@ function OSC_Abilities.GiveRandom(hero, notify)
     end
 
     ability:SetLevel(OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
+    ability:SetAbilityIndex(0)
     ability:SetHidden(false)
     ability:EndCooldown()
 

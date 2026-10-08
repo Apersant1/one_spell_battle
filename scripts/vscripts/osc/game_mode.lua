@@ -16,6 +16,7 @@ function OneSpellChaos:Init()
     ListenToGameEvent("dota_on_hero_finish_spawn", Dynamic_Wrap(OneSpellChaos, "OnHeroFinishSpawn"), self)
     ListenToGameEvent("dota_player_gained_level",  Dynamic_Wrap(OneSpellChaos, "OnPlayerLevelUp"),   self)
     ListenToGameEvent("game_rules_state_change",   Dynamic_Wrap(OneSpellChaos, "OnStateChange"),     self)
+    ListenToGameEvent("player_chat",               Dynamic_Wrap(OneSpellChaos, "OnPlayerChat"),      self)
 
     Convars:RegisterCommand("osc_strip", function()
         local player = Convars:GetCommandClient()
@@ -32,6 +33,25 @@ function OneSpellChaos:Init()
     self:PublishTimer()
 
     print("[OSC] One Spell Chaos loaded")
+end
+
+function OneSpellChaos:OnPlayerChat(event)
+    local text = string.lower(string.match(event.text or "", "^%s*(.-)%s*$"))
+    if text ~= "-reroll" then return end
+
+    local playerID = event.playerid
+    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
+        print("[OSC] -reroll ignored: invalid player")
+        return
+    end
+
+    local hero = PlayerResource:GetSelectedHeroEntity(playerID)
+    if not hero or not hero.osc_initialized then
+        print("[OSC] -reroll ignored: player has no initialized hero")
+        return
+    end
+
+    OSC_Abilities.GiveRandom(hero, true)
 end
 
 --------------------------------------------------------------------
@@ -79,6 +99,9 @@ function OneSpellChaos:TryInitHero(unit, source)
         local ok, err = pcall(function()
             OSC_Abilities.StripHero(unit)
             OSC_Abilities.GiveRandom(unit, true)
+            if unit:GetLevel() >= 6 then
+                OSC_Abilities.GiveRandomUltimate(unit, true)
+            end
         end)
         if not ok then
             print("[OSC] ERROR: " .. tostring(err))
@@ -97,12 +120,23 @@ function OneSpellChaos:OnPlayerLevelUp(event)
     else
         hero = PlayerResource:GetSelectedHeroEntity(event.player_id)
     end
-    if not hero or not hero.osc_current_ability then return end
+    if not hero then return end
 
-    local ability = hero:FindAbilityByName(hero.osc_current_ability)
+    local level = event.level or hero:GetLevel()
+    if level >= 6 and not hero.osc_current_ultimate then
+        OSC_Abilities.GiveRandomUltimate(hero, true)
+    end
+
+    local ability = hero.osc_current_ability and hero:FindAbilityByName(hero.osc_current_ability)
     if ability then
-        local newLevel = OSC_Abilities.CalcLevel(event.level or hero:GetLevel(), ability)
+        local newLevel = OSC_Abilities.CalcLevel(level, ability)
         ability:SetLevel(math.max(ability:GetLevel(), newLevel))
+    end
+
+    local ultimate = hero.osc_current_ultimate and hero:FindAbilityByName(hero.osc_current_ultimate)
+    if ultimate then
+        local newLevel = OSC_Abilities.CalcLevel(level, ultimate)
+        ultimate:SetLevel(math.max(ultimate:GetLevel(), newLevel))
     end
 end
 

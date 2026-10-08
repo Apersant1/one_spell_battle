@@ -1,3 +1,18 @@
 "DOTAAbilities"
 {
+	"item_osc_ultimate_reroll"
+	{
+		"BaseClass"                 "item_lua"
+		"ScriptFile"                "scripts/vscripts/osc/item_ultimate_reroll.lua"
+		"AbilityTextureName"        "item_refresher"
+		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityCooldown"           "0"
+		"ItemCost"                  "3500"
+		"ItemPurchasable"           "1"
+		"ItemInitialCharges"        "1"
+		"ItemStackable"             "0"
+		"ItemStockMax"              "5"
+		"ItemStockTime"             "0"
+		"ItemShareability"          "ITEM_SHAREABLE"
+	}
 }

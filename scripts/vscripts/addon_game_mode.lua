@@ -1,5 +1,6 @@
 require("osc/config")
 require("osc/abilities")
+require("osc/item_ultimate_reroll")
 require("osc/game_mode")
 
 
@@ -13,10 +14,12 @@ function Precache(context)
     -- Прекэшим героев-владельцев способностей из whitelist,
     -- иначе у чужих способностей не будет партиклов и звуков
     local done = {}
-    for _, entry in ipairs(OSC_ABILITY_POOL) do
-        if not done[entry.hero] then
-            done[entry.hero] = true
-            PrecacheUnitByNameSync(entry.hero, context)
+    for _, pool in ipairs({ OSC_ABILITY_POOL, OSC_ULTIMATE_POOL }) do
+        for _, entry in ipairs(pool) do
+            if not done[entry.hero] then
+                done[entry.hero] = true
+                PrecacheUnitByNameSync(entry.hero, context)
+            end
         end
     end
 
