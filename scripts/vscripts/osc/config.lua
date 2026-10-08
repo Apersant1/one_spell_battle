@@ -3,6 +3,15 @@ OSC_CONFIG = {
     WARNING_TIME      = 10,  -- предупреждение за N секунд
     CHAT_MESSAGES     = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
+    CASINO_DEFAULT_STAKE = 250,
+    CASINO_MIN_SPIN_COST = 50,
+    CASINO_MACHINE_LIFETIME = 90,
+    CASINO_OUTCOMES = {
+        { chance = 60, symbol = "circle", multiplier = 1 },
+        { chance = 5, symbol = "diamond", multiplier = 2 },
+        { chance = 2, symbol = "star", multiplier = 5 },
+        { chance = 1, symbol = "seven", multiplier = 10 },
+    },
 }
 
 -- Служебные способности, которые нельзя удалять
@@ -12,6 +21,7 @@ OSC_KEEP_ABILITIES = {
     ability_pluck_famango         = true,
     twin_gate_portal_warp         = true,
     abyssal_underlord_portal_warp = true,
+    ogre_magi_unrefined_fireblast = true,
 }
 
 -- Вес по умолчанию — 4; меньший вес делает способность более редкой.

@@ -1,6 +1,8 @@
 require("osc/config")
 require("osc/abilities")
 require("osc/item_ultimate_reroll")
+require("osc/ogre_casino")
+require("osc/ogre_casino")
 require("osc/game_mode")
 
 
@@ -23,6 +25,7 @@ function Precache(context)
         end
     end
 
+    PrecacheUnitByNameSync("npc_osc_casino_test_object", context)
     PrecacheResource("particle", "particles/generic_hero_status/hero_levelup.vpcf", context)
 end
 
