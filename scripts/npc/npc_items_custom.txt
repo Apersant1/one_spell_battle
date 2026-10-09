@@ -3,7 +3,7 @@
 	"item_osc_ultimate_reroll"
 	{
 		"BaseClass"                 "item_lua"
-		"ScriptFile"                "scripts/vscripts/osc/item_ultimate_reroll.lua"
+		"ScriptFile"                "scripts/vscripts/osc/items/item_ultimate_reroll.lua"
 		"AbilityTextureName"        "item_refresher"
 		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
 		"AbilityCooldown"           "0"
