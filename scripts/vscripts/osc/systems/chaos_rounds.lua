@@ -8,11 +8,28 @@ OSC_ChaosRounds = {
 local EVENTS = {
     {
         id = "cooldowns",
-        name = "Перезарядки ускорены на 40%",
+        name = "Ускоренные перезарядки",
+        description = "Перезарядка способностей героев сокращена на 40%.",
         modifier = "modifier_osc_chaos_cooldowns",
         target = "heroes",
     },
 }
+
+local function PublishState(active)
+    local data = {
+        active = active and 1 or 0,
+        next_round_at = OSC_ChaosRounds.nextRoundAt or -1,
+    }
+
+    if active then
+        data.event_id = active.event.id
+        data.title = active.event.name
+        data.description = active.event.description
+        data.ends_at = active.endsAt
+    end
+
+    CustomNetTables:SetTableValue("osc_state", "chaos_round", data)
+end
 
 local function IsValidEntity(entity)
     return entity and not entity:IsNull()
@@ -88,6 +105,7 @@ local function EndEvent()
     OSC_ChaosRounds.active = nil
     OSC_Notifications.ChaosRoundEnded(event.name)
     OSC_Logger.Log("Chaos round ended: " .. event.id)
+    PublishState(nil)
 end
 
 function OSC_ChaosRounds.Think()
@@ -114,6 +132,7 @@ function OSC_ChaosRounds.Think()
         OSC_ChaosRounds.nextRoundAt = OSC_ChaosRounds.nextRoundAt
             + OSC_CONFIG.CHAOS_ROUNDS.INTERVAL
         OSC_ChaosRounds.warned = false
+        PublishState(OSC_ChaosRounds.active)
     end
 
     return 0.5
@@ -124,6 +143,7 @@ local function StartTimer()
     OSC_ChaosRounds.started = true
     OSC_ChaosRounds.nextRoundAt = GameRules:GetGameTime() + OSC_CONFIG.CHAOS_ROUNDS.INTERVAL
     OSC_ChaosRounds.warned = false
+    PublishState(nil)
     GameRules:GetGameModeEntity():SetThink(
         "Think",
         OSC_ChaosRounds,
@@ -140,5 +160,6 @@ local function OnStateChange()
 end
 
 function OSC_ChaosRounds.Init()
+    PublishState(nil)
     ListenToGameEvent("game_rules_state_change", OnStateChange, nil)
 end
