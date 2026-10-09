@@ -50,3 +50,26 @@ function OSC_Notifications.RotationStarted()
         "<font color='#FFD700'>ХАОС! Все получили новые способности!</font>"
     )
 end
+
+function OSC_Notifications.ChaosRoundWarning(seconds)
+    OSC_Notifications.TeamMessage(
+        0,
+        "<font color='#FF8C00'>Хаос-раунд начнётся через "
+            .. seconds .. " сек.!</font>"
+    )
+end
+
+function OSC_Notifications.ChaosRoundStarted(eventName, duration)
+    OSC_Notifications.TeamMessage(
+        0,
+        "<font color='#FF4D4D'>ХАОС-РАУНД: " .. eventName
+            .. "! Длительность: " .. duration .. " сек.</font>"
+    )
+end
+
+function OSC_Notifications.ChaosRoundEnded(eventName)
+    OSC_Notifications.TeamMessage(
+        0,
+        "<font color='#B0B0B0'>Хаос-раунд «" .. eventName .. "» завершён.</font>"
+    )
+end

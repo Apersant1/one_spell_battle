@@ -1,9 +1,3 @@
-LinkLuaModifier(
-    "modifier_osc_courier_drunk",
-    "osc/modifiers/modifier_osc_courier_drunk",
-    LUA_MODIFIER_MOTION_NONE
-)
-
 OSC_Couriers = {
     Abilities = {
         {
@@ -94,9 +88,11 @@ local function IssueMoveOrder(courier, position)
 end
 
 local function ApplyCourierAbility(courier, ability, suppressAnnouncement)
+    local baseMoveSpeed = courier:GetBaseMoveSpeed()
     local modifier = courier:AddNewModifier(courier, nil, ability.modifier, {
         duration = ability.duration,
         slow_pct = ability.slow_pct,
+        base_move_speed = baseMoveSpeed,
     })
     if not modifier or modifier:IsNull() then
         OSC_Logger.Error("Failed to apply courier modifier: " .. ability.modifier)

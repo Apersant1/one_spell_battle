@@ -18,14 +18,12 @@ end
 
 function modifier_osc_courier_drunk:OnCreated(kv)
     self.slowPct = kv and tonumber(kv.slow_pct) or 30
-    self.baseMoveSpeed = self:GetParent():GetBaseMoveSpeed()
+    self.baseMoveSpeed = kv and tonumber(kv.base_move_speed)
 end
 
 function modifier_osc_courier_drunk:OnRefresh(kv)
     self.slowPct = (kv and tonumber(kv.slow_pct)) or self.slowPct or 30
-    if not self.baseMoveSpeed then
-        self.baseMoveSpeed = self:GetParent():GetBaseMoveSpeed()
-    end
+    self.baseMoveSpeed = (kv and tonumber(kv.base_move_speed)) or self.baseMoveSpeed
 end
 
 function modifier_osc_courier_drunk:DeclareFunctions()
@@ -33,5 +31,7 @@ function modifier_osc_courier_drunk:DeclareFunctions()
 end
 
 function modifier_osc_courier_drunk:GetModifierMoveSpeedOverride()
-    return self.baseMoveSpeed * (1 - (self.slowPct or 30) / 100)
+    local baseMoveSpeed = self.baseMoveSpeed
+    if not baseMoveSpeed then return nil end
+    return baseMoveSpeed * (1 - (self.slowPct or 30) / 100)
 end

@@ -11,6 +11,7 @@ function OneSpellChaos:Init()
     OSC_Commands.Init()
     OSC_HeroLifecycle.Init()
     OSC_Rotation.Init()
+    OSC_ChaosRounds.Init()
 
     OSC_Logger.Log("One Spell Chaos loaded")
 end
