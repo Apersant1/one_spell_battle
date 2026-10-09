@@ -2,25 +2,28 @@ OSC_Commands = {}
 
 local function OnPlayerChat(event)
     local text = string.lower(string.match(event.text or "", "^%s*(.-)%s*$"))
-    local playerID = event.playerid
     local abilityName = string.match(text, "^%-courier_ability%s*(%S*)$")
+    local isReroll = text == "-reroll"
+    if abilityName == nil and not isReroll then return end
+
+    if not OSC_CONFIG.DEVELOPMENT_MODE then
+        OSC_Logger.Log("Ignored development chat command: " .. text)
+        return
+    end
+
+    local playerID = event.playerid
+    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
+        OSC_Logger.Error(text .. " ignored: invalid player")
+        return
+    end
+
+    local hero = PlayerResource:GetSelectedHeroEntity(playerID)
+    if not hero or hero:IsNull() then
+        OSC_Logger.Error(text .. " ignored: player has no hero")
+        return
+    end
+
     if abilityName ~= nil then
-        if not OSC_CONFIG.ENABLE_COURIER_DEBUG_CHAT_COMMAND then
-            OSC_Logger.Log("Ignored disabled -courier_ability chat command")
-            return
-        end
-
-        if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
-            OSC_Logger.Error("-courier_ability ignored: invalid player")
-            return
-        end
-
-        local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-        if not hero or hero:IsNull() then
-            OSC_Logger.Error("-courier_ability ignored: player has no hero")
-            return
-        end
-
         abilityName = abilityName ~= "" and abilityName or "drunk"
         local ok, result = OSC_Couriers.DebugAbility(hero:GetTeamNumber(), abilityName)
         if not ok then
@@ -33,14 +36,7 @@ local function OnPlayerChat(event)
         return
     end
 
-    if text ~= "-reroll" then return end
-    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
-        OSC_Logger.Error("-reroll ignored: invalid player")
-        return
-    end
-
-    local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-    if not hero or not hero.osc_initialized then
+    if not hero.osc_initialized then
         OSC_Logger.Error("-reroll ignored: player has no initialized hero")
         return
     end
