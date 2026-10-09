@@ -268,9 +268,33 @@ end
 
 function OneSpellChaos:OnPlayerChat(event)
     local text = string.lower(string.match(event.text or "", "^%s*(.-)%s*$"))
-    if text ~= "-reroll" then return end
-
     local playerID = event.playerid
+    local abilityName = string.match(text, "^%-courier_ability%s*(%S*)$")
+    if abilityName ~= nil then
+        if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
+            print("[OSC] -courier_ability ignored: invalid player")
+            return
+        end
+
+        local hero = PlayerResource:GetSelectedHeroEntity(playerID)
+        if not hero or hero:IsNull() then
+            print("[OSC] -courier_ability ignored: player has no hero")
+            return
+        end
+
+        abilityName = abilityName ~= "" and abilityName or "drunk"
+        local ok, result = OSC_Couriers.DebugAbility(hero:GetTeamNumber(), abilityName)
+        if not ok then
+            print("[OSC] " .. result)
+            return
+        end
+
+        print("[OSC] Applied courier ability '" .. abilityName
+            .. "' to " .. result .. " team courier(s)")
+        return
+    end
+
+    if text ~= "-reroll" then return end
     if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
         print("[OSC] -reroll ignored: invalid player")
         return
@@ -321,6 +345,7 @@ function OneSpellChaos:TryInitHero(unit, source)
     end
 
     if not unit:IsRealHero() then return end
+    OSC_Couriers.EnsureTeamCouriers(unit)
     if unit.osc_initialized then return end
     unit.osc_initialized = true
 

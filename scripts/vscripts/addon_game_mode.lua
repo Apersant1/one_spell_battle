@@ -3,6 +3,8 @@ require("osc/abilities")
 require("osc/item_ultimate_reroll")
 require("osc/ogre_casino")
 require("osc/ogre_casino")
+require("osc/modifier_osc_courier_drunk")
+require("osc/couriers")
 require("osc/game_mode")
 
 
