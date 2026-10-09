@@ -1,13 +1,23 @@
 OSC_Abilities = {}
 
-local function ShouldKeep(name)
+local function IsInnateAbility(ability)
+    local abilityData = GetAbilityKeyValuesByName(ability:GetAbilityName())
+    return abilityData and (
+        abilityData.Innate == "1"
+        or abilityData.Innate == 1
+        or abilityData.Innate == true
+    )
+end
+
+local function ShouldKeep(ability)
+    local name = ability:GetAbilityName()
     if OSC_KEEP_ABILITIES[name] then
         return true
     end
     if string.sub(name, 1, 14) == "special_bonus_" then
         return true
     end
-    return false
+    return IsInnateAbility(ability)
 end
 
 function OSC_Abilities.StripHero(hero)
@@ -15,7 +25,7 @@ function OSC_Abilities.StripHero(hero)
     local toRemove = {}
     for i = 0, hero:GetAbilityCount() - 1 do
         local ability = hero:GetAbilityByIndex(i)
-        if ability and not ShouldKeep(ability:GetAbilityName()) then
+        if ability and not ShouldKeep(ability) then
             table.insert(toRemove, ability:GetAbilityName())
         end
     end
