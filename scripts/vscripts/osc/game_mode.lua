@@ -59,9 +59,32 @@ function OneSpellChaos:GetCasinoPlayer(sourceIndex)
     return PlayerResource:GetPlayer(playerID), playerID
 end
 
+function OneSpellChaos:GetCasinoHeroPlayer(hero)
+    local playerID = hero:GetPlayerOwnerID()
+    local player = PlayerResource:IsValidPlayerID(playerID)
+        and PlayerResource:GetPlayer(playerID)
+        or nil
+
+    if player then
+        return player, playerID
+    end
+
+    local owner = hero:GetPlayerOwner()
+    if owner and not owner:IsNull() then
+        if not PlayerResource:IsValidPlayerID(playerID) and owner.GetPlayerID then
+            playerID = owner:GetPlayerID()
+        end
+        print("[OSC] Casino using hero owner fallback: player_id="
+            .. tostring(playerID) .. ", team=" .. hero:GetTeamNumber())
+        return owner, playerID
+    end
+
+    return nil, playerID
+end
+
 function OneSpellChaos:OnCasinoReopen(sourceIndex, event)
-    local player, playerID = self:GetCasinoPlayer(sourceIndex)
-    if not player then return end
+    local _, playerID = self:GetCasinoPlayer(sourceIndex)
+    if not playerID then return end
 
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
     local machineIndex = event and tonumber(event.machine_entindex)
@@ -78,6 +101,9 @@ function OneSpellChaos:OnCasinoReopen(sourceIndex, event)
         return
     end
 
+    local player, ownerPlayerID = self:GetCasinoHeroPlayer(hero)
+    if not player or ownerPlayerID ~= playerID then return end
+
     CustomGameEventManager:Send_ServerToPlayer(player, "osc_casino_open", {
         machine_entindex = machine:entindex(),
         min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
@@ -89,9 +115,13 @@ function OneSpellChaos:OnCasinoReopen(sourceIndex, event)
 end
 
 function OneSpellChaos:OpenCasino(hero)
-    local playerID = hero:GetPlayerOwnerID()
-    local player = PlayerResource:GetPlayer(playerID)
-    if not player then return end
+    local player, playerID = self:GetCasinoHeroPlayer(hero)
+    if not player then
+        print("[OSC] Cannot open casino: no player handle for hero "
+            .. hero:GetUnitName() .. ", player_id=" .. tostring(playerID)
+            .. ", team=" .. hero:GetTeamNumber())
+        return
+    end
 
     local oldMachine = hero.osc_casino_machine
     if oldMachine and not oldMachine:IsNull() then
@@ -102,6 +132,8 @@ function OneSpellChaos:OpenCasino(hero)
             gold = hero:GetGold(),
             lifetime = OSC_CONFIG.CASINO_MACHINE_LIFETIME,
         })
+        print("[OSC] Reopened casino for player " .. tostring(playerID)
+            .. " on team " .. hero:GetTeamNumber())
         return
     end
 
@@ -149,6 +181,8 @@ function OneSpellChaos:OpenCasino(hero)
         gold = hero:GetGold(),
         lifetime = OSC_CONFIG.CASINO_MACHINE_LIFETIME,
     })
+    print("[OSC] Opened casino for player " .. tostring(playerID)
+        .. " on team " .. hero:GetTeamNumber())
 end
 
 function OneSpellChaos:OnCasinoSpin(sourceIndex, event)
