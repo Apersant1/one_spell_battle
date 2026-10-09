@@ -1,11 +1,17 @@
-require("osc/config")
-require("osc/abilities")
-require("osc/item_ultimate_reroll")
-require("osc/ogre_casino")
-require("osc/ogre_casino")
-require("osc/modifier_osc_courier_drunk")
-require("osc/couriers")
-require("osc/game_mode")
+require("osc/core/config")
+require("osc/config/ability_pools")
+require("osc/core/logger")
+require("osc/core/notifications")
+require("osc/core/commands")
+require("osc/systems/abilities")
+require("osc/systems/hero_lifecycle")
+require("osc/systems/rotation")
+require("osc/items/item_ultimate_reroll")
+require("osc/systems/casino")
+require("osc/heroes/ogre_casino")
+require("osc/modifiers/modifier_osc_courier_drunk")
+require("osc/systems/couriers")
+require("osc/core/game_mode")
 
 
 -- Generated from template
@@ -37,7 +43,7 @@ function Activate()
 end
 
 function CAddonTemplateGameMode:InitGameMode()
-	print( "[DEBUG] Template addon is loaded." )
+    OSC_Logger.Log("Template addon is loaded")
 	GameRules:GetGameModeEntity():SetThink( "OnThink", self, "GlobalThink", 2 )
 end
 

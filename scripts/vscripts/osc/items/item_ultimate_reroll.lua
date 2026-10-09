@@ -3,7 +3,7 @@ item_osc_ultimate_reroll = class({})
 function item_osc_ultimate_reroll:OnSpellStart()
     local hero = self:GetCaster()
     if not hero or not hero:IsRealHero() or hero:GetLevel() < 6 then
-        print("[OSC] Ultimate reroll requires a real hero at level 6 or higher")
+        OSC_Logger.Error("Ultimate reroll requires a real hero at level 6 or higher")
         return
     end
 

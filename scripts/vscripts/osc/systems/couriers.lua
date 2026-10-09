@@ -1,6 +1,6 @@
 LinkLuaModifier(
     "modifier_osc_courier_drunk",
-    "osc/modifier_osc_courier_drunk",
+    "osc/modifiers/modifier_osc_courier_drunk",
     LUA_MODIFIER_MOTION_NONE
 )
 
@@ -99,18 +99,17 @@ local function ApplyCourierAbility(courier, ability, suppressAnnouncement)
         slow_pct = ability.slow_pct,
     })
     if not modifier or modifier:IsNull() then
-        print("[OSC] Failed to apply courier modifier: " .. ability.modifier)
+        OSC_Logger.Error("Failed to apply courier modifier: " .. ability.modifier)
         return false
     end
 
     courier.osc_next_ability_time = GameRules:GetGameTime()
         + RandomInt(ability.interval_min, ability.interval_max)
     if not suppressAnnouncement then
-        GameRules:SendCustomMessage(
-            "<font color='#FFB347'>Курьер получил способность «"
-                .. ability.label .. "» на " .. ability.duration .. " сек.!</font>",
+        OSC_Notifications.TeamMessage(
             courier:GetTeamNumber(),
-            0
+            "<font color='#FFB347'>Курьер получил способность «"
+                .. ability.label .. "» на " .. ability.duration .. " сек.!</font>"
         )
     end
     return true
@@ -131,32 +130,53 @@ local function StartDelivery(courier, hero, item)
         return false
     end
 
-    courier:AddItem(removedItem)
+    local courierItem = courier:AddItem(removedItem)
+    if not courierItem then
+        hero:AddItem(removedItem)
+        OSC_Logger.Error("Failed to move stash item into courier inventory")
+        return false
+    end
 
     courier.osc_delivery_hero = hero
-    courier.osc_delivery_item = removedItem
+    courier.osc_delivery_item = courierItem
+    courier.osc_delivery_player_id = hero:GetPlayerOwnerID()
+    courier.osc_returning_home = nil
     IssueMoveOrder(courier, hero:GetAbsOrigin())
     return true
 end
 
 local function FinishDelivery(courier, hero)
     local item = courier.osc_delivery_item
-    if IsValidEntity(item) then
-        local removedItem = courier:TakeItem(item)
-        if removedItem then
-            hero:AddItem(removedItem)
-        end
+    if not IsValidEntity(item) then
+        OSC_Logger.Error("Cannot finish courier delivery: item is unavailable")
+        return false
     end
+
+    local removedItem = courier:TakeItem(item)
+    if not removedItem then
+        OSC_Logger.Error("Failed to remove delivered item from courier")
+        return false
+    end
+
+    local heroItem = hero:AddItem(removedItem)
+    if not heroItem then
+        courier:AddItem(removedItem)
+        OSC_Logger.Error("Failed to add delivered item to hero inventory")
+        return false
+    end
+
     courier.osc_delivery_hero = nil
     courier.osc_delivery_item = nil
+    courier.osc_delivery_player_id = nil
     courier.osc_returning_home = true
     IssueMoveOrder(courier, courier.osc_home_position)
+    return true
 end
 
 local function ThinkReturnHome(courier, now)
     local home = courier.osc_home_position
     if not home then
-        print("[OSC] Courier has no assigned home position")
+        OSC_Logger.Error("Courier has no assigned home position")
         return
     end
 
@@ -180,26 +200,44 @@ local function ThinkCourier(courier)
         StartDrunkAbility(courier)
     end
 
+    local item = courier.osc_delivery_item
+    if item and not IsValidEntity(item) then
+        courier.osc_delivery_item = nil
+        courier.osc_delivery_hero = nil
+        courier.osc_delivery_player_id = nil
+        item = nil
+    end
+
+    if IsValidEntity(item) then
+        local hero = courier.osc_delivery_hero
+        if not IsValidEntity(hero) and PlayerResource:IsValidPlayerID(courier.osc_delivery_player_id) then
+            hero = PlayerResource:GetSelectedHeroEntity(courier.osc_delivery_player_id)
+            courier.osc_delivery_hero = hero
+        end
+
+        if IsValidEntity(hero) and hero:GetTeamNumber() == courier:GetTeamNumber()
+            and hero:IsAlive() and HasInventorySpace(hero) then
+            courier.osc_returning_home = nil
+            if (courier:GetAbsOrigin() - hero:GetAbsOrigin()):Length2D() <= HERO_DELIVERY_DISTANCE then
+                FinishDelivery(courier, hero)
+            elseif now - (courier.osc_last_move_order_time or 0) >= MOVE_ORDER_INTERVAL then
+                IssueMoveOrder(courier, hero:GetAbsOrigin())
+            end
+        else
+            courier.osc_delivery_hero = nil
+            courier.osc_returning_home = true
+            ThinkReturnHome(courier, now)
+        end
+        return THINK_INTERVAL
+    end
+
     if courier.osc_returning_home then
         ThinkReturnHome(courier, now)
         return THINK_INTERVAL
     end
 
-    local hero = courier.osc_delivery_hero
-    if hero and not IsValidEntity(hero) then
-        return THINK_INTERVAL
-    end
-
-    if IsValidEntity(hero) then
-        if (courier:GetAbsOrigin() - hero:GetAbsOrigin()):Length2D() <= HERO_DELIVERY_DISTANCE then
-            if HasInventorySpace(hero) then
-                FinishDelivery(courier, hero)
-            end
-        elseif now - (courier.osc_last_move_order_time or 0) >= MOVE_ORDER_INTERVAL then
-            IssueMoveOrder(courier, hero:GetAbsOrigin())
-        end
-    else
-        courier.osc_delivery_hero = nil
+    courier.osc_delivery_hero = nil
+    do
         for _, teammate in ipairs(GetTeamHeroes(courier:GetTeamNumber())) do
             if HasInventorySpace(teammate) then
                 local item = FindStashItem(teammate)
@@ -247,7 +285,9 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
 
     local fountain = FindTeamFountain(team)
     if not fountain then
-        print("[OSC] Could not find fountain for team " .. team .. "; couriers were not initialized")
+        OSC_Logger.Error(
+            "Could not find fountain for team " .. team .. "; couriers were not initialized"
+        )
         return
     end
 
@@ -269,7 +309,7 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
             team
         )
         if not courier then
-            print("[OSC] Failed to create team courier for team " .. team)
+            OSC_Logger.Error("Failed to create team courier for team " .. team)
             return
         end
 
@@ -307,11 +347,10 @@ function OSC_Couriers.DebugAbility(team, abilityName)
     end
 
     if appliedCount > 0 then
-        GameRules:SendCustomMessage(
-            "<font color='#FFB347'>Debug: способность «"
-                .. ability.label .. "» применена к курьерам команды.</font>",
+        OSC_Notifications.TeamMessage(
             team,
-            0
+            "<font color='#FFB347'>Debug: способность «"
+                .. ability.label .. "» применена к курьерам команды.</font>"
         )
         return true, appliedCount
     end

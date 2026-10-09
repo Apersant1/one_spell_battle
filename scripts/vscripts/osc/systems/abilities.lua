@@ -136,7 +136,7 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
             ultimate:SetHidden(false)
             unit.osc_current_ultimate = ultimateName
         else
-            print("[OSC] Failed to copy ultimate: " .. ultimateName)
+            OSC_Logger.Error("Failed to copy ultimate: " .. ultimateName)
         end
     end
 end
@@ -179,7 +179,7 @@ function OSC_Abilities.GiveRandomUltimate(hero, notify)
     local entry = OSC_Abilities.PickRandomUltimate(oldName, hero)
     local ability = hero:AddAbility(entry.name)
     if not ability then
-        print("[OSC] Failed to add ultimate: " .. entry.name)
+        OSC_Logger.Error("Failed to add ultimate: " .. entry.name)
         return nil
     end
 
@@ -198,7 +198,7 @@ function OSC_Abilities.GiveRandomUltimate(hero, notify)
     hero.osc_current_ultimate = entry.name
 
     if notify then
-        OSC_Abilities.Notify(hero, entry)
+        OSC_Notifications.AbilityChanged(hero, entry)
     end
 
     return entry
@@ -211,7 +211,7 @@ function OSC_Abilities.GiveRandom(hero, notify)
     local entry = OSC_Abilities.PickRandom(oldName)
     local ability = hero:AddAbility(entry.name)
     if not ability then
-        print("[OSC] Failed to add ability: " .. entry.name)
+        OSC_Logger.Error("Failed to add ability: " .. entry.name)
         hero.osc_current_ability = nil
         return nil
     end
@@ -224,38 +224,8 @@ function OSC_Abilities.GiveRandom(hero, notify)
     hero.osc_current_ability = entry.name
 
     if notify then
-        OSC_Abilities.Notify(hero, entry)
+        OSC_Notifications.AbilityChanged(hero, entry)
     end
 
     return entry
-end
-
-function OSC_Abilities.AnnounceWarning(seconds)
-    if not OSC_CONFIG.CHAT_MESSAGES then return end
-    GameRules:SendCustomMessage(
-        "<font color='#FF8C00'>Смена способностей через " .. seconds .. " сек!</font>", 0, 0)
-end
-
-function OSC_Abilities.AnnounceRotation()
-    if not OSC_CONFIG.CHAT_MESSAGES then return end
-    GameRules:SendCustomMessage(
-        "<font color='#FFD700'>ХАОС! Все получили новые способности!</font>", 0, 0)
-end
-
-function OSC_Abilities.Notify(hero, entry)
-    local fx = ParticleManager:CreateParticle(
-        "particles/generic_hero_status/hero_levelup.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
-    ParticleManager:ReleaseParticleIndex(fx)
-
-    local player = PlayerResource:GetPlayer(hero:GetPlayerOwnerID())
-    if not player then return end
-
-    CustomGameEventManager:Send_ServerToPlayer(player, "osc_ability_changed", {
-        ability = entry.name,
-        label   = entry.label,
-    })
-
-    if OSC_CONFIG.CHAT_MESSAGES then
-        Say(player, "Моя способность: " .. entry.label, true)
-    end
 end
