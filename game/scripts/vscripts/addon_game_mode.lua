@@ -1,4 +1,4 @@
-require("osc/core/config")
+require("osc/config/config")
 require("osc/config/ability_pools")
 require("osc/core/logger")
 require("osc/core/notifications")

@@ -1,4 +1,4 @@
-require("osc/core/config")
+require("osc/config/config")
 
 LinkLuaModifier(
     "modifier_osc_courier_drunk",
