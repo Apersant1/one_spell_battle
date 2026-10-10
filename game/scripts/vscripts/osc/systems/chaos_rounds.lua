@@ -1,6 +1,7 @@
 OSC_ChaosRounds = OSC_ChaosRounds or {}
 
 local THINK_INTERVAL = 0.25
+local SPAWN_APPLY_DELAY = 0.5
 local STATE = { IDLE = "idle", WARNING = "warning", ACTIVE = "active" }
 
 local function config()
@@ -76,6 +77,12 @@ function OSC_ChaosRounds:Init()
         Dynamic_Wrap(OSC_ChaosRounds, "OnGameStateChange"),
         self
     )
+    ListenToGameEvent(
+        "npc_spawned",
+        Dynamic_Wrap(OSC_ChaosRounds, "OnNPCSpawned"),
+        self
+    )
+
     self:Publish()
 end
 
@@ -199,6 +206,31 @@ function OSC_ChaosRounds:EndEvent(debugStop)
     end
     self:ScheduleNext(nextDelay)
     return true
+end
+
+function OSC_ChaosRounds:OnNPCSpawned(keys)
+    if self.state ~= STATE.ACTIVE then
+        return
+    end
+
+    local hero = EntIndexToHScript(keys.entindex)
+    if not isRealHero(hero) then
+        return
+    end
+
+    local event = self.event
+    local eventEndTime = self.endTime
+    hero:SetContextThink("osc_chaos_apply_on_spawn", function()
+        if not isRealHero(hero)
+            or self.state ~= STATE.ACTIVE
+            or self.event ~= event
+            or self.endTime ~= eventEndTime then
+            return nil
+        end
+
+        callHook(event, "ApplyToHero", hero, self:Context())
+        return nil
+    end, SPAWN_APPLY_DELAY)
 end
 
 function OSC_ChaosRounds:Publish()
