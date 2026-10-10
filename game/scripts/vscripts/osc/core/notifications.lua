@@ -1,4 +1,4 @@
-require("osc.config.notifications")
+require("osc/config/notifications")
 
 OSC_Notifications = {}
 
@@ -50,19 +50,41 @@ function Channels.feed(settings, params)
     }
 
     if settings.scope == "team" then
-        if not params.team then
+        if params.team == nil then
             OSC_Logger.Error("Feed notification '" .. tostring(settings.token) .. "' needs params.team")
             return
         end
-        CustomGameEventManager:Send_ServerToTeam(params.team, FEED_EVENT, data)
+
+        for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
+            if PlayerResource:IsValidPlayerID(playerID)
+                and PlayerResource:GetTeam(playerID) == params.team then
+                local player = PlayerResource:GetPlayer(playerID)
+                if player then
+                    CustomGameEventManager:Send_ServerToPlayer(player, FEED_EVENT, data)
+                end
+            end
+        end
     else
         CustomGameEventManager:Send_ServerToAllClients(FEED_EVENT, data)
     end
 end
 
 function Channels.hud(settings, params)
-    if not params.player then return end
-    CustomGameEventManager:Send_ServerToPlayer(params.player, settings.event, params.hud or {})
+    local playerID = params.player_id
+    if playerID == nil or not PlayerResource:IsValidPlayerID(playerID) then
+        OSC_Logger.Error("Cannot send HUD notification '" .. tostring(settings.event) .. "': invalid player ID")
+        return
+    end
+
+    local player = PlayerResource:GetPlayer(playerID)
+    if not player then
+        OSC_Logger.Error("Cannot send HUD notification '" .. tostring(settings.event) .. "': player is unavailable")
+        return
+    end
+
+    local data = params.hud or {}
+    data.player_id = playerID
+    CustomGameEventManager:Send_ServerToPlayer(player, settings.event, data)
 end
 
 function Channels.particle(settings, params)
@@ -80,9 +102,9 @@ local CHANNEL_ORDER = { "particle", "hud", "feed" }
 -- ================= Публичный API =================
 
 -- params: подстановки для текста плюс служебные поля:
---   player — сущность игрока (для hud)
+--   player_id — ID игрока (для hud)
 --   unit   — юнит (для particle)
---   team   — команда (для feed со scope = "team")
+--   team   — команда (для адресной feed-доставки)
 --   hud    — таблица данных для hud-события
 function OSC_Notifications.Notify(typeName, params)
     params = params or {}
@@ -120,7 +142,6 @@ function OSC_Notifications.AbilityChanged(hero, entry)
     local playerID = hero:GetPlayerOwnerID()
     OSC_Notifications.Notify("ability_changed", {
         unit = hero,
-        player = PlayerResource:GetPlayer(playerID),
         team = hero:GetTeamNumber(),
         player_id = playerID,
         ability = "#DOTA_Tooltip_Ability_" .. entry.name,

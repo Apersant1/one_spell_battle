@@ -22,6 +22,8 @@ OSC.AbilityPopup = (function () {
   }
 
   function OnAbilityChanged(event) {
+    if (parseInt(event.player_id, 10) !== Players.GetLocalPlayer()) return;
+
     var popup = $("#Popup");
     var card = $("#PopupCard");
 

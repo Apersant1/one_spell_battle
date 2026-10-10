@@ -9,14 +9,20 @@ local function PublishTimer()
     })
 end
 
+
+
 local function RotateAll()
-    OSC_Notifications.RotationStarted()
+    local ok, err = pcall(OSC_Notifications.RotationStarted)
+    if not ok then OSC_Logger.Error("RotationStarted: " .. tostring(err)) end
 
     for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
         if PlayerResource:IsValidPlayerID(playerID) then
             local hero = PlayerResource:GetSelectedHeroEntity(playerID)
             if hero and not hero:IsNull() and hero.osc_initialized then
-                OSC_Abilities.GiveRandom(hero, true)
+                local ok, err = pcall(OSC_Abilities.GiveRandom, hero, true)
+                if not ok then
+                    OSC_Logger.Error("GiveRandom for player " .. playerID .. ": " .. tostring(err))
+                end
             end
         end
     end
