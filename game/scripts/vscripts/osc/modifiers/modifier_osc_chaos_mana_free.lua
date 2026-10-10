@@ -12,9 +12,9 @@ function modifier_osc_chaos_mana_free:OnCreated()
 end
 
 function modifier_osc_chaos_mana_free:DeclareFunctions()
-    return { MODIFIER_PROPERTY_MANACOST_PERCENTAGE }
+    return { MODIFIER_PROPERTY_MANACOST_PERCENTAGE_STACKING }
 end
 
-function modifier_osc_chaos_mana_free:GetModifierPercentageManacost()
+function modifier_osc_chaos_mana_free:GetModifierPercentageManacostStacking()
     return self:GetStackCount()
 end
