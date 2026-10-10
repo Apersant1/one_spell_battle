@@ -1,3 +1,7 @@
+
+//TODO: Вынести описание в файл с конфигурацией
+//TODO: Сделать уведомления настраиваемыми через конфигурацию
+//TODO: Сделать разные типы уведомлений поводам (например, способности, раунды, события игроков)
 OSC_Notifications = {}
 
 function OSC_Notifications.TeamMessage(team, message)
@@ -58,6 +62,8 @@ function OSC_Notifications.ChaosRoundWarning(seconds)
             .. seconds .. " сек.!</font>"
     )
 end
+
+
 
 function OSC_Notifications.ChaosRoundStarted(eventName, duration)
     OSC_Notifications.TeamMessage(
