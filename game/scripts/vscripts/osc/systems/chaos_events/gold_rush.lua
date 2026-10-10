@@ -2,6 +2,10 @@ OSC_ChaosEvents:Register({
     id = "gold_rush",
     weight = 6,
     tick_interval = OSC_CONFIG.CHAOS_ROUNDS.GOLD_RUSH_TICK,
+    description_params = {
+        amount = OSC_CONFIG.CHAOS_ROUNDS.GOLD_RUSH_AMOUNT,
+        tick = OSC_CONFIG.CHAOS_ROUNDS.GOLD_RUSH_TICK,
+    },
 
     OnInterval = function(_, ctx)
         if ctx.remaining <= 0 then

@@ -1,12 +1,13 @@
 -- Chaos event descriptor contract:
 -- id (required), weight (default 10; 0 disables), duration (default
 -- CHAOS_ROUNDS.DURATION), title_key/desc_key (default osc_chaos_<id>_title/
--- osc_chaos_<id>_desc), conflicts (default {}), modifier (optional automatic
--- ApplyToHero/RemoveFromHero), tick_interval (default 1), and optional hooks
--- OnStart(ev, ctx), ApplyToHero(ev, hero, ctx), RemoveFromHero(ev, hero, ctx),
--- OnInterval(ev, ctx), OnEnd(ev, ctx). ctx has event_id, start_time,
--- end_time, and remaining. ApplyToHero must be idempotent because it is also
--- called after hero respawns.
+-- osc_chaos_<id>_desc), description_params (optional localization values),
+-- conflicts (default {}), modifier (optional automatic ApplyToHero/
+-- RemoveFromHero), tick_interval (default 1), and optional hooks OnStart(ev,
+-- ctx), ApplyToHero(ev, hero, ctx), RemoveFromHero(ev, hero, ctx),
+-- OnInterval(ev, ctx), OnEnd(ev, ctx). ctx has event_id, start_time, end_time,
+-- and remaining. ApplyToHero must be idempotent because it is also called
+-- after hero respawns.
 
 OSC_ChaosEvents = OSC_ChaosEvents or { list = {}, byId = {} }
 

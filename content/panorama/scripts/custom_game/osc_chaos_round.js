@@ -11,8 +11,9 @@ OSC.ChaosRound = (function () {
     if (phase === "active") OSC.Util.PlaySound(OSC.Sounds.chaosStart);
   }
 
-  function LocalizeKey(key, fallback) {
-    return key ? $.Localize("#" + key) : fallback;
+  function LocalizeKey(key, fallback, panel) {
+    if (!key) return fallback;
+    return panel ? $.Localize("#" + key, panel) : $.Localize("#" + key);
   }
 
   function Update() {
@@ -47,13 +48,22 @@ OSC.ChaosRound = (function () {
     vignette.SetHasClass("Soon", isWarning);
 
     if (isShown) {
+      var description = $("#ChaosRoundDescription");
+      var descriptionParams = data.desc_params || {};
+      for (var parameter in descriptionParams) {
+        description.SetDialogVariable(
+          parameter,
+          String(descriptionParams[parameter])
+        );
+      }
       $("#ChaosRoundTitle").text = LocalizeKey(
         data.title_key,
         isActive ? "Хаос-раунд" : "Приближается хаос-раунд"
       );
-      $("#ChaosRoundDescription").text = LocalizeKey(
+      description.text = LocalizeKey(
         data.desc_key,
-        isActive ? "" : "Правила матча скоро изменятся."
+        isActive ? "" : "Правила матча скоро изменятся.",
+        description
       );
       $("#ChaosRoundTimer").text =
         (isActive ? "До конца: " : "До события: ") +

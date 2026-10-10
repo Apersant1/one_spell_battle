@@ -243,6 +243,7 @@ function OSC_ChaosRounds:Publish()
         event_id = ev and ev.id or "",
         title_key = ev and ev.title_key or "",
         desc_key = ev and ev.desc_key or "",
+        desc_params = ev and ev.description_params or {},
         start_time = active and self.startTime or self.nextStart,
         end_time = active and self.endTime or 0,
     })
