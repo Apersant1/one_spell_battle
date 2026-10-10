@@ -1,0 +1,81 @@
+.OSCSurface {
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#24152de8),
+    to(#0c0a12e8)
+  );
+  border: 1px solid #ffffff30;
+  border-radius: 6px;
+  box-shadow: #000000aa 0px 2px 10px 0px;
+}
+
+.OSCChaos {
+  border: 1px solid #bd72e8;
+}
+
+.OSCTextSmall {
+  color: #d5c9df;
+  font-size: 14px;
+}
+
+.OSCTextBody {
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.OSCTextTitle {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: #000000 1px 1px 3px 0px;
+}
+
+.OSCTextDisplay {
+  color: #ffffff;
+  font-size: 42px;
+  font-weight: bold;
+  text-shadow: #000000 2px 2px 6px 0px;
+}
+
+.OSCGold {
+  color: #efc96c;
+}
+
+.OSCChaosText {
+  color: #d9a4ff;
+}
+
+.OSCBold {
+  font-weight: bold;
+}
+
+.OSCCaps {
+  text-transform: uppercase;
+}
+
+.OSCMuted {
+  color: #b9aebe;
+}
+
+.OSCButton {
+  min-width: 180px;
+  min-height: 42px;
+  padding: 8px;
+  background-color: #382443;
+  border: 1px solid #bd72e8;
+}
+
+.OSCButtonPrimary {
+  background-color: #805225;
+  border: 1px solid #ffd36a;
+}
+
+.OSCButton Label {
+  horizontal-align: center;
+  vertical-align: center;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: bold;
+}

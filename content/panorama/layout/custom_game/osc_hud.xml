@@ -1,56 +1,82 @@
 <root>
     <styles>
+        <include src="s2r://panorama/styles/dotastyles.vcss_c" />
+        <include src="file://{resources}/styles/custom_game/osc_theme.css" />
         <include src="file://{resources}/styles/custom_game/osc_hud.css" />
     </styles>
     <scripts>
+        <include src="file://{resources}/scripts/custom_game/osc_core.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_version.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_timer.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_chaos_round.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_ability_popup.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
     </scripts>
 
     <Panel class="OSCRoot" hittest="false">
-        <Label id="VersionLabel" hittest="false" />
-
-        <Panel id="TimerPanel" hittest="false">
-            <Label id="TimerLabel" />
+        <!-- Виньетка хаоса: первой, чтобы лежать под остальным HUD -->
+        <Panel id="ChaosVignette" hittest="false">
+            <Panel id="VignetteTop" class="VignetteEdge" hittest="false" />
+            <Panel id="VignetteBottom" class="VignetteEdge" hittest="false" />
+            <Panel id="VignetteLeft" class="VignetteEdge" hittest="false" />
+            <Panel id="VignetteRight" class="VignetteEdge" hittest="false" />
         </Panel>
 
-        <Panel id="ChaosRoundPanel" hittest="false">
-            <Label id="ChaosRoundHeader" text="ХАОС-РАУНД" />
-            <Label id="ChaosRoundTitle" text="Ожидание события" />
-            <Label id="ChaosRoundDescription" text="Правила матча скоро изменятся." />
-            <Label id="ChaosRoundTimer" text="До события: --:--" />
+        <Label id="VersionLabel" class="OSCTextSmall OSCMuted" hittest="false" />
+
+        <Panel id="TimerPanel" class="OSCSurface OSCChaos" hittest="false">
+            <Panel id="TimerRing" hittest="false">
+                <Panel id="TimerRingTrack" hittest="false" />
+                <Panel id="TimerRingFill" hittest="false" />
+                <Panel id="TimerRingHole" hittest="false" />
+            </Panel>
+            <Label id="TimerLabel" class="OSCTextBody OSCBold" />
+        </Panel>
+
+        <Panel id="ChaosRoundPanel" class="OSCSurface OSCChaos" hittest="false">
+            <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText" text="Хаос-раунд" />
+            <Label id="ChaosRoundTitle" class="OSCTextTitle" text="Ожидание события" />
+            <Label id="ChaosRoundDescription" class="OSCTextBody OSCMuted" text="Правила матча скоро изменятся." />
+            <Label id="ChaosRoundTimer" class="OSCTextBody OSCBold OSCGold" text="До события: --:--" />
         </Panel>
 
         <Panel id="Popup" hittest="false">
-            <DOTAAbilityImage id="PopupIcon" />
-            <Label id="PopupTitle" />
-            <Label id="PopupName" />
+            <Panel id="PopupCard" hittest="false">
+                <DOTAAbilityImage id="PopupIcon" hittest="false" />
+                <Panel id="PopupFlash" hittest="false" />
+            </Panel>
+            <Label id="PopupTitle" class="OSCTextBody OSCCaps OSCChaosText" />
+            <Label id="PopupName" class="OSCTextDisplay" />
         </Panel>
 
         <Panel id="CasinoPanel" hittest="true">
-            <Panel id="CasinoWindow" hittest="true">
-                <Label id="CasinoTitle" text="АВТОМАТ ОГРА" />
-                <Label id="CasinoDescription" text="Тройка: ● ×1 (60%), ♦ ×2 (5%), ★ ×5 (2%), 7 ×10 (1%)    Без тройки — 32%." />
-                <Label id="CasinoBalance" text="Золото: —" />
+            <Panel id="CasinoWindow" class="OSCSurface OSCChaos" hittest="true">
+                <Label id="CasinoTitle" class="OSCTextTitle OSCGold" text="АВТОМАТ ОГРА" />
+                <Label id="CasinoDescription" class="OSCTextSmall OSCMuted" text="" />
+                <Label id="CasinoBalance" class="OSCTextBody OSCBold OSCGold" text="Золото: —" />
                 <Panel id="CasinoStakeRow">
-                    <Label id="CasinoStakeLabel" text="Ставка:" />
+                    <Label id="CasinoStakeLabel" class="OSCTextBody" text="Ставка:" />
                     <TextEntry id="CasinoStake" text="250" maxchars="8" />
-                    <Label id="CasinoStakeLimit" text="Мин. 50" />
+                    <Label id="CasinoStakeLimit" class="OSCTextSmall OSCMuted" text="Мин. 50" />
                 </Panel>
                 <Panel id="CasinoReels">
                     <Label id="CasinoReel1" class="CasinoReel" text="7" />
                     <Label id="CasinoReel2" class="CasinoReel" text="★" />
                     <Label id="CasinoReel3" class="CasinoReel" text="♦" />
                 </Panel>
-                <Label id="CasinoResult" text="Нажмите, чтобы запустить барабаны." />
+                <Label id="CasinoResult" class="OSCTextBody" text="Нажмите, чтобы запустить барабаны." />
                 <Panel id="CasinoButtons">
-                    <Button id="CasinoSpinButton" onactivate="OnCasinoSpin()">
+                    <Button id="CasinoSpinButton" class="OSCButton OSCButtonPrimary" onactivate="OSC.Casino.Spin()">
                         <Label text="Крутить" />
                     </Button>
-                    <Button id="CasinoCloseButton" onactivate="CloseCasino()">
+                    <Button id="CasinoCloseButton" class="OSCButton" onactivate="OSC.Casino.Close()">
                         <Label text="Закрыть" />
                     </Button>
                 </Panel>
             </Panel>
+            <!-- Слой для частиц поверх окна -->
+            <Panel id="CasinoFx" hittest="false" />
         </Panel>
     </Panel>
 </root>

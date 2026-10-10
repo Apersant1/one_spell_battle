@@ -17,21 +17,44 @@ function modifier_osc_courier_drunk:GetTexture()
 end
 
 function modifier_osc_courier_drunk:OnCreated(kv)
-    self.slowPct = kv and tonumber(kv.slow_pct) or 30
-    self.baseMoveSpeed = kv and tonumber(kv.base_move_speed)
+    if not IsServer() then return end
+    self.slowPct = tonumber(kv.slow_pct) or 30
+    self.baseMoveSpeed = tonumber(kv.base_move_speed)
+    self:SetHasCustomTransmitterData(true)
 end
 
 function modifier_osc_courier_drunk:OnRefresh(kv)
-    self.slowPct = (kv and tonumber(kv.slow_pct)) or self.slowPct or 30
-    self.baseMoveSpeed = (kv and tonumber(kv.base_move_speed)) or self.baseMoveSpeed
+    if not IsServer() then return end
+    self.slowPct = tonumber(kv.slow_pct) or self.slowPct or 30
+    self.baseMoveSpeed = tonumber(kv.base_move_speed) or self.baseMoveSpeed
+    self:SendBuffRefreshToClients()
+end
+
+-- Сервер → клиент. nil в таблице не передаётся, поэтому -1 = «нет значения».
+function modifier_osc_courier_drunk:AddCustomTransmitterData()
+    return {
+        slow_pct = self.slowPct or 30,
+        base_move_speed = self.baseMoveSpeed or -1,
+    }
+end
+
+function modifier_osc_courier_drunk:HandleCustomTransmitterData(data)
+    self.slowPct = data.slow_pct
+    self.baseMoveSpeed = data.base_move_speed >= 0 and data.base_move_speed or nil
 end
 
 function modifier_osc_courier_drunk:DeclareFunctions()
-    return { MODIFIER_PROPERTY_MOVESPEED_BASE_OVERRIDE }
+    return {
+        MODIFIER_PROPERTY_MOVESPEED_BASE_OVERRIDE,
+        MODIFIER_PROPERTY_TOOLTIP,
+    }
 end
 
 function modifier_osc_courier_drunk:GetModifierMoveSpeedOverride()
-    local baseMoveSpeed = self.baseMoveSpeed
-    if not baseMoveSpeed then return nil end
-    return baseMoveSpeed * (1 - (self.slowPct or 30) / 100)
+    if not self.baseMoveSpeed then return nil end
+    return self.baseMoveSpeed * (1 - (self.slowPct or 30) / 100)
+end
+
+function modifier_osc_courier_drunk:OnTooltip()
+    return self.slowPct or 30
 end
