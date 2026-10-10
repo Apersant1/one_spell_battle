@@ -3,14 +3,16 @@
 var OSC = OSC || {};
 
 OSC.ChaosRound = (function () {
-  var SHOW_BEFORE = 30; // секунд до начала хаос-раунда
   var UPDATE_INTERVAL = 0.25;
-
   var lastPhase = "none";
 
   function OnPhaseChanged(phase) {
-    if (phase === "soon") OSC.Util.PlaySound(OSC.Sounds.chaosWarning);
+    if (phase === "warning") OSC.Util.PlaySound(OSC.Sounds.chaosWarning);
     if (phase === "active") OSC.Util.PlaySound(OSC.Sounds.chaosStart);
+  }
+
+  function LocalizeKey(key, fallback) {
+    return key ? $.Localize("#" + key) : fallback;
   }
 
   function Update() {
@@ -24,36 +26,41 @@ OSC.ChaosRound = (function () {
     }
 
     var data = CustomNetTables.GetTableValue("osc_state", "chaos_round");
+    var state = data && data.state ? data.state : "idle";
+    var isActive = state === "active";
+    var isWarning = state === "warning";
+    var isShown = isActive || isWarning;
     var now = Game.GetGameTime();
-    var isActive = Boolean(data && data.active === 1);
-    var timeUntilRound =
-      data && data.next_round_at >= 0 ? data.next_round_at - now : -1;
-    var isSoon =
-      !isActive && timeUntilRound >= 0 && timeUntilRound <= SHOW_BEFORE;
+    var timerEnd = isActive ? data.end_time : data && data.start_time;
+    var timeLeft = Math.max(0, (timerEnd || 0) - now);
+    var phase = isActive ? "active" : isWarning ? "warning" : "none";
 
-    var phase = isActive ? "active" : isSoon ? "soon" : "none";
     if (phase !== lastPhase) {
       OnPhaseChanged(phase);
       lastPhase = phase;
     }
 
-    panel.SetHasClass("Shown", isActive || isSoon);
+    panel.SetHasClass("Shown", isShown);
     panel.SetHasClass("Active", isActive);
-    panel.SetHasClass("Soon", isSoon);
-    vignette.SetHasClass("Shown", isActive || isSoon);
-    vignette.SetHasClass("Soon", isSoon);
+    panel.SetHasClass("Soon", isWarning);
+    vignette.SetHasClass("Shown", isShown);
+    vignette.SetHasClass("Soon", isWarning);
 
-    if (isActive) {
-      $("#ChaosRoundTitle").text = data.title || "Хаос-раунд";
-      $("#ChaosRoundDescription").text = data.description || "";
+    if (isShown) {
+      $("#ChaosRoundTitle").text = LocalizeKey(
+        data.title_key,
+        isActive ? "Хаос-раунд" : "Приближается хаос-раунд"
+      );
+      $("#ChaosRoundDescription").text = LocalizeKey(
+        data.desc_key,
+        isActive ? "" : "Правила матча скоро изменятся."
+      );
       $("#ChaosRoundTimer").text =
-        "До конца: " + OSC.Util.FormatTime(data.ends_at - now);
-    } else if (isSoon) {
-      $("#ChaosRoundTitle").text = "Приближается хаос-раунд";
-      $("#ChaosRoundDescription").text = "Правила матча скоро изменятся.";
-      $("#ChaosRoundTimer").text =
-        "До события: " + OSC.Util.FormatTime(timeUntilRound);
+        (isActive ? "До конца: " : "До события: ") +
+        OSC.Util.FormatTime(timeLeft);
     }
+
+    return true;
   }
 
   function Init() {

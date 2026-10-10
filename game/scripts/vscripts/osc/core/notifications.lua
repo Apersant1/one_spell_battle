@@ -136,8 +136,11 @@ function OSC_Notifications.RotationStarted()
     OSC_Notifications.Notify("rotation_started")
 end
 
-function OSC_Notifications.ChaosRoundWarning(seconds)
-    OSC_Notifications.Notify("chaos_round_warning", { seconds = seconds })
+function OSC_Notifications.ChaosRoundWarning(eventTitle, seconds)
+    OSC_Notifications.Notify("chaos_round_warning", {
+        name = "#" .. eventTitle,
+        seconds = seconds,
+    })
 end
 
 function OSC_Notifications.ChaosRoundStarted(eventName, duration)

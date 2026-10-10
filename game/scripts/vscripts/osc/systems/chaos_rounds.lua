@@ -48,16 +48,16 @@ local function callHook(ev, hookName, ...)
     end
 end
 
-local function notifyWarning()
-    OSC_Notifications.ChaosRoundWarning(config().WARNING_TIME)
+local function notifyWarning(ev)
+    OSC_Notifications.ChaosRoundWarning(ev.title_key, config().WARNING_TIME)
 end
 
 local function notifyStarted(ev)
-    OSC_Notifications.ChaosRoundStarted(ev.id, ev.duration)
+    OSC_Notifications.ChaosRoundStarted("#" .. ev.title_key, ev.duration)
 end
 
 local function notifyEnded(ev)
-    OSC_Notifications.ChaosRoundEnded(ev.id)
+    OSC_Notifications.ChaosRoundEnded("#" .. ev.title_key)
 end
 
 function OSC_ChaosRounds:Init()
@@ -124,7 +124,7 @@ function OSC_ChaosRounds:Think()
         if self.pending and time >= self.nextStart - config().WARNING_TIME then
             self.state = STATE.WARNING
             self:Publish()
-            notifyWarning()
+            notifyWarning(self.pending)
         end
     elseif self.state == STATE.WARNING then
         if time >= self.nextStart then
@@ -203,12 +203,15 @@ end
 
 function OSC_ChaosRounds:Publish()
     local active = self.state == STATE.ACTIVE
-    local ev = active and self.event or nil
+    local ev = active and self.event
+        or (self.state == STATE.WARNING and self.pending)
+        or nil
     CustomNetTables:SetTableValue("osc_state", "chaos_round", {
-        active = active and 1 or 0,
-        next_round_at = self.nextStart,
-        ends_at = active and self.endTime or 0,
-        title = ev and ev.id or "",
-        description = ev and ev.id or "",
+        state = self.state,
+        event_id = ev and ev.id or "",
+        title_key = ev and ev.title_key or "",
+        desc_key = ev and ev.desc_key or "",
+        start_time = active and self.startTime or self.nextStart,
+        end_time = active and self.endTime or 0,
     })
 end
