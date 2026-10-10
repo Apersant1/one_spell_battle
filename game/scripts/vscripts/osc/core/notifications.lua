@@ -150,3 +150,11 @@ end
 function OSC_Notifications.ChaosRoundEnded(eventName)
     OSC_Notifications.Notify("chaos_round_ended", { name = eventName })
 end
+
+function OSC_Notifications.CourierAbilityGained(team, ability, duration)
+    OSC_Notifications.Notify("courier_ability_gained", {
+        team = team,
+        ability = "#DOTA_Tooltip_" .. ability.modifier,
+        duration = duration,
+    })
+end

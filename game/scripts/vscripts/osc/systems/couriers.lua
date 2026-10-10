@@ -102,10 +102,10 @@ local function ApplyCourierAbility(courier, ability, suppressAnnouncement)
     courier.osc_next_ability_time = GameRules:GetGameTime()
         + RandomInt(ability.interval_min, ability.interval_max)
     if not suppressAnnouncement then
-        OSC_Notifications.TeamMessage(
+        OSC_Notifications.CourierAbilityGained(
             courier:GetTeamNumber(),
-            "<font color='#FFB347'>Курьер получил способность «"
-                .. ability.label .. "» на " .. ability.duration .. " сек.!</font>"
+            ability,
+            ability.duration
         )
     end
     return true
@@ -343,10 +343,10 @@ function OSC_Couriers.DebugAbility(team, abilityName)
     end
 
     if appliedCount > 0 then
-        OSC_Notifications.TeamMessage(
+        OSC_Notifications.CourierAbilityGained(
             team,
-            "<font color='#FFB347'>Debug: способность «"
-                .. ability.label .. "» применена к курьерам команды.</font>"
+            ability,
+            ability.duration
         )
         return true, appliedCount
     end
