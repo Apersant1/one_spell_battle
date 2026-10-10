@@ -6,13 +6,14 @@ require("osc/core/commands")
 require("osc/systems/abilities")
 require("osc/systems/hero_lifecycle")
 require("osc/systems/rotation")
-require("osc/systems/chaos_rounds")
 require("osc/items/item_ultimate_reroll")
 require("osc/systems/casino")
 require("osc/heroes/ogre_casino")
 require("osc/systems/couriers")
+require("osc/systems/chaos_events/registry")
+require("osc/systems/chaos_events/cooldowns")
+require("osc/systems/chaos_rounds")
 require("osc/core/game_mode")
-
 
 -- Generated from template
 

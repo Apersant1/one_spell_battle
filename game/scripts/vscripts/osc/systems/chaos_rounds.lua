@@ -1,165 +1,214 @@
-OSC_ChaosRounds = {
-    started = false,
-    warned = false,
-    active = nil,
-    previousEvent = nil,
-}
+OSC_ChaosRounds = OSC_ChaosRounds or {}
 
-local EVENTS = {
-    {
-        id = "cooldowns",
-        name = "Ускоренные перезарядки",
-        description = "Перезарядка способностей героев сокращена на 40%.",
-        modifier = "modifier_osc_chaos_cooldowns",
-        target = "heroes",
-    },
-}
+local THINK_INTERVAL = 0.25
+local STATE = { IDLE = "idle", WARNING = "warning", ACTIVE = "active" }
 
-local function PublishState(active)
-    local data = {
-        active = active and 1 or 0,
-        next_round_at = OSC_ChaosRounds.nextRoundAt or -1,
-    }
-
-    if active then
-        data.event_id = active.event.id
-        data.title = active.event.name
-        data.description = active.event.description
-        data.ends_at = active.endsAt
-    end
-
-    CustomNetTables:SetTableValue("osc_state", "chaos_round", data)
+local function config()
+    return OSC_CONFIG.CHAOS_ROUNDS
 end
 
-local function IsValidEntity(entity)
+local function now()
+    return GameRules:GetGameTime()
+end
+
+local function logError(message)
+    OSC_Logger.Error("[ChaosRounds] " .. message)
+end
+
+local function isValidEntity(entity)
     return entity and not entity:IsNull()
 end
 
-local function ApplyModifier(unit, modifier, duration)
-    if not IsValidEntity(unit) then return false end
-    local result = unit:AddNewModifier(unit, nil, modifier, { duration = duration })
-    if not result or result:IsNull() then
-        OSC_Logger.Error("Failed to apply chaos round modifier " .. modifier
-            .. " to " .. unit:GetUnitName())
-        return false
-    end
-    return true
+local function isRealHero(hero)
+    return isValidEntity(hero)
+        and hero.IsRealHero
+        and hero:IsRealHero()
+        and not (hero.IsIllusion and hero:IsIllusion())
+        and not (hero.IsTempestDouble and hero:IsTempestDouble())
+        and not (hero.IsClone and hero:IsClone())
 end
 
-local function ApplyToHeroes(event, duration)
-    local appliedCount = 0
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-            if IsValidEntity(hero) and hero:IsHero() then
-                if ApplyModifier(hero, event.modifier, duration) then
-                    appliedCount = appliedCount + 1
-                end
+local function forEachHero(callback)
+    for _, hero in pairs(HeroList:GetAllHeroes() or {}) do
+        if isRealHero(hero) then
+            callback(hero)
+        end
+    end
+end
+
+local function callHook(ev, hookName, ...)
+    local hook = ev[hookName]
+    if not hook then
+        return
+    end
+
+    local ok, err = pcall(hook, ev, ...)
+    if not ok then
+        logError(ev.id .. ":" .. hookName .. " — " .. tostring(err))
+    end
+end
+
+local function notifyWarning()
+    OSC_Notifications.ChaosRoundWarning(config().WARNING_TIME)
+end
+
+local function notifyStarted(ev)
+    OSC_Notifications.ChaosRoundStarted(ev.id, ev.duration)
+end
+
+local function notifyEnded(ev)
+    OSC_Notifications.ChaosRoundEnded(ev.id)
+end
+
+function OSC_ChaosRounds:Init()
+    self.state = STATE.IDLE
+    self.event = nil
+    self.pending = nil
+    self.lastId = nil
+    self.nextStart = 0
+    self.startTime = 0
+    self.endTime = 0
+    self.nextTick = 0
+    self.running = false
+
+    ListenToGameEvent(
+        "game_rules_state_change",
+        Dynamic_Wrap(OSC_ChaosRounds, "OnGameStateChange"),
+        self
+    )
+    self:Publish()
+end
+
+function OSC_ChaosRounds:OnGameStateChange()
+    if self.running
+        or GameRules:State_Get() ~= DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
+        return
+    end
+
+    self.running = true
+    self:ScheduleNext(config().INTERVAL)
+    GameRules:GetGameModeEntity():SetContextThink(
+        "osc_chaos_rounds_think",
+        function()
+            local ok, err = pcall(self.Think, self)
+            if not ok then
+                logError("Think — " .. tostring(err))
             end
-        end
-    end
-
-    if appliedCount == 0 then
-        OSC_Logger.Error("Cooldown chaos round found no heroes to apply its modifier to")
-    else
-        OSC_Logger.Log("Cooldown chaos modifier applied to " .. appliedCount
-            .. " hero(es); icon=item_octarine_core")
-    end
+            return THINK_INTERVAL
+        end,
+        THINK_INTERVAL
+    )
 end
 
-local function ApplyEvent(event, duration)
-    if event.target == "heroes" then
-        ApplyToHeroes(event, duration)
-    end
+function OSC_ChaosRounds:ScheduleNext(delay)
+    self.state = STATE.IDLE
+    self.event = nil
+    self.pending = OSC_ChaosEvents:PickRandom(self.lastId, now())
+    self.nextStart = now() + delay
+    self.startTime = self.nextStart
+    self.endTime = 0
+    self.nextTick = 0
+    self:Publish()
 end
 
-local function PickEvent()
-    local candidates = {}
-    for _, event in ipairs(EVENTS) do
-        if event.id ~= OSC_ChaosRounds.previousEvent then
-            table.insert(candidates, event)
-        end
-    end
-    if #candidates == 0 then
-        candidates = EVENTS
-    end
-    return candidates[RandomInt(1, #candidates)]
-end
-
-local function StartEvent()
-    local event = PickEvent()
-    local duration = OSC_CONFIG.CHAOS_ROUNDS.DURATION
-    OSC_ChaosRounds.active = {
-        event = event,
-        endsAt = GameRules:GetGameTime() + duration,
-    }
-    OSC_ChaosRounds.previousEvent = event.id
-
-    ApplyEvent(event, duration)
-    OSC_Notifications.ChaosRoundStarted(event.name, duration)
-    OSC_Logger.Log("Chaos round started: " .. event.id)
-end
-
-local function EndEvent()
-    local event = OSC_ChaosRounds.active.event
-    OSC_ChaosRounds.active = nil
-    OSC_Notifications.ChaosRoundEnded(event.name)
-    OSC_Logger.Log("Chaos round ended: " .. event.id)
-    PublishState(nil)
-end
-
-function OSC_ChaosRounds.Think()
+function OSC_ChaosRounds:Think()
     if GameRules:State_Get() >= DOTA_GAMERULES_STATE_POST_GAME then
         return nil
     end
 
-    local now = GameRules:GetGameTime()
-    if OSC_ChaosRounds.active then
-        if now >= OSC_ChaosRounds.active.endsAt then
-            EndEvent()
+    local time = now()
+    if self.state == STATE.IDLE then
+        if not self.pending then
+            self.pending = OSC_ChaosEvents:PickRandom(self.lastId, time)
         end
-        return 0.5
+        if self.pending and time >= self.nextStart - config().WARNING_TIME then
+            self.state = STATE.WARNING
+            self:Publish()
+            notifyWarning()
+        end
+    elseif self.state == STATE.WARNING then
+        if time >= self.nextStart then
+            self:StartEvent(self.pending)
+        end
+    elseif self.state == STATE.ACTIVE then
+        local ev = self.event
+        if time >= self.endTime then
+            self:EndEvent(false)
+        elseif ev.OnInterval and time >= self.nextTick then
+            self.nextTick = time + ev.tick_interval
+            callHook(ev, "OnInterval", self:Context())
+        end
     end
 
-    local timeLeft = OSC_ChaosRounds.nextRoundAt - now
-    if not OSC_ChaosRounds.warned and timeLeft <= OSC_CONFIG.CHAOS_ROUNDS.WARNING_TIME then
-        OSC_ChaosRounds.warned = true
-        OSC_Notifications.ChaosRoundWarning(OSC_CONFIG.CHAOS_ROUNDS.WARNING_TIME)
-    end
-
-    if timeLeft <= 0 then
-        StartEvent()
-        OSC_ChaosRounds.nextRoundAt = OSC_ChaosRounds.nextRoundAt
-            + OSC_CONFIG.CHAOS_ROUNDS.INTERVAL
-        OSC_ChaosRounds.warned = false
-        PublishState(OSC_ChaosRounds.active)
-    end
-
-    return 0.5
+    return THINK_INTERVAL
 end
 
-local function StartTimer()
-    if OSC_ChaosRounds.started then return end
-    OSC_ChaosRounds.started = true
-    OSC_ChaosRounds.nextRoundAt = GameRules:GetGameTime() + OSC_CONFIG.CHAOS_ROUNDS.INTERVAL
-    OSC_ChaosRounds.warned = false
-    PublishState(nil)
-    GameRules:GetGameModeEntity():SetThink(
-        "Think",
-        OSC_ChaosRounds,
-        "osc_chaos_rounds",
-        0.5
-    )
-    OSC_Logger.Log("Chaos round schedule started")
+function OSC_ChaosRounds:Context()
+    return {
+        event_id = self.event and self.event.id or "",
+        start_time = self.startTime,
+        end_time = self.endTime,
+        remaining = math.max(0, self.endTime - now()),
+    }
 end
 
-local function OnStateChange()
-    if GameRules:State_Get() == DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
-        StartTimer()
+function OSC_ChaosRounds:StartEvent(ev)
+    if not ev then
+        return false, "no event selected"
     end
+
+    self.event = ev
+    self.pending = nil
+    self.state = STATE.ACTIVE
+    self.startTime = now()
+    self.endTime = self.startTime + ev.duration
+    self.nextTick = self.startTime + ev.tick_interval
+
+    callHook(ev, "OnStart", self:Context())
+    forEachHero(function(hero)
+        callHook(ev, "ApplyToHero", hero, self:Context())
+    end)
+
+    self:Publish()
+    notifyStarted(ev)
+    OSC_Logger.Log("Chaos round started: " .. ev.id)
+    return true
 end
 
-function OSC_ChaosRounds.Init()
-    PublishState(nil)
-    ListenToGameEvent("game_rules_state_change", OnStateChange, nil)
+function OSC_ChaosRounds:EndEvent(debugStop)
+    local ev = self.event
+    if not ev then
+        return false, "no active chaos round"
+    end
+
+    local ctx = self:Context()
+    forEachHero(function(hero)
+        callHook(ev, "RemoveFromHero", hero, ctx)
+    end)
+    callHook(ev, "OnEnd", ctx)
+
+    notifyEnded(ev)
+    OSC_Logger.Log("Chaos round ended: " .. ev.id)
+    self.lastId = ev.id
+
+    local nextDelay
+    if debugStop then
+        nextDelay = config().INTERVAL
+    else
+        nextDelay = math.max(0, self.nextStart + config().INTERVAL - now())
+    end
+    self:ScheduleNext(nextDelay)
+    return true
+end
+
+function OSC_ChaosRounds:Publish()
+    local active = self.state == STATE.ACTIVE
+    local ev = active and self.event or nil
+    CustomNetTables:SetTableValue("osc_state", "chaos_round", {
+        active = active and 1 or 0,
+        next_round_at = self.nextStart,
+        ends_at = active and self.endTime or 0,
+        title = ev and ev.id or "",
+        description = ev and ev.id or "",
+    })
 end
