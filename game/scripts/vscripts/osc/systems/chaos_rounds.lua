@@ -247,3 +247,37 @@ function OSC_ChaosRounds:Publish()
         end_time = active and self.endTime or 0,
     })
 end
+
+function OSC_ChaosRounds:DebugStart(id)
+    if not self.running then
+        return false, "игра ещё не началась"
+    end
+
+    local event
+    if id then
+        event = OSC_ChaosEvents:Get(id)
+    else
+        event = OSC_ChaosEvents:PickRandom(self.lastId, now())
+    end
+    if not event or event.enabled == false or event.weight <= 0 then
+        return false, "неизвестное или отключённое событие: " .. tostring(id)
+    end
+
+    if self.state == STATE.ACTIVE then
+        self:EndEvent(true)
+    end
+    self.nextStart = now()
+    self.pending = nil
+    self.state = STATE.IDLE
+    return self:StartEvent(event)
+end
+
+function OSC_ChaosRounds:DebugStop()
+    if not self.running then
+        return false, "игра ещё не началась"
+    end
+    if self.state ~= STATE.ACTIVE then
+        return false, "нет активного раунда"
+    end
+    return self:EndEvent(true)
+end

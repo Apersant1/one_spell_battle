@@ -4,7 +4,12 @@ local function OnPlayerChat(event)
     local text = string.lower(string.match(event.text or "", "^%s*(.-)%s*$"))
     local abilityName = string.match(text, "^%-courier_ability%s*(%S*)$")
     local isReroll = text == "-reroll"
-    if abilityName == nil and not isReroll then return end
+    local isChaosStop = text == "-chaos_stop"
+    local chaosId = text == "-chaos" and ""
+        or string.match(text, "^%-chaos%s+(%S+)$")
+    if abilityName == nil and not isReroll and not isChaosStop and chaosId == nil then
+        return
+    end
 
     if not OSC_CONFIG.DEVELOPMENT_MODE then
         OSC_Logger.Log("Ignored development chat command: " .. text)
@@ -14,6 +19,25 @@ local function OnPlayerChat(event)
     local playerID = event.playerid
     if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
         OSC_Logger.Error(text .. " ignored: invalid player")
+        return
+    end
+
+    if isChaosStop or chaosId ~= nil then
+        local ok, err
+        if isChaosStop then
+            ok, err = OSC_ChaosRounds:DebugStop()
+        else
+            ok, err = OSC_ChaosRounds:DebugStart(
+                chaosId ~= "" and chaosId or nil
+            )
+        end
+
+        if not ok then
+            OSC_Logger.Error(text .. " failed for player " .. tostring(playerID)
+                .. ": " .. tostring(err))
+        else
+            OSC_Logger.Log(text .. " executed by player " .. tostring(playerID))
+        end
         return
     end
 
