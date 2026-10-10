@@ -1,0 +1,54 @@
+<root>
+    <styles>
+        <include src="file://{resources}/styles/custom_game/osc_hud.css" />
+    </styles>
+    <scripts>
+        <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
+    </scripts>
+
+    <Panel class="OSCRoot" hittest="false">
+        <Panel id="TimerPanel" hittest="false">
+            <Label id="TimerLabel" />
+        </Panel>
+
+        <Panel id="ChaosRoundPanel" hittest="false">
+            <Label id="ChaosRoundHeader" text="ХАОС-РАУНД" />
+            <Label id="ChaosRoundTitle" text="Ожидание события" />
+            <Label id="ChaosRoundDescription" text="Правила матча скоро изменятся." />
+            <Label id="ChaosRoundTimer" text="До события: --:--" />
+        </Panel>
+
+        <Panel id="Popup" hittest="false">
+            <DOTAAbilityImage id="PopupIcon" />
+            <Label id="PopupTitle" />
+            <Label id="PopupName" />
+        </Panel>
+
+        <Panel id="CasinoPanel" hittest="true">
+            <Panel id="CasinoWindow" hittest="true">
+                <Label id="CasinoTitle" text="АВТОМАТ ОГРА" />
+                <Label id="CasinoDescription" text="Тройка: ● ×1 (60%), ♦ ×2 (5%), ★ ×5 (2%), 7 ×10 (1%)    Без тройки — 32%." />
+                <Label id="CasinoBalance" text="Золото: —" />
+                <Panel id="CasinoStakeRow">
+                    <Label id="CasinoStakeLabel" text="Ставка:" />
+                    <TextEntry id="CasinoStake" text="250" maxchars="8" />
+                    <Label id="CasinoStakeLimit" text="Мин. 50" />
+                </Panel>
+                <Panel id="CasinoReels">
+                    <Label id="CasinoReel1" class="CasinoReel" text="7" />
+                    <Label id="CasinoReel2" class="CasinoReel" text="★" />
+                    <Label id="CasinoReel3" class="CasinoReel" text="♦" />
+                </Panel>
+                <Label id="CasinoResult" text="Нажмите, чтобы запустить барабаны." />
+                <Panel id="CasinoButtons">
+                    <Button id="CasinoSpinButton" onactivate="OnCasinoSpin()">
+                        <Label text="Крутить" />
+                    </Button>
+                    <Button id="CasinoCloseButton" onactivate="CloseCasino()">
+                        <Label text="Закрыть" />
+                    </Button>
+                </Panel>
+            </Panel>
+        </Panel>
+    </Panel>
+</root>
