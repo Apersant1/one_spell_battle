@@ -11,6 +11,7 @@
         <include src="file://{resources}/scripts/custom_game/osc_chaos_round.js" />
         <include src="file://{resources}/scripts/custom_game/osc_ability_popup.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_notification_feed.js" />
         <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
     </scripts>
 
@@ -22,6 +23,8 @@
             <Panel id="VignetteLeft" class="VignetteEdge" hittest="false" />
             <Panel id="VignetteRight" class="VignetteEdge" hittest="false" />
         </Panel>
+
+        <Panel id="NotificationFeed" hittest="false" />
 
         <Label id="VersionLabel" class="OSCTextSmall OSCMuted" hittest="false" />
 
