@@ -1,4 +1,5 @@
 OSC_CONFIG = {
+    VERSION = "0.1.0",
     ROTATION_INTERVAL = 60,
     WARNING_TIME = 10,
     CHAT_MESSAGES = false,

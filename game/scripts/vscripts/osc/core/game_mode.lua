@@ -7,6 +7,10 @@ function OneSpellChaos:Init()
     GameRules:SetCustomGameTeamMaxPlayers(DOTA_TEAM_BADGUYS, 5)
     GameRules:SetCustomGameSetupAutoLaunchDelay(15)
 
+    CustomNetTables:SetTableValue("osc_state", "version", {
+        version = OSC_CONFIG.VERSION,
+    })
+
     OSC_Casino.Init()
     OSC_Commands.Init()
     OSC_HeroLifecycle.Init()

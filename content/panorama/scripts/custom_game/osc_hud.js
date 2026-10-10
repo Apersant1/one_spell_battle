@@ -22,6 +22,12 @@ function FormatTime(seconds) {
   return m + ":" + (s < 10 ? "0" : "") + s;
 }
 
+function UpdateVersion(tableName, key, value) {
+  if (tableName === "osc_state" && key === "version" && value) {
+    $("#VersionLabel").text = "v" + value.version;
+  }
+}
+
 function UpdateTimer() {
   var panel = $("#TimerPanel");
   var label = $("#TimerLabel");
@@ -54,7 +60,7 @@ function UpdateChaosRound() {
 
   var data = CustomNetTables.GetTableValue("osc_state", "chaos_round");
   var now = Game.GetGameTime();
-  var isActive = data && data.active === 1;
+  var isActive = Boolean(data && data.active === 1);
   var timeUntilRound =
     data && data.next_round_at >= 0 ? data.next_round_at - now : -1;
   var isSoon =
@@ -375,6 +381,12 @@ function CheckSelectedCasinoMachine() {
 }
 
 (function () {
+  CustomNetTables.SubscribeNetTableListener("osc_state", UpdateVersion);
+  UpdateVersion(
+    "osc_state",
+    "version",
+    CustomNetTables.GetTableValue("osc_state", "version")
+  );
   GameEvents.Subscribe("osc_ability_changed", OnAbilityChanged);
   GameEvents.Subscribe("osc_casino_open", OnCasinoOpen);
   GameEvents.Subscribe("osc_casino_result", OnCasinoResult);
