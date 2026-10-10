@@ -10,3 +10,8 @@ LinkLuaModifier(
     "osc/modifiers/modifier_osc_chaos_cooldowns",
     LUA_MODIFIER_MOTION_NONE
 )
+LinkLuaModifier(
+    "modifier_osc_chaos_mana_free",
+    "osc/modifiers/modifier_osc_chaos_mana_free",
+    LUA_MODIFIER_MOTION_NONE
+)

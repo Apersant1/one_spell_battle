@@ -12,6 +12,8 @@ require("osc/heroes/ogre_casino")
 require("osc/systems/couriers")
 require("osc/systems/chaos_events/registry")
 require("osc/systems/chaos_events/cooldowns")
+require("osc/systems/chaos_events/mana_free")
+require("osc/systems/chaos_events/gold_rush")
 require("osc/systems/chaos_rounds")
 require("osc/core/game_mode")
 
