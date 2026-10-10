@@ -108,6 +108,8 @@ function OSC_Casino.OpenCasino(hero)
         hero,
         hero:GetTeamNumber()
     )
+    machine:SetMaterialGroup("base") -- фикс материала
+    machine:AddNewModifier(machine, nil, "modifier_osc_casino_visual_offset", {}) -- фикс origin
     if not machine then
         OSC_Logger.Error("Failed to spawn casino test object")
         return

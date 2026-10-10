@@ -36,6 +36,7 @@ function Precache(context)
         end
     end
 
+    PrecacheResource("model", "models/osc/slot_machine/slot_machine.vmdl", context) -- Казик
     PrecacheUnitByNameSync("npc_osc_casino_test_object", context)
     PrecacheResource("particle", "particles/generic_hero_status/hero_levelup.vpcf", context)
 end

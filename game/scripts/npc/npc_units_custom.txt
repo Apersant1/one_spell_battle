@@ -94,7 +94,7 @@
 	"npc_osc_casino_test_object"
 	{
 		"BaseClass"					"npc_dota_creature"
-		"Model"						"models/creeps/neutral_creeps/n_creep_gnoll/n_creep_gnoll_frost.vmdl"
+		"Model"						"models/osc/slot_machine/slot_machine.vmdl"
 		"ModelScale"				"1.2"
 		"Level"						"1"
 		"AttackCapabilities"		"DOTA_UNIT_CAP_NO_ATTACK"

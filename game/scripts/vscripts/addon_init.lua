@@ -15,3 +15,9 @@ LinkLuaModifier(
     "osc/modifiers/modifier_osc_chaos_mana_free",
     LUA_MODIFIER_MOTION_NONE
 )
+
+LinkLuaModifier(
+    "modifier_osc_casino_visual_offset",
+    "osc/modifiers/modifier_osc_casino_visual_offset",
+     LUA_MODIFIER_MOTION_NONE
+)
