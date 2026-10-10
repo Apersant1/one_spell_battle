@@ -98,3 +98,15 @@ OSC_ULTIMATE_POOL = {
     { name = "magnataur_reverse_polarity",    hero = "npc_dota_hero_magnataur",       label = "Reverse Polarity" },
     { name = "elder_titan_earth_splitter",    hero = "npc_dota_hero_elder_titan",    label = "Earth Splitter" },
 }
+
+OSC_COURIER_ABILITY_POOL = {
+    {
+        name = "drunk",
+        name_token = "DOTA_Tooltip_modifier_osc_courier_drunk",
+        modifier = "modifier_osc_courier_drunk",
+        duration = 15,
+        slow_pct = 30,
+        interval_min = 60,
+        interval_max = 180,
+    },
+}

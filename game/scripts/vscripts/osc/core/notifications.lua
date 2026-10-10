@@ -154,7 +154,7 @@ end
 function OSC_Notifications.CourierAbilityGained(team, ability, duration)
     OSC_Notifications.Notify("courier_ability_gained", {
         team = team,
-        ability = "#DOTA_Tooltip_" .. ability.modifier,
+        ability = "#" .. (ability.name_token or ("DOTA_Tooltip_" .. ability.modifier)),
         duration = duration,
     })
 end
