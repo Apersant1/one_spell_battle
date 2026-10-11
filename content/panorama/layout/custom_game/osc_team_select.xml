@@ -1,0 +1,60 @@
+<root>
+  <styles>
+    <include src="s2r://panorama/styles/dotastyles.vcss_c" />
+    <include src="file://{resources}/styles/custom_game/osc_team_select.css" />
+  </styles>
+  <scripts>
+    <include src="file://{resources}/scripts/custom_game/osc_core.js" />
+    <include src="file://{resources}/scripts/custom_game/osc_team_select.js" />
+  </scripts>
+
+  <Panel class="TeamSelectContext" hittest="false">
+    <Panel id="LBRoot" hittest="true">
+      <Panel id="Backdrop" hittest="false">
+        <Panel class="Aura AuraLeft" hittest="false" />
+        <Panel class="Aura AuraRight" hittest="false" />
+        <Panel class="Vignette" hittest="false" />
+      </Panel>
+
+      <Panel id="Header">
+        <Label id="Title" text="#addon_game_name" />
+        <Panel class="TitleUnderline" />
+        <Label id="MapName" text="" />
+      </Panel>
+
+      <Panel id="TimerWrap">
+        <Panel id="RingBox">
+          <Panel id="TimerTrack" />
+          <Panel id="TimerRing" />
+          <Label id="TimerText" text="" />
+        </Panel>
+        <Label id="TimerCaption" text="ДО НАЧАЛА" />
+      </Panel>
+
+      <Panel id="TeamsRow" />
+
+      <Panel id="Unassigned">
+        <Label id="UnassignedTitle" text="" />
+        <Panel id="UnassignedList" />
+      </Panel>
+
+      <Panel id="Footer">
+        <Label id="LockedBanner" text="КОМАНДЫ ЗАФИКСИРОВАНЫ · ИГРА ВОТ-ВОТ НАЧНЁТСЯ" />
+        <Panel id="HostControls">
+          <Button id="ShuffleButton" class="LBButton Ghost">
+            <Label text="ПЕРЕМЕШАТЬ" />
+          </Button>
+          <Button id="AutoButton" class="LBButton Ghost">
+            <Label text="АВТОРАСПРЕДЕЛЕНИЕ" />
+          </Button>
+          <Button id="StartButton" class="LBButton Primary">
+            <Label id="StartLabel" text="НАЧАТЬ ИГРУ" />
+          </Button>
+        </Panel>
+      </Panel>
+
+      <!-- Последний слой: сюда переносится родной чат Dota, поверх всего -->
+      <Panel id="ChatLayer" hittest="false" />
+    </Panel>
+  </Panel>
+</root>

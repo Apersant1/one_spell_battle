@@ -10,6 +10,12 @@ OSC.Sounds = {
   reelStop: "",
   casinoWin: "General.Coins",
   casinoJackpot: "General.Coins",
+
+  teamPick: "ui_team_select_pick_team",
+  teamShuffle: "ui_team_select_shuffle",
+  teamAutoAssign: "ui_team_select_auto_assign",
+  teamLockStart: "ui_team_select_lock_and_start",
+  teamCancel: "ui_team_select_cancel",
 };
 
 OSC.Util = {

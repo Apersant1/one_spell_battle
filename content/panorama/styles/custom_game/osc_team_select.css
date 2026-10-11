@@ -1,0 +1,596 @@
+/* ===================== КОРЕНЬ И ФОН ===================== */
+
+.TeamSelectContext {
+  width: 100%;
+  height: 100%;
+}
+
+#ChatLayer {
+  width: 100%;
+  height: 100%;
+}
+
+#LBRoot {
+  width: 100%;
+  height: 100%;
+  background-color: gradient(
+    radial,
+    50% 45%,
+    0% 0%,
+    75% 75%,
+    from(#1b2130),
+    to(#06070a)
+  );
+  color: #e8e2d4;
+}
+
+#Backdrop {
+  width: 100%;
+  height: 100%;
+}
+
+.Aura {
+  width: 900px;
+  height: 900px;
+  vertical-align: center;
+  animation-name: AuraPulse;
+  animation-duration: 6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.AuraLeft {
+  horizontal-align: left;
+  margin-left: -250px;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#2fbf6a40),
+    to(#00000000)
+  );
+}
+.AuraRight {
+  horizontal-align: right;
+  margin-right: -250px;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#ff3b3040),
+    to(#00000000)
+  );
+  animation-delay: 3s;
+}
+.Vignette {
+  width: 100%;
+  height: 100%;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    90% 90%,
+    from(#00000000),
+    to(#000000cc)
+  );
+}
+
+/* ===================== ШАПКА ===================== */
+#Header {
+  horizontal-align: center;
+  margin-top: 48px;
+  flow-children: down;
+  animation-name: FadeDown;
+  animation-duration: 0.6s;
+  animation-timing-function: ease-out;
+}
+#Title {
+  horizontal-align: center;
+  font-size: 54px;
+  font-weight: bold;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: #f4e3b5;
+  text-shadow: 0px 0px 18px 1.5 #d9a84a88;
+}
+.TitleUnderline {
+  horizontal-align: center;
+  width: 420px;
+  height: 2px;
+  margin-top: 6px;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    100% 0%,
+    from(#00000000),
+    color-stop(0.5, #e8c070),
+    to(#00000000)
+  );
+}
+#MapName {
+  horizontal-align: center;
+  margin-top: 10px;
+  font-size: 15px;
+  letter-spacing: 4px;
+  color: #8f96a8;
+}
+
+/* ===================== ТАЙМЕР ===================== */
+#TimerWrap {
+  horizontal-align: right;
+  margin-top: 40px;
+  margin-right: 64px;
+  flow-children: down;
+}
+#RingBox {
+  width: 110px;
+  height: 110px;
+  horizontal-align: center;
+}
+#TimerTrack,
+#TimerRing {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 5px solid #ffffff12;
+}
+#TimerRing {
+  border: 5px solid #e8c070;
+}
+#TimerText {
+  horizontal-align: center;
+  vertical-align: center;
+  font-size: 46px;
+  font-weight: bold;
+  color: #f4e3b5;
+}
+
+#TimerText.Long {
+  font-size: 32px;
+}
+
+#TimerCaption {
+  horizontal-align: center;
+  margin-top: 8px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #8f96a8;
+}
+#TimerWrap.Urgent #TimerRing {
+  border: 5px solid #ff5a4e;
+}
+#TimerWrap.Urgent #TimerText {
+  color: #ff8a80;
+  animation-name: Heartbeat;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+}
+#TimerWrap.Idle #TimerRing {
+  opacity: 0.25;
+}
+
+/* ===================== КАРТОЧКИ КОМАНД ===================== */
+#TeamsRow {
+  horizontal-align: center;
+  vertical-align: center;
+  margin-top: 10px;
+  flow-children: right;
+}
+.VS {
+  vertical-align: center;
+  margin: 0px 18px;
+  font-size: 64px;
+  font-weight: bold;
+  font-style: italic;
+  letter-spacing: 4px;
+  color: #ffffff22;
+}
+.TeamCard {
+  width: 440px;
+  height: fit-children;
+  margin: 0px 10px;
+  border: 1px solid #ffffff20;
+  border-radius: 8px;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#171c28f0),
+    to(#0a0d13f5)
+  );
+  box-shadow: #000000aa 0px 12px 40px 0px;
+  transition-property: transform, opacity, saturation, brightness;
+  transition-duration: 0.22s;
+  transition-timing-function: ease-out;
+  animation-name: CardIn;
+  animation-duration: 0.6s;
+  animation-timing-function: ease-out;
+}
+.TeamCard:hover {
+  transform: translateY(-6px);
+  brightness: 1.15;
+}
+.TeamCard:active {
+  transform: translateY(-2px);
+}
+.TeamCard.Full {
+  saturation: 0.25;
+  opacity: 0.6;
+}
+.TeamCard.Full:hover,
+#LBRoot.Locked .TeamCard:hover {
+  transform: translateY(0px);
+  brightness: 1;
+}
+#LBRoot.ManyTeams .TeamCard {
+  width: 320px;
+}
+
+.CardGlow {
+  width: 100%;
+  height: 200px;
+  border-radius: 8px 8px 0px 0px;
+}
+.CardBody {
+  width: 100%;
+  flow-children: down;
+  padding: 22px 22px 18px 22px;
+}
+.CardHeader {
+  width: 100%;
+  flow-children: right;
+}
+.ColorBar {
+  width: 4px;
+  height: 30px;
+  margin-right: 12px;
+  vertical-align: center;
+  border-radius: 2px;
+}
+.TeamName {
+  width: fill-parent-flow(1);
+  vertical-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 12px 1 #000000;
+}
+.TeamCount {
+  vertical-align: center;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: #9aa1b2;
+}
+.Divider {
+  width: 100%;
+  height: 1px;
+  margin: 14px 0px 6px 0px;
+}
+.SlotList {
+  width: 100%;
+  flow-children: down;
+}
+
+/* ===================== СЛОТЫ ===================== */
+.Slot {
+  width: 100%;
+  height: 60px;
+  margin-top: 8px;
+  flow-children: right;
+  border-radius: 6px;
+  background-color: #ffffff07;
+  border: 1px solid #ffffff0a;
+}
+.Slot.Filled {
+  background-color: #ffffff0d;
+}
+.Slot.Local {
+  border: 1px solid #f4e3b566;
+}
+.Slot.Pop {
+  animation-name: SlotPop;
+  animation-duration: 0.35s;
+  animation-timing-function: ease-out;
+}
+.Avatar,
+.AvatarPlaceholder {
+  width: 42px;
+  height: 42px;
+  margin: 0px 12px 0px 9px;
+  vertical-align: center;
+  border-radius: 5px;
+}
+.Avatar {
+  border: 2px solid #ffffff44;
+}
+.AvatarPlaceholder {
+  background-color: #ffffff08;
+  border: 1px solid #ffffff10;
+}
+.SlotName {
+  width: fill-parent-flow(1);
+  vertical-align: center;
+  font-size: 18px;
+  color: #e8e2d4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.Slot.Empty .SlotName {
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffffff30;
+}
+.HostBadge {
+  vertical-align: center;
+  margin-right: 12px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #1a1408;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#f7dc8f),
+    to(#c9973e)
+  );
+}
+.JoinHint {
+  horizontal-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #ffffff55;
+  transition-property: color;
+  transition-duration: 0.2s;
+}
+.TeamCard:hover .JoinHint {
+  color: #ffffffcc;
+}
+.TeamCard.Mine .JoinHint {
+  color: #f4e3b5;
+}
+
+/* ===================== НЕОПРЕДЕЛИВШИЕСЯ ===================== */
+#Unassigned {
+  horizontal-align: center;
+  vertical-align: bottom;
+  margin-bottom: 130px;
+  flow-children: down;
+}
+#UnassignedTitle {
+  horizontal-align: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #8f96a8;
+}
+#UnassignedList {
+  horizontal-align: center;
+  flow-children: right;
+}
+.Chip {
+  height: 40px;
+  margin: 0px 5px;
+  padding-right: 14px;
+  flow-children: right;
+  border-radius: 20px;
+  background-color: #ffffff10;
+  border: 1px solid #ffffff18;
+}
+.Chip.Local {
+  border: 1px solid #f4e3b5aa;
+  animation-name: Nudge;
+  animation-duration: 1.6s;
+  animation-iteration-count: infinite;
+}
+.ChipAvatar {
+  width: 30px;
+  height: 30px;
+  margin: 0px 8px 0px 5px;
+  vertical-align: center;
+  border-radius: 15px;
+}
+.ChipName {
+  vertical-align: center;
+  font-size: 15px;
+}
+
+/* ===================== КНОПКИ ===================== */
+#Footer {
+  horizontal-align: center;
+  vertical-align: bottom;
+  margin-bottom: 40px;
+  flow-children: down;
+}
+#LockedBanner {
+  horizontal-align: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: #f4e3b5;
+  visibility: collapse;
+}
+#LBRoot.Locked #LockedBanner {
+  visibility: visible;
+  animation-name: Blink;
+  animation-duration: 1.4s;
+  animation-iteration-count: infinite;
+}
+#HostControls {
+  horizontal-align: center;
+  flow-children: right;
+}
+
+.LBButton {
+  height: 54px;
+  margin: 0px 8px;
+  padding: 0px 30px;
+  border-radius: 5px;
+  transition-property: brightness, transform, opacity, saturation;
+  transition-duration: 0.15s;
+}
+.LBButton Label {
+  horizontal-align: center;
+  vertical-align: center;
+  font-size: 17px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #e8e2d4;
+}
+.LBButton:hover {
+  brightness: 1.3;
+  transform: translateY(-2px);
+}
+.LBButton:active {
+  brightness: 0.9;
+  transform: translateY(1px);
+}
+.LBButton:disabled {
+  saturation: 0;
+  opacity: 0.35;
+}
+
+.LBButton.Ghost {
+  background-color: #ffffff0c;
+  border: 1px solid #ffffff26;
+}
+.LBButton.Primary {
+  width: 300px;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#f2cf7a),
+    to(#b8862f)
+  );
+  border: 1px solid #ffe7a8;
+  animation-name: StartGlow;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+.LBButton.Primary Label {
+  font-size: 20px;
+  color: #20160a;
+}
+
+.LBButton.Primary:disabled {
+  animation-name: none;
+  box-shadow: none;
+}
+
+.LBButton.Primary.Cancel {
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#e0574c),
+    to(#8f231b)
+  );
+  border: 1px solid #ff9a90;
+  animation-name: none;
+}
+.LBButton.Primary.Cancel Label {
+  color: #fff2ef;
+}
+
+.Hidden {
+  visibility: collapse;
+}
+
+/* ===================== АНИМАЦИИ ===================== */
+@keyframes 'AuraPulse' {
+  0% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.45;
+  }
+}
+@keyframes 'FadeDown' {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+@keyframes 'CardIn' {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+@keyframes 'SlotPop' {
+  0% {
+    opacity: 0;
+    transform: scale3d(0.9, 0.9, 1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale3d(1.03, 1.03, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes 'Heartbeat' {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  30% {
+    transform: scale3d(1.15, 1.15, 1);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes 'StartGlow' {
+  0% {
+    box-shadow: #f2cf7a33 0px 0px 10px 0px;
+  }
+  50% {
+    box-shadow: #f2cf7aaa 0px 0px 30px 4px;
+  }
+  100% {
+    box-shadow: #f2cf7a33 0px 0px 10px 0px;
+  }
+}
+@keyframes 'Nudge' {
+  0% {
+    box-shadow: #f4e3b500 0px 0px 0px 0px;
+  }
+  50% {
+    box-shadow: #f4e3b588 0px 0px 16px 2px;
+  }
+  100% {
+    box-shadow: #f4e3b500 0px 0px 0px 0px;
+  }
+}
+@keyframes 'Blink' {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}

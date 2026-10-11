@@ -1,8 +1,9 @@
 <root>
     <Panel>
-        <Panel style="visibility: collapse;">
-            <Image src="file://{images}/spellicons/custom/osc_casino.png" hittest="false" />
-        </Panel>
+
         <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/osc_hud.xml" />
+        <CustomUIElement type="GameSetup"
+            layoutfile="file://{resources}/layout/custom_game/osc_team_select.xml" />
+
     </Panel>
 </root>
