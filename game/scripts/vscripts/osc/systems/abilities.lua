@@ -20,6 +20,25 @@ local function ShouldKeep(ability)
     return IsInnateAbility(ability)
 end
 
+local SCEPTER_ABILITY = "ogre_magi_unrefined_fireblast"
+
+local function PreserveScepterAbilitySlot(hero, preferredIndex)
+    local scepterAbility = hero:FindAbilityByName(SCEPTER_ABILITY)
+    if not scepterAbility or hero:GetAbilityByIndex(preferredIndex) ~= scepterAbility then
+        return
+    end
+
+    local lastVisibleIndex = math.min(hero:GetAbilityCount() - 1, 5)
+    for index = 0, lastVisibleIndex do
+        if index ~= preferredIndex and not hero:GetAbilityByIndex(index) then
+            scepterAbility:SetAbilityIndex(index)
+            return
+        end
+    end
+
+    error("[OSC] No free ability slot to preserve " .. SCEPTER_ABILITY)
+end
+
 function OSC_Abilities.StripHero(hero)
     -- Сначала собираем имена, потом удаляем, чтобы не сбить индексы
     local toRemove = {}
@@ -33,6 +52,22 @@ function OSC_Abilities.StripHero(hero)
     for _, name in ipairs(toRemove) do
         hero:RemoveAbility(name)
     end
+end
+
+function OSC_Abilities.EnsureOgreCasinoAbility(hero)
+    if hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" then return end
+
+    local ability = hero:FindAbilityByName("ogre_magi_casino")
+    if not ability then
+        ability = hero:AddAbility("ogre_magi_casino")
+    end
+    if not ability then
+        error("[OSC] Failed to add Ogre casino ability")
+    end
+
+    ability:SetAbilityIndex(1)
+    ability:SetLevel(1)
+    ability:SetHidden(false)
 end
 
 local function PickRandomFromPool(pool, excludeName, isAllowed)
@@ -116,6 +151,7 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
     if not name then return end
 
     local source = owner:FindAbilityByName(name)
+    PreserveScepterAbilitySlot(unit, 0)
     local ability = unit:AddAbility(name)
     if ability then
         ability:SetLevel(source and source:GetLevel() or 1)
@@ -129,6 +165,7 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
     unit.osc_current_ultimate = nil
     if ultimateName then
         local sourceUltimate = owner:FindAbilityByName(ultimateName)
+        PreserveScepterAbilitySlot(unit, 5)
         local ultimate = unit:AddAbility(ultimateName)
         if ultimate then
             ultimate:SetLevel(sourceUltimate and sourceUltimate:GetLevel() or 1)
@@ -177,6 +214,7 @@ end
 function OSC_Abilities.GiveRandomUltimate(hero, notify)
     local oldName = hero.osc_current_ultimate
     local entry = OSC_Abilities.PickRandomUltimate(oldName, hero)
+    PreserveScepterAbilitySlot(hero, 5)
     local ability = hero:AddAbility(entry.name)
     if not ability then
         OSC_Logger.Error("Failed to add ultimate: " .. entry.name)
@@ -209,6 +247,7 @@ function OSC_Abilities.GiveRandom(hero, notify)
     OSC_Abilities.RemoveCurrent(hero)
 
     local entry = OSC_Abilities.PickRandom(oldName)
+    PreserveScepterAbilitySlot(hero, 0)
     local ability = hero:AddAbility(entry.name)
     if not ability then
         OSC_Logger.Error("Failed to add ability: " .. entry.name)

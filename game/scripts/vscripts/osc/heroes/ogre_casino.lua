@@ -1,9 +1,9 @@
-ogre_magi_unrefined_fireblast = class({})
+ogre_magi_casino = class({})
 
-function ogre_magi_unrefined_fireblast:OnSpellStart()
+function ogre_magi_casino:OnSpellStart()
     local hero = self:GetCaster()
-    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" or not hero:HasScepter() then
-        OSC_Logger.Error("Casino ability requires Ogre Magi with Aghanim's Scepter")
+    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" then
+        OSC_Logger.Error("Casino ability can only be used by Ogre Magi")
         return
     end
 

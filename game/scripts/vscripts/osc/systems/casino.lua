@@ -63,7 +63,7 @@ function OSC_Casino.OnReopen(sourceIndex, event)
 
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
     local machineIndex = event and tonumber(event.machine_entindex)
-    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" or not hero:HasScepter()
+    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi"
         or not machineIndex or machineIndex ~= math.floor(machineIndex) then
         return
     end
@@ -156,8 +156,8 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         OSC_Notifications.PlayerEvent(player, "osc_casino_result", data)
     end
 
-    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" or not hero:HasScepter() then
-        SendResult({ error = "Казино доступно только Огр Маги с Aghanim's Scepter" })
+    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" then
+        SendResult({ error = "Казино доступно только Огр Маги" })
         return
     end
 

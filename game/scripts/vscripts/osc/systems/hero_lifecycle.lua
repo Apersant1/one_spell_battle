@@ -24,6 +24,7 @@ local function InitializeHeroAbilities(hero, source)
 
         local ok, err = pcall(function()
             OSC_Abilities.StripHero(hero)
+            OSC_Abilities.EnsureOgreCasinoAbility(hero)
             OSC_Abilities.GiveRandom(hero, true)
             if hero:GetLevel() >= 6 then
                 OSC_Abilities.GiveRandomUltimate(hero, true)

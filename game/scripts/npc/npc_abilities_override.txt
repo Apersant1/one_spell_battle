@@ -1,13 +1,3 @@
 "DOTAAbilities"
 {
-	"ogre_magi_unrefined_fireblast"
-	{
-		"BaseClass"					"ability_lua"
-		"ScriptFile"				"scripts/vscripts/osc/heroes/ogre_casino.lua"
-		"AbilityBehavior"			"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
-		"AbilityCastPoint"			"0.3"
-		"AbilityCooldown"			"8"
-		"AbilityManaCost"			"0"
-		"AbilityTextureName"		"custom/osc_casino"
-	}
 }

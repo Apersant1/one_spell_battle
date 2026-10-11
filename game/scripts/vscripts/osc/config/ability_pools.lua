@@ -5,6 +5,7 @@ OSC_KEEP_ABILITIES = {
     twin_gate_portal_warp          = true,
     abyssal_underlord_portal_warp = true,
     ogre_magi_unrefined_fireblast = true,
+    ogre_magi_casino = true,
 }
 
 OSC_ABILITY_POOL = {
