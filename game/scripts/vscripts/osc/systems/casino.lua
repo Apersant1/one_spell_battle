@@ -1,5 +1,23 @@
 OSC_Casino = {}
 
+local function GetPlayer(sourceIndex)
+    local playerID
+    if PlayerResource:IsValidPlayerID(sourceIndex) then
+        playerID = sourceIndex
+    else
+        local source = sourceIndex and EntIndexToHScript(sourceIndex)
+        if source and not source:IsNull() and source.GetPlayerID then
+            playerID = source:GetPlayerID()
+        end
+    end
+
+    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
+        return nil
+    end
+
+    return PlayerResource:GetPlayer(playerID), playerID
+end
+
 local function GetHeroPlayer(hero)
     local playerID = hero:GetPlayerOwnerID()
     local player = PlayerResource:IsValidPlayerID(playerID)
@@ -40,15 +58,8 @@ function OSC_Casino.Init()
 end
 
 function OSC_Casino.OnReopen(sourceIndex, event)
-    local playerID = event and event.PlayerID
-    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
-        return
-    end
-
-    local player = PlayerResource:GetPlayer(playerID)
-    if not player then
-        return
-    end
+    local _, playerID = GetPlayer(sourceIndex)
+    if not playerID then return end
 
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
     local machineIndex = event and tonumber(event.machine_entindex)
@@ -97,13 +108,12 @@ function OSC_Casino.OpenCasino(hero)
         hero,
         hero:GetTeamNumber()
     )
+    machine:SetMaterialGroup("base") -- фикс материала
+    machine:AddNewModifier(machine, nil, "modifier_osc_casino_visual_offset", {}) -- фикс origin
     if not machine then
         OSC_Logger.Error("Failed to spawn casino test object")
         return
     end
-
-    machine:SetMaterialGroup("base") -- фикс материала
-    machine:AddNewModifier(machine, nil, "modifier_osc_casino_visual_offset", {}) -- фикс origin
 
     FindClearSpaceForUnit(machine, origin, true)
     machine:SetForwardVector(hero:GetForwardVector() * -1)
@@ -138,15 +148,8 @@ function OSC_Casino.OpenCasino(hero)
 end
 
 function OSC_Casino.OnSpin(sourceIndex, event)
-    local playerID = event and event.PlayerID
-    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
-        return
-    end
-
-    local player = PlayerResource:GetPlayer(playerID)
-    if not player then
-        return
-    end
+    local player, playerID = GetPlayer(sourceIndex)
+    if not player then return end
 
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
     local function SendResult(data)
@@ -154,13 +157,13 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     end
 
     if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" then
-        SendResult({ error = "#osc_casino_err_not_ogre" })
+        SendResult({ error = "Казино доступно только Огр Маги" })
         return
     end
 
     local machineIndex = event and tonumber(event.machine_entindex)
     if not machineIndex or machineIndex < 0 or machineIndex ~= math.floor(machineIndex) then
-        SendResult({ error = "#osc_casino_err_bad_machine" })
+        SendResult({ error = "Некорректный автомат" })
         return
     end
 
@@ -169,55 +172,33 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         or machine.osc_casino_owner_player_id ~= playerID
         or hero.osc_casino_machine ~= machine
         or (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D() > 450 then
-        SendResult({ error = "#osc_casino_err_unavailable" })
+        SendResult({ error = "Автомат недоступен: подойдите ближе и вызовите его снова" })
         return
     end
 
     if machine.osc_casino_is_spinning then
-        SendResult({ error = "#osc_casino_err_busy" })
+        SendResult({ error = "Автомат уже запущен" })
         return
     end
 
     if GameRules:GetGameTime() < (machine.osc_casino_next_spin_time or 0) then
-        SendResult({ error = "#osc_casino_err_cooldown" })
+        SendResult({ error = "Подождите, пока автомат подготовится" })
         return
     end
 
     local stake = event and tonumber(event.stake)
-    local playerGold = PlayerResource:GetGold(playerID)
     if not stake or stake ~= math.floor(stake)
         or stake < OSC_CONFIG.CASINO_MIN_SPIN_COST
-        or stake > playerGold then
+        or stake > hero:GetGold() then
         SendResult({
-            error = "#osc_casino_err_stake",
-            min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
-            max_stake = playerGold,
-            gold = playerGold,
+            error = "Ставка должна быть не меньше " .. OSC_CONFIG.CASINO_MIN_SPIN_COST
+                .. " и не больше вашего запаса золота",
+            gold = hero:GetGold(),
         })
         return
     end
 
-    local goldBefore = PlayerResource:GetGold(playerID)
-    PlayerResource:SpendGold(playerID, stake, DOTA_ModifyGold_Unspecified)
-    local goldAfter = PlayerResource:GetGold(playerID)
-    local expectedGoldAfter = goldBefore - stake
-    if goldAfter ~= expectedGoldAfter then
-        local delta = expectedGoldAfter - goldAfter
-        PlayerResource:ModifyGold(playerID, delta, false, DOTA_ModifyGold_Unspecified)
-        local reason = "Casino stake validation failed for player "
-            .. tostring(playerID)
-            .. ": before=" .. tostring(goldBefore)
-            .. ", expected_after=" .. tostring(expectedGoldAfter)
-            .. ", actual_after=" .. tostring(goldAfter)
-            .. ", delta=" .. tostring(delta)
-        OSC_Logger.Error(reason)
-        SendResult({
-            error = "#osc_casino_err_settle",
-            gold = PlayerResource:GetGold(playerID),
-        })
-        return
-    end
-
+    PlayerResource:ModifyGold(playerID, -stake, false, DOTA_ModifyGold_Unspecified)
     machine.osc_casino_is_spinning = true
     machine.osc_casino_stake_pending = true
     machine.osc_casino_next_spin_time = GameRules:GetGameTime() + 1
@@ -269,12 +250,9 @@ function OSC_Casino.OnSpin(sourceIndex, event)
                     stakePending = false
                     stakeRefunded = true
                     SetMachineSpinState(false)
-                    return nil, "#osc_casino_err_hero_missing"
+                    return nil, "Не удалось завершить ставку: герой недоступен"
                 end
 
-                -- Refunds and payouts intentionally use unreliable gold so the
-                -- slot machine remains a pure gamble while the initial stake is
-                -- deducted from the combined balance via SpendGold().
                 PlayerResource:ModifyGold(
                     playerID,
                     payout,
@@ -288,8 +266,8 @@ function OSC_Casino.OnSpin(sourceIndex, event)
 
             if not ok or failureReason then
                 local reason = failureReason
-                    or ("#osc_casino_err_settle")
-                OSC_Logger.Error("Casino settlement failed: " .. tostring(reason))
+                    or ("Ошибка завершения ставки: " .. tostring(currentGold))
+                OSC_Logger.Error("Casino settlement failed: " .. reason)
                 if stakePending then
                     PlayerResource:ModifyGold(
                         playerID,
@@ -302,9 +280,9 @@ function OSC_Casino.OnSpin(sourceIndex, event)
                 end
                 SetMachineSpinState(false)
                 SendResult({
-                    error = reason,
-                    gold = PlayerResource:GetGold(playerID),
-                    stake_refunded = stakeRefunded,
+                    error = reason .. (stakeRefunded
+                        and "; ставка возвращена"
+                        or "; автомат требует проверки")
                 })
                 return nil
             end

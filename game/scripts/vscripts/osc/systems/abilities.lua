@@ -22,83 +22,6 @@ end
 
 local SCEPTER_ABILITY = "ogre_magi_unrefined_fireblast"
 
-local function GetCompanionNamesFromPool(abilityName)
-    for _, pool in ipairs({ OSC_ABILITY_POOL, OSC_ULTIMATE_POOL }) do
-        for _, entry in ipairs(pool) do
-            if entry and entry.name == abilityName and entry.companions then
-                return entry.companions
-            end
-        end
-    end
-    return {}
-end
-
-local function ApplyCompanionAbilities(hero, abilityName)
-    local companionNames = GetCompanionNamesFromPool(abilityName)
-    local nextIndex = 6
-    for _, companionName in ipairs(companionNames) do
-        local companion = hero:FindAbilityByName(companionName)
-        if not companion then
-            companion = hero:AddAbility(companionName)
-        end
-        if companion then
-            companion:SetAbilityIndex(nextIndex)
-            companion:SetLevel(1)
-            companion:SetHidden(true)
-            nextIndex = nextIndex + 1
-        end
-    end
-end
-
-local function RemoveCompanionAbilities(hero, abilityName)
-    local companionNames = GetCompanionNamesFromPool(abilityName)
-    for _, companionName in ipairs(companionNames) do
-        local companion = hero:FindAbilityByName(companionName)
-        if companion then
-            local ok, err = pcall(function()
-                if companion:IsChanneling() then
-                    hero:InterruptChannel()
-                end
-                if companion:IsToggle() and companion:GetToggleState() then
-                    companion:ToggleAbility()
-                end
-                local modifierName = companion:GetIntrinsicModifierName()
-                if modifierName and modifierName ~= "" then
-                    hero:RemoveModifierByName(modifierName)
-                end
-                hero:RemoveAbilityByHandle(companion)
-            end)
-            if not ok then
-                OSC_Logger.Error("Failed to remove companion ability " .. tostring(companionName) .. ": " .. tostring(err))
-            end
-        end
-    end
-end
-
-local function SafeRemoveAbility(hero, ability)
-    if not hero or not ability or ability:IsNull() then
-        return
-    end
-
-    local ok, err = pcall(function()
-        if ability:IsChanneling() then
-            hero:InterruptChannel()
-        end
-        if ability:IsToggle() and ability:GetToggleState() then
-            ability:ToggleAbility()
-        end
-        local modifierName = ability:GetIntrinsicModifierName()
-        if modifierName and modifierName ~= "" then
-            hero:RemoveModifierByName(modifierName)
-        end
-        hero:RemoveAbilityByHandle(ability)
-    end)
-
-    if not ok then
-        OSC_Logger.Error("Failed to remove ability " .. tostring(ability:GetAbilityName()) .. ": " .. tostring(err))
-    end
-end
-
 local function PreserveScepterAbilitySlot(hero, preferredIndex)
     local scepterAbility = hero:FindAbilityByName(SCEPTER_ABILITY)
     if not scepterAbility or hero:GetAbilityByIndex(preferredIndex) ~= scepterAbility then
@@ -117,21 +40,17 @@ local function PreserveScepterAbilitySlot(hero, preferredIndex)
 end
 
 function OSC_Abilities.StripHero(hero)
+    -- Сначала собираем имена, потом удаляем, чтобы не сбить индексы
     local toRemove = {}
     for i = 0, hero:GetAbilityCount() - 1 do
         local ability = hero:GetAbilityByIndex(i)
         if ability and not ShouldKeep(ability) then
-            table.insert(toRemove, ability)
+            table.insert(toRemove, ability:GetAbilityName())
         end
     end
 
-    for i = #toRemove, 1, -1 do
-        local ability = toRemove[i]
-        if ability and not ability:IsNull() then
-            local abilityName = ability:GetAbilityName()
-            RemoveCompanionAbilities(hero, abilityName)
-            SafeRemoveAbility(hero, ability)
-        end
+    for _, name in ipairs(toRemove) do
+        hero:RemoveAbility(name)
     end
 end
 
@@ -152,48 +71,36 @@ function OSC_Abilities.EnsureOgreCasinoAbility(hero)
 end
 
 local function PickRandomFromPool(pool, excludeName, isAllowed)
+    local candidates = {}
+    local totalWeight = 0
+
     local function GetWeight(entry)
         local weight = entry.weight == nil and 4 or entry.weight
         if type(weight) ~= "number" or weight <= 0 or weight ~= math.floor(weight) then
-            error("[OSC] Invalid weight for ability: " .. tostring(entry and entry.name))
+            error("[OSC] Invalid weight for ability: " .. tostring(entry.name))
         end
         return weight
     end
 
-    local candidates = {}
     for _, entry in ipairs(pool) do
-        if entry and entry.name ~= excludeName and (not isAllowed or isAllowed(entry)) then
+        if entry.name ~= excludeName and (not isAllowed or isAllowed(entry)) then
             table.insert(candidates, entry)
-        end
-    end
-
-    if #candidates == 0 and isAllowed then
-        OSC_Logger.Error("Ability pool filter exhausted, ignoring duplicate limit for exclusion='" .. tostring(excludeName) .. "'")
-        candidates = {}
-        for _, entry in ipairs(pool) do
-            if entry and entry.name ~= excludeName then
-                table.insert(candidates, entry)
-            end
+            totalWeight = totalWeight + GetWeight(entry)
         end
     end
 
     if #candidates == 0 then
-        candidates = {}
-        for _, entry in ipairs(pool) do
-            if entry and entry.name ~= excludeName then
-                table.insert(candidates, entry)
-            end
+        if isAllowed then
+            error("[OSC] No eligible abilities in pool")
+        end
+        candidates = pool
+        for _, entry in ipairs(candidates) do
+            totalWeight = totalWeight + GetWeight(entry)
         end
     end
 
-    if #candidates == 0 then
-        OSC_Logger.Error("Ability pool is empty after filtering")
-        return nil
-    end
-
-    local totalWeight = 0
-    for _, entry in ipairs(candidates) do
-        totalWeight = totalWeight + GetWeight(entry)
+    if totalWeight == 0 then
+        error("[OSC] Ability pool is empty")
     end
 
     local roll = RandomInt(1, totalWeight)
@@ -203,8 +110,6 @@ local function PickRandomFromPool(pool, excludeName, isAllowed)
             return entry
         end
     end
-
-    return candidates[#candidates]
 end
 
 function OSC_Abilities.PickRandom(excludeName)
@@ -252,7 +157,6 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
         ability:SetLevel(source and source:GetLevel() or 1)
         ability:SetAbilityIndex(0)
         ability:SetHidden(false)
-        ApplyCompanionAbilities(unit, name)
     end
 
     unit.osc_current_ability = name
@@ -267,7 +171,6 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
             ultimate:SetLevel(sourceUltimate and sourceUltimate:GetLevel() or 1)
             ultimate:SetAbilityIndex(5)
             ultimate:SetHidden(false)
-            ApplyCompanionAbilities(unit, ultimateName)
             unit.osc_current_ultimate = ultimateName
         else
             OSC_Logger.Error("Failed to copy ultimate: " .. ultimateName)
@@ -301,18 +204,16 @@ function OSC_Abilities.RemoveCurrent(hero)
 
     local old = hero:FindAbilityByName(oldName)
     if old then
-        RemoveCompanionAbilities(hero, oldName)
-        SafeRemoveAbility(hero, old)
+        if old:IsChanneling() then
+            hero:InterruptChannel()
+        end
+        hero:RemoveAbilityByHandle(old)
     end
 end
 
 function OSC_Abilities.GiveRandomUltimate(hero, notify)
     local oldName = hero.osc_current_ultimate
     local entry = OSC_Abilities.PickRandomUltimate(oldName, hero)
-    if not entry then
-        return nil
-    end
-
     PreserveScepterAbilitySlot(hero, 5)
     local ability = hero:AddAbility(entry.name)
     if not ability then
@@ -321,16 +222,17 @@ function OSC_Abilities.GiveRandomUltimate(hero, notify)
     end
 
     local old = oldName and hero:FindAbilityByName(oldName)
-    if old and old ~= ability then
-        RemoveCompanionAbilities(hero, oldName)
-        SafeRemoveAbility(hero, old)
+    if old then
+        if old:IsChanneling() then
+            hero:InterruptChannel()
+        end
+        hero:RemoveAbilityByHandle(old)
     end
 
     ability:SetAbilityIndex(5)
     ability:SetLevel(OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
     ability:SetHidden(false)
     ability:EndCooldown()
-    ApplyCompanionAbilities(hero, entry.name)
     hero.osc_current_ultimate = entry.name
 
     if notify then
@@ -342,29 +244,22 @@ end
 
 function OSC_Abilities.GiveRandom(hero, notify)
     local oldName = hero.osc_current_ability
-    local entry = OSC_Abilities.PickRandom(oldName)
-    if not entry then
-        return nil
-    end
+    OSC_Abilities.RemoveCurrent(hero)
 
+    local entry = OSC_Abilities.PickRandom(oldName)
     PreserveScepterAbilitySlot(hero, 0)
     local ability = hero:AddAbility(entry.name)
     if not ability then
         OSC_Logger.Error("Failed to add ability: " .. entry.name)
+        hero.osc_current_ability = nil
         return nil
-    end
-
-    local old = oldName and hero:FindAbilityByName(oldName)
-    if old and old ~= ability then
-        RemoveCompanionAbilities(hero, oldName)
-        SafeRemoveAbility(hero, old)
     end
 
     ability:SetLevel(OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
     ability:SetAbilityIndex(0)
     ability:SetHidden(false)
     ability:EndCooldown()
-    ApplyCompanionAbilities(hero, entry.name)
+
     hero.osc_current_ability = entry.name
 
     if notify then

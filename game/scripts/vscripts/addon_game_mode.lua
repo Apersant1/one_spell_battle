@@ -1,7 +1,6 @@
 require("osc/config/config")
 require("osc/config/ability_pools")
 require("osc/core/logger")
-require("osc/core/config_validation")
 require("osc/core/notifications")
 require("osc/core/commands")
 require("osc/systems/abilities")
