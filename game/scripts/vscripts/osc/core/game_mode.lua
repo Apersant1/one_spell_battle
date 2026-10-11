@@ -11,6 +11,7 @@ function OneSpellChaos:Init()
         version = OSC_CONFIG.VERSION,
     })
 
+    OSC_ConfigValidation.Validate()
     OSC_Casino.Init()
     OSC_Commands.Init()
     OSC_HeroLifecycle.Init()

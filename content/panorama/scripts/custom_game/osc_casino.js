@@ -194,6 +194,24 @@ OSC.Casino = (function () {
     });
   }
 
+  function LocalizeError(error, data) {
+    if (!error || typeof error !== "string") return error;
+    if (error.indexOf("#") !== 0) return error;
+
+    var text = $.Localize(error);
+    if (data) {
+      for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+          text = text.replace(
+            new RegExp("\\{s:" + key + "\\}", "g"),
+            String(data[key]),
+          );
+        }
+      }
+    }
+    return text;
+  }
+
   function ShowError(message) {
     for (var i = 0; i < 3; i++) StopReel(i, null, false);
     animating = false;
@@ -291,7 +309,7 @@ OSC.Casino = (function () {
       return;
     }
 
-    outcome = event.error ? { error: event.error } : event;
+    outcome = event.error ? { error: LocalizeError(event.error, event) } : event;
     TryReveal();
   }
 
