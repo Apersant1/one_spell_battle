@@ -40,6 +40,12 @@ function Precache(context)
     PrecacheResource("model", "models/osc/slot_machine/slot_machine.vmdl", context) -- Казик
     PrecacheUnitByNameSync("npc_osc_casino_test_object", context)
     PrecacheResource("particle", "particles/generic_hero_status/hero_levelup.vpcf", context)
+    
+    for _, particle in ipairs({ OSC_CONFIG.CASINO_WIN_PARTICLE, OSC_CONFIG.CASINO_JACKPOT_PARTICLE }) do
+        if particle and particle ~= "" then
+            PrecacheResource("particle", particle, context)
+        end
+    end
 end
 
 function Activate()

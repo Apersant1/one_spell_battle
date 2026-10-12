@@ -9,7 +9,7 @@
 		"ScriptFile"				"scripts/vscripts/osc/heroes/ogre_casino.lua"
 		"AbilityBehavior"			"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
 		"AbilityCastPoint"			"0.3"
-		"AbilityCooldown"			"8"
+		"AbilityCooldown"			"30"
 		"AbilityManaCost"			"0"
 		"AbilityTextureName"		"custom/osc_casino"
 		"AbilityValues"

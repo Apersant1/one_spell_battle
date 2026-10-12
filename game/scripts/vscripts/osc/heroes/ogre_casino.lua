@@ -7,5 +7,5 @@ function ogre_magi_casino:OnSpellStart()
         return
     end
 
-    OSC_Casino.OpenCasino(hero)
+    OSC_Casino.SpawnMachine(hero)
 end

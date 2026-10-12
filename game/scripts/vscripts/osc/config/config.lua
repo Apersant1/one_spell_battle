@@ -29,16 +29,20 @@ OSC_CONFIG = {
         INITIAL_ABILITY_INTERVAL_MIN = 60,
         INITIAL_ABILITY_INTERVAL_MAX = 180,
     },
-    CASINO_SHARED_WITH_TEAM = true,  -- союзники Огра тоже могут играть
+    CASINO_ACCESS = "all",  -- all/team/owner
     CASINO_USE_DISTANCE = 450,       -- как близко нужно стоять к автомату
     CASINO_HULL_RADIUS = 80,
+    CASINO_WIN_PARTICLE = "particles/generic_gameplay/lasthit_coins.vpcf",
+    CASINO_WIN_SOUND = "General.Coins",
+    CASINO_JACKPOT_PARTICLE = "particles/items2_fx/hand_of_midas.vpcf",
+    CASINO_JACKPOT_SOUND = "DOTA_Item.Hand_Of_Midas",
     CASINO_DEFAULT_STAKE = 250,
     CASINO_MIN_SPIN_COST = 50,
     CASINO_MACHINE_LIFETIME = 90,
     CASINO_OUTCOMES = {
-        { chance = 60, symbol = "circle", multiplier = 1 },
-        { chance = 5, symbol = "diamond", multiplier = 2 },
-        { chance = 2, symbol = "star", multiplier = 5 },
-        { chance = 1, symbol = "seven", multiplier = 10 },
+        { chance = 10, symbol = "circle", multiplier = 1 },
+        { chance = 15, symbol = "diamond", multiplier = 2 },
+        { chance = 4, symbol = "star", multiplier = 5 },
+        { chance = 1, symbol = "seven", multiplier = 30 },
     },
 }

@@ -56,22 +56,45 @@ local function BuildOutcomes()
     return outcomes, math.max(0, loseChance)
 end
 
--- Хозяин автомата пользуется им всегда, союзники — если это включено в конфиге.
--- Чужая команда автомат не использует.
+-- Кто может играть, задаёт CASINO_ACCESS: "owner" — только Огр,
+-- "team" — Огр и его союзники, "all" — все игроки. Вторым значением
+-- возвращает ключ локализации с причиной отказа.
 local function CanUseMachine(hero, playerID, machine)
     if not machine or machine:IsNull() or machine.osc_casino_owner_player_id == nil then
-        return false
+        return false, "osc_casino_err_bad_machine"
     end
-    if not hero or hero:IsNull()
-        or (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D()
-            > OSC_CONFIG.CASINO_USE_DISTANCE then
-        return false
+    if not hero or hero:IsNull() then
+        return false, "osc_casino_err_unavailable"
     end
-    if machine.osc_casino_owner_player_id == playerID then
-        return hero.osc_casino_machine == machine
+
+    local isOwner = machine.osc_casino_owner_player_id == playerID
+    if isOwner and hero.osc_casino_machine ~= machine then
+        return false, "osc_casino_err_unavailable"
     end
-    return OSC_CONFIG.CASINO_SHARED_WITH_TEAM == true
-        and hero:GetTeamNumber() == machine:GetTeamNumber()
+    if not isOwner then
+        local access = OSC_CONFIG.CASINO_ACCESS or "team"
+        if access == "owner" then
+            return false, "osc_casino_err_owner_only"
+        end
+        if access == "team" and hero:GetTeamNumber() ~= machine:GetTeamNumber() then
+            return false, "osc_casino_err_wrong_team"
+        end
+    end
+
+    local distance = (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D()
+    if distance > (OSC_CONFIG.CASINO_USE_DISTANCE or 450) then
+        return false, "osc_casino_err_too_far"
+    end
+    return true
+end
+
+-- Красная подсказка внизу экрана, как у стандартных ошибок Dota
+local function ShowHudError(player, token)
+    if player then
+        CustomGameEventManager:Send_ServerToPlayer(player, "osc_hud_error", {
+            message = token,
+        })
+    end
 end
 
 local function SendOpen(player, playerID, hero, machine)
@@ -94,6 +117,10 @@ local function SendOpen(player, playerID, hero, machine)
 end
 
 function OSC_Casino.Init()
+    -- Клиенту нужен радиус, чтобы рисовать зону действия по Alt
+    CustomNetTables:SetTableValue("osc_state", "casino", {
+        use_distance = OSC_CONFIG.CASINO_USE_DISTANCE or 450,
+    })
     CustomGameEventManager:RegisterListener("osc_casino_spin", OSC_Casino.OnSpin)
     CustomGameEventManager:RegisterListener("osc_casino_reopen", OSC_Casino.OnReopen)
 end
@@ -108,8 +135,16 @@ function OSC_Casino.OnReopen(sourceIndex, event)
         return
     end
 
-    local machine = EntIndexToHScript(machineIndex)
-    if not CanUseMachine(hero, playerID, machine) then
+       local machine = EntIndexToHScript(machineIndex)
+    local canUse, reason = CanUseMachine(hero, playerID, machine)
+    if not canUse then
+        -- Клиент повторяет запрос, пока герой идёт к автомату; такие повторы
+        -- приходят с quiet = 1, и подсказку на них не показываем
+        if tonumber(event.quiet) ~= 1 then
+            OSC_Logger.Log("Casino reopen refused for player " .. tostring(playerID)
+                .. ": " .. tostring(reason))
+            ShowHudError(PlayerResource:GetPlayer(playerID), reason)
+        end
         return
     end
 
@@ -119,21 +154,61 @@ function OSC_Casino.OnReopen(sourceIndex, event)
     SendOpen(player, playerID, hero, machine)
 end
 
-function OSC_Casino.OpenCasino(hero)
-    local player, playerID = GetHeroPlayer(hero)
-    if not player then
-        OSC_Logger.Error("Cannot open casino: no player handle for hero "
-            .. hero:GetUnitName() .. ", player_id=" .. tostring(playerID)
-            .. ", team=" .. hero:GetTeamNumber())
-        return
+-- Вспышка и звук на автомате при выигрыше; джекпот — эффект побольше
+local function PlayWinEffects(machine, isJackpot)
+    if not machine or machine:IsNull() then return end
+
+    local particleName = isJackpot and OSC_CONFIG.CASINO_JACKPOT_PARTICLE
+        or OSC_CONFIG.CASINO_WIN_PARTICLE
+    local soundName = isJackpot and OSC_CONFIG.CASINO_JACKPOT_SOUND
+        or OSC_CONFIG.CASINO_WIN_SOUND
+
+    if particleName and particleName ~= "" then
+        local particle = ParticleManager:CreateParticle(
+            particleName, PATTACH_ABSORIGIN_FOLLOW, machine)
+        -- Некоторые эффекты (Midas) летят от точки 0 к точке 1: ставим обе на автомат
+        ParticleManager:SetParticleControlEnt(particle, 1, machine,
+            PATTACH_ABSORIGIN_FOLLOW, nil, machine:GetAbsOrigin(), true)
+        ParticleManager:ReleaseParticleIndex(particle)
     end
+    if soundName and soundName ~= "" then
+        EmitSoundOn(soundName, machine)
+    end
+end
+
+-- Убирает автомат и закрывает окно у всех, кто в нём сидел
+local function RemoveMachine(machine)
+    if not machine or machine:IsNull() then return end
+
+    for viewerID in pairs(machine.osc_casino_viewers or {}) do
+        local viewer = PlayerResource:GetPlayer(viewerID)
+        if viewer then
+            OSC_Notifications.PlayerEvent(viewer, "osc_casino_closed", {
+                machine_entindex = machine:entindex(),
+            })
+        end
+    end
+
+    local owner = machine.osc_casino_owner_hero
+    if owner and not owner:IsNull() and owner.osc_casino_machine == machine then
+        owner.osc_casino_machine = nil
+    end
+    UTIL_Remove(machine)
+end
+
+-- Способность Огра только ставит автомат. Окно открывается кликом по автомату
+-- (клиент шлёт osc_casino_reopen, см. OnReopen). Повторное применение
+-- переносит автомат на новое место, если на нём сейчас не крутят барабаны.
+function OSC_Casino.SpawnMachine(hero)
+    local _, playerID = GetHeroPlayer(hero)
 
     local oldMachine = hero.osc_casino_machine
     if oldMachine and not oldMachine:IsNull() then
-        SendOpen(player, playerID, hero, oldMachine)
-        OSC_Logger.Log("Reopened casino for player " .. tostring(playerID)
-            .. " on team " .. hero:GetTeamNumber())
-        return
+        if oldMachine.osc_casino_is_spinning then
+            ShowHudError(PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
+            return false
+        end
+        RemoveMachine(oldMachine)
     end
 
     local origin = hero:GetAbsOrigin() + hero:GetForwardVector() * 180
@@ -147,7 +222,7 @@ function OSC_Casino.OpenCasino(hero)
     )
     if not machine then
         OSC_Logger.Error("Failed to spawn casino object")
-        return
+        return false
     end
 
     machine:SetMaterialGroup("base")                                              -- фикс материала
@@ -155,37 +230,25 @@ function OSC_Casino.OpenCasino(hero)
 
     FindClearSpaceForUnit(machine, origin, true)
     machine:SetForwardVector(hero:GetForwardVector() * -1)
-    
     machine:AddNewModifier(machine, nil, "modifier_invulnerable", {})
     machine.osc_casino_owner_player_id = playerID
+    machine.osc_casino_owner_hero = hero
     machine.osc_casino_is_spinning = false
     hero.osc_casino_machine = machine
 
     machine:SetContextThink("osc_casino_expire", function()
-        if not machine:IsNull() and machine.osc_casino_is_spinning then
+        if machine:IsNull() then return nil end
+        -- Идёт спин: ждём результата, чтобы ставка не пропала
+        if machine.osc_casino_is_spinning then
             return 0.5
         end
-
-        if not machine:IsNull() then
-            for viewerID in pairs(machine.osc_casino_viewers or {}) do
-                local viewer = PlayerResource:GetPlayer(viewerID)
-                if viewer then
-                    OSC_Notifications.PlayerEvent(viewer, "osc_casino_closed", {
-                        machine_entindex = machine:entindex(),
-                    })
-                end
-            end
-            UTIL_Remove(machine)
-        end
-        if hero.osc_casino_machine == machine then
-            hero.osc_casino_machine = nil
-        end
+        RemoveMachine(machine)
         return nil
     end, OSC_CONFIG.CASINO_MACHINE_LIFETIME)
 
-    SendOpen(player, playerID, hero, machine)
-    OSC_Logger.Log("Opened casino for player " .. tostring(playerID)
+    OSC_Logger.Log("Spawned casino for player " .. tostring(playerID)
         .. " on team " .. hero:GetTeamNumber())
+    return true
 end
 
 function OSC_Casino.OnSpin(sourceIndex, event)
@@ -209,8 +272,9 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     end
 
     local machine = EntIndexToHScript(machineIndex)
-    if not CanUseMachine(hero, playerID, machine) then
-        SendResult({ error = "osc_casino_err_unavailable" })
+    local canUse, reason = CanUseMachine(hero, playerID, machine)
+    if not canUse then
+        SendResult({ error = reason })
         return
     end
 
@@ -336,6 +400,9 @@ function OSC_Casino.OnSpin(sourceIndex, event)
                 return nil
             end
 
+            if payout > 0 then
+                PlayWinEffects(machine, reels[1] == "seven")
+            end
             SendResult({
                 stake = stake,
                 payout = payout,

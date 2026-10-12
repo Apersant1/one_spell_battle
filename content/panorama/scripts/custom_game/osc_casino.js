@@ -10,7 +10,11 @@ OSC.Casino = (function () {
   var REEL_TICK = 0.07;
   var REEL_BOUNCE_TIME = 0.3; // совпадает с OSCReelBounce
   var RESPONSE_TIMEOUT = 8;
+  var RANGE_PARTICLE = "particles/ui_mouseactions/range_display.vpcf";
+  var RANGE_POLL = 0.05; // как часто проверяем Alt
+  var DEFAULT_USE_DISTANCE = 450;
   var SELECTION_POLL = 0.2;
+  var REOPEN_RETRY = 0.5; // пока автомат в портрете, а окно закрыто, повторяем запрос
   var JACKPOT_PARTICLE = ""; // путь к .vpcf
   var JACKPOT_PARTICLE_LIFETIME = 3;
   var DEFAULT_STAKE_MINIMUM = 50;
@@ -35,6 +39,15 @@ OSC.Casino = (function () {
   var selectionSuppressed = false;
 
   // ================= Вспомогательное =================
+  // Автомат, который игрок сейчас выбрал кликом, или -1.
+  // Чужого юнита (а автомат принадлежит Огру) нельзя «выделить» — он становится
+  // юнитом в портрете (query unit). Поэтому смотрим портрет, а не выделение.
+  function GetClickedMachine() {
+    var unit = Players.GetLocalPlayerPortraitUnit();
+    if (unit === undefined || unit === -1) return -1;
+    return Entities.GetUnitName(unit) === MACHINE_UNIT_NAME ? unit : -1;
+  }
+
   function Reel(index) {
     return $("#CasinoReel" + (index + 1));
   }
@@ -95,9 +108,13 @@ OSC.Casino = (function () {
   }
 
   function UpdateSpinButton() {
-    var stake = parseInt($("#CasinoStake").text, 10);
+    var stakeEntry = $("#CasinoStake");
+    var spinButton = $("#CasinoSpinButton");
+    // При горячей перезагрузке разметки панели на миг пропадают
+    if (!stakeEntry || !spinButton) return;
+    var stake = parseInt(stakeEntry.text, 10);
     var gold = currentGold;
-    $("#CasinoSpinButton").enabled =
+    spinButton.enabled =
       machine >= 0 &&
       !waiting &&
       !animating &&
@@ -365,50 +382,100 @@ OSC.Casino = (function () {
   }
 
   function Close() {
-    selectionSuppressed = false;
-    if (machine >= 0 && Game.GetSelectedEntities) {
-      var selected = Game.GetSelectedEntities();
-      if (selected) {
-        for (var i = 0; i < selected.length; i++) {
-          if (selected[i] === machine) {
-            selectionSuppressed = true;
-            break;
-          }
-        }
-      }
-    }
+    // Если окно закрыли, пока автомат в портрете, не открываем его снова сразу же
+    selectionSuppressed = machine >= 0 && GetClickedMachine() === machine;
     machine = -1;
     ResetState();
     $("#CasinoPanel").RemoveClass("Visible");
   }
 
-  // ================= Повторное открытие по выделению =================
+  // ================= Повторное открытие по выделению ================
+  var nextReopenTime = 0;
+
   function PollSelection() {
     if (OSC.Util.IsPostGame()) return false;
-    if (!Game.GetSelectedEntities) return;
 
-    var selected = Game.GetSelectedEntities();
-    var selectedMachine = -1;
-    if (selected) {
-      for (var i = 0; i < selected.length; i++) {
-        if (Entities.GetUnitName(selected[i]) === MACHINE_UNIT_NAME) {
-          selectedMachine = selected[i];
-          break;
-        }
-      }
-    }
+    var selectedMachine = GetClickedMachine();
+    var now = Game.GetGameTime();
 
     if (selectedMachine < 0) {
       selectionSuppressed = false;
-    } else if (
-      selectedMachine !== lastSelectedMachine &&
-      !selectionSuppressed
-    ) {
-      GameEvents.SendCustomGameEventToServer("osc_casino_reopen", {
-        machine_entindex: selectedMachine,
-      });
+    } else if (!selectionSuppressed && machine !== selectedMachine) {
+      // Первый запрос — с подсказкой об отказе. Повторные (пока герой идёт
+      // к автомату) — тихие: окно откроется, как только он подойдёт.
+      var isNewClick = selectedMachine !== lastSelectedMachine;
+      if (isNewClick || now >= nextReopenTime) {
+        GameEvents.SendCustomGameEventToServer("osc_casino_reopen", {
+          machine_entindex: selectedMachine,
+          quiet: isNewClick ? 0 : 1,
+        });
+        nextReopenTime = now + REOPEN_RETRY;
+      }
     }
     lastSelectedMachine = selectedMachine;
+  }
+
+  // ================= Зона действия по Alt =================
+  var rangeParticles = {}; // entindex автомата -> частица
+
+  function GetUseDistance() {
+    var data = CustomNetTables.GetTableValue("osc_state", "casino");
+    return (data && data.use_distance) || DEFAULT_USE_DISTANCE;
+  }
+
+  function FindMachines() {
+    var result = [];
+    var creatures =
+      Entities.GetAllEntitiesByClassname("npc_dota_creature") || [];
+    for (var i = 0; i < creatures.length; i++) {
+      if (Entities.GetUnitName(creatures[i]) === MACHINE_UNIT_NAME) {
+        result.push(creatures[i]);
+      }
+    }
+    return result;
+  }
+
+  function DestroyRange(ent) {
+    Particles.DestroyParticleEffect(rangeParticles[ent], true);
+    Particles.ReleaseParticleIndex(rangeParticles[ent]);
+    delete rangeParticles[ent];
+  }
+
+  function UpdateRangeDisplay() {
+    if (OSC.Util.IsPostGame()) return false;
+
+    var show = {};
+    if (GameUI.IsAltDown()) {
+      var machines = FindMachines();
+      for (var i = 0; i < machines.length; i++) show[machines[i]] = true;
+    }
+
+    // Убираем круги у пропавших автоматов или когда Alt отпущен
+    for (var ent in rangeParticles) {
+      if (!show[ent]) DestroyRange(ent);
+    }
+
+    // Рисуем круги у новых
+    var radius = GetUseDistance();
+    for (var key in show) {
+      if (rangeParticles[key] !== undefined) continue;
+      var particle = Particles.CreateParticle(
+        RANGE_PARTICLE,
+        ParticleAttachment_t.PATTACH_ABSORIGIN_FOLLOW,
+        Number(key),
+      );
+      Particles.SetParticleControl(particle, 1, [radius, 0, 0]);
+      rangeParticles[key] = particle;
+    }
+  }
+
+  function OnHudError(event) {
+    if (!event || !event.message) return;
+    GameEvents.SendEventClientSide("dota_hud_error_message", {
+      splitscreenplayer: 0,
+      reason: 80,
+      message: "#" + event.message,
+    });
   }
 
   // ================= Инициализация =================
@@ -416,8 +483,10 @@ OSC.Casino = (function () {
     GameEvents.Subscribe("osc_casino_open", OnOpen);
     GameEvents.Subscribe("osc_casino_result", OnResult);
     GameEvents.Subscribe("osc_casino_closed", OnClosed);
+    GameEvents.Subscribe("osc_hud_error", OnHudError);
     $("#CasinoStake").SetPanelEvent("ontextentrychange", UpdateSpinButton);
     OSC.Util.Loop(SELECTION_POLL, PollSelection);
+    OSC.Util.Loop(RANGE_POLL, UpdateRangeDisplay);
   }
 
   return {
