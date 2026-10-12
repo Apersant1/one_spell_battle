@@ -38,9 +38,11 @@
         </Panel>
 
         <Panel id="ChaosRoundPanel" class="OSCSurface OSCChaos" hittest="false">
-            <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText" text="Хаос-раунд" />
+            <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
+                text="Хаос-раунд" />
             <Label id="ChaosRoundTitle" class="OSCTextTitle" text="Ожидание события" />
-            <Label id="ChaosRoundDescription" class="OSCTextBody OSCMuted" text="Правила матча скоро изменятся." />
+            <Label id="ChaosRoundDescription" class="OSCTextBody OSCMuted"
+                text="Правила матча скоро изменятся." />
             <Label id="ChaosRoundTimer" class="OSCTextBody OSCBold OSCGold" text="До события: --:--" />
         </Panel>
 
@@ -55,26 +57,27 @@
 
         <Panel id="CasinoPanel" hittest="true">
             <Panel id="CasinoWindow" class="OSCSurface OSCChaos" hittest="true">
-                <Label id="CasinoTitle" class="OSCTextTitle OSCGold" text="АВТОМАТ ОГРА" />
+                <Label id="CasinoTitle" class="OSCTextTitle OSCGold" text="#osc_casino_title" />
                 <Label id="CasinoDescription" class="OSCTextSmall OSCMuted" text="" />
-                <Label id="CasinoBalance" class="OSCTextBody OSCBold OSCGold" text="Золото: —" />
+                <Label id="CasinoBalance" class="OSCTextBody OSCBold OSCGold" text="" />
                 <Panel id="CasinoStakeRow">
-                    <Label id="CasinoStakeLabel" class="OSCTextBody" text="Ставка:" />
+                    <Label id="CasinoStakeLabel" class="OSCTextBody" text="#osc_casino_stake_label" />
                     <TextEntry id="CasinoStake" text="250" maxchars="8" />
-                    <Label id="CasinoStakeLimit" class="OSCTextSmall OSCMuted" text="Мин. 50" />
+                    <Label id="CasinoStakeLimit" class="OSCTextSmall OSCMuted" text="" />
                 </Panel>
                 <Panel id="CasinoReels">
                     <Label id="CasinoReel1" class="CasinoReel" text="7" />
                     <Label id="CasinoReel2" class="CasinoReel" text="★" />
                     <Label id="CasinoReel3" class="CasinoReel" text="♦" />
                 </Panel>
-                <Label id="CasinoResult" class="OSCTextBody" text="Нажмите, чтобы запустить барабаны." />
+                <Label id="CasinoResult" class="OSCTextBody" text="#osc_casino_idle" />
                 <Panel id="CasinoButtons">
-                    <Button id="CasinoSpinButton" class="OSCButton OSCButtonPrimary" onactivate="OSC.Casino.Spin()">
-                        <Label text="Крутить" />
+                    <Button id="CasinoSpinButton" class="OSCButton OSCButtonPrimary"
+                        onactivate="OSC.Casino.Spin()">
+                        <Label text="#osc_casino_btn_spin" />
                     </Button>
                     <Button id="CasinoCloseButton" class="OSCButton" onactivate="OSC.Casino.Close()">
-                        <Label text="Закрыть" />
+                        <Label text="#osc_casino_btn_close" />
                     </Button>
                 </Panel>
             </Panel>

@@ -3,7 +3,7 @@ OSC_CONFIG = {
     ROTATION_INTERVAL = 60,
     WARNING_TIME = 10,
     CHAT_MESSAGES = true,
-    DEVELOPMENT_MODE = true,
+    DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
     CHAOS_ROUNDS = {
         INTERVAL                = 200,
@@ -29,6 +29,8 @@ OSC_CONFIG = {
         INITIAL_ABILITY_INTERVAL_MIN = 60,
         INITIAL_ABILITY_INTERVAL_MAX = 180,
     },
+    CASINO_SHARED_WITH_TEAM = true,  -- союзники Огра тоже могут играть
+    CASINO_USE_DISTANCE = 450,       -- как близко нужно стоять к автомату
     CASINO_DEFAULT_STAKE = 250,
     CASINO_MIN_SPIN_COST = 50,
     CASINO_MACHINE_LIFETIME = 90,

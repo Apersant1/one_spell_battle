@@ -14,18 +14,9 @@ OSC.Casino = (function () {
   var JACKPOT_PARTICLE = ""; // путь к .vpcf
   var JACKPOT_PARTICLE_LIFETIME = 3;
   var DEFAULT_STAKE_MINIMUM = 50;
-  var DEFAULT_DESCRIPTION =
-    "Тройка: ● ×1 (60%), ♦ ×2 (5%), ★ ×5 (2%), 7 ×10 (1%). Без тройки — 32%.";
 
   var SPIN_SYMBOLS = ["7", "★", "♦", "●", "♠"];
   var SYMBOL_LABELS = { circle: "●", diamond: "♦", star: "★", seven: "7" };
-
-  var TEXT = {
-    idle: "Нажмите, чтобы запустить барабаны.",
-    spinning: "Барабаны вращаются...",
-    timeout: "Нет ответа от автомата. Попробуйте ещё раз.",
-    vanished: "Автомат исчез.",
-  };
 
   // ================= Состояние =================
   var machine = -1;
@@ -39,6 +30,7 @@ OSC.Casino = (function () {
   var responseTimeoutHandle = null;
   var minSpinHandle = null;
   var stakeMinimum = DEFAULT_STAKE_MINIMUM;
+  var currentGold = NaN;
   var lastSelectedMachine = -1;
   var selectionSuppressed = false;
 
@@ -58,13 +50,53 @@ OSC.Casino = (function () {
     }
   }
 
+  // Текст из resource/addon_<язык>.txt; vars подставляются в {d:...} и {s:...}
+  function SetLocalized(panel, token, vars) {
+    for (var key in vars || {}) {
+      var value = vars[key];
+      if (typeof value === "number") {
+        panel.SetDialogVariableInt(key, value);
+      } else {
+        panel.SetDialogVariable(key, String(value));
+      }
+    }
+    panel.text = $.Localize("#" + token, panel);
+  }
+
+  function SetResult(token, vars) {
+    SetLocalized($("#CasinoResult"), token, vars);
+  }
+
   function SetBalance(gold) {
-    $("#CasinoBalance").text = "Золото: " + gold;
+    currentGold = gold;
+    SetLocalized($("#CasinoBalance"), "osc_casino_balance", { gold: gold });
+  }
+
+  // Строка правил собирается из таблицы исходов, которую прислал сервер
+  function SetRules(outcomes, loseChance) {
+    var keys = Object.keys(outcomes || {}).sort(function (a, b) {
+      return Number(a) - Number(b);
+    });
+    var parts = keys.map(function (key) {
+      var o = outcomes[key];
+      return (
+        (SYMBOL_LABELS[o.symbol] || o.symbol) +
+        " ×" +
+        o.multiplier +
+        " (" +
+        o.chance +
+        "%)"
+      );
+    });
+    SetLocalized($("#CasinoDescription"), "osc_casino_rules", {
+      outcomes: parts.join(", "),
+      lose_chance: loseChance || 0,
+    });
   }
 
   function UpdateSpinButton() {
     var stake = parseInt($("#CasinoStake").text, 10);
-    var gold = parseInt($("#CasinoBalance").text.replace(/[^0-9]/g, ""), 10);
+    var gold = currentGold;
     $("#CasinoSpinButton").enabled =
       machine >= 0 &&
       !waiting &&
@@ -139,7 +171,7 @@ OSC.Casino = (function () {
     win.RemoveClass("Win");
     win.RemoveClass("Jackpot");
     win.AddClass("Spinning");
-    $("#CasinoResult").text = TEXT.spinning;
+    SetResult("osc_casino_spinning");
 
     for (var i = 0; i < 3; i++) {
       reelSpinning[i] = true;
@@ -161,7 +193,7 @@ OSC.Casino = (function () {
       responseTimeoutHandle = null;
       if (token !== spinToken || !waiting) return;
       waiting = false;
-      outcome = { error: TEXT.timeout };
+      outcome = { error: "osc_casino_err_timeout" };
       TryReveal();
     });
   }
@@ -171,7 +203,7 @@ OSC.Casino = (function () {
 
     // Ошибку показываем сразу, не дожидаясь анимации
     if (outcome.error) {
-      ShowError(outcome.error);
+      ShowError(outcome.error, outcome);
       return;
     }
     if (!minSpinDone) return;
@@ -194,12 +226,15 @@ OSC.Casino = (function () {
     });
   }
 
-  function ShowError(message) {
+  // token — ключ ошибки с сервера или клиента; data — подстановки (min_stake)
+  function ShowError(token, data) {
     for (var i = 0; i < 3; i++) StopReel(i, null, false);
     animating = false;
     revealing = false;
     $("#CasinoWindow").RemoveClass("Spinning");
-    $("#CasinoResult").text = message;
+    SetResult(token, {
+      min_stake: (data && data.min_stake) || stakeMinimum,
+    });
     UpdateSpinButton();
   }
 
@@ -225,10 +260,11 @@ OSC.Casino = (function () {
     }
 
     var net = result.net > 0 ? "+" + result.net : String(result.net);
-    $("#CasinoResult").text =
-      payout > 0
-        ? "Выплата: " + payout + " золота. Чистый итог: " + net
-        : "Нет тройки. Ставка потеряна: " + result.stake + " золота.";
+    if (payout > 0) {
+      SetResult("osc_casino_result_win", { payout: payout, net: net });
+    } else {
+      SetResult("osc_casino_result_lose", { stake: result.stake });
+    }
     UpdateSpinButton();
   }
 
@@ -251,9 +287,11 @@ OSC.Casino = (function () {
     selectionSuppressed = false;
 
     SetBalance(event.gold);
-    $("#CasinoDescription").text = event.description || DEFAULT_DESCRIPTION;
-    $("#CasinoStakeLimit").text =
-      "Мин. " + stakeMinimum + " · макс. " + event.gold;
+    SetRules(event.outcomes, event.lose_chance);
+    SetLocalized($("#CasinoStakeLimit"), "osc_casino_stake_limit", {
+      min: stakeMinimum,
+      max: event.gold,
+    });
 
     var currentStake = parseInt($("#CasinoStake").text, 10);
     if (
@@ -269,7 +307,7 @@ OSC.Casino = (function () {
     if (event.spinning && !animating) {
       StartSpinVisuals();
     } else if (!animating && !waiting) {
-      $("#CasinoResult").text = TEXT.idle;
+      SetResult("osc_casino_idle");
     }
 
     UpdateSpinButton();
@@ -291,7 +329,9 @@ OSC.Casino = (function () {
       return;
     }
 
-    outcome = event.error ? { error: event.error } : event;
+    outcome = event.error
+      ? { error: event.error, min_stake: event.min_stake }
+      : event;
     TryReveal();
   }
 
@@ -302,7 +342,7 @@ OSC.Casino = (function () {
     )
       return;
     Close();
-    $("#CasinoResult").text = TEXT.vanished;
+    SetResult("osc_casino_vanished");
   }
 
   // ================= Действия игрока =================

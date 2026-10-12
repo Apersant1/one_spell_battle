@@ -689,8 +689,7 @@ OSC.TeamSelect = (function () {
         // в обычном клиенте Дота сама сдвигает чат — обнуляем её позиционирование
         setStyle(chat, "position", "0px 0px 0px");
         setStyle(chat, "transform", "none");
-        setStyle(chat, "horizontalAlign", "left");
-        setStyle(chat, "verticalAlign", "bottom");
+        setStyle(chat, "align", "left bottom"); // !!!!!!
         setStyle(chat, "backgroundColor", "#00000000");
         setStyle(chat, "boxShadow", "none");
         setStyle(chat, "borderRadius", "0px");
