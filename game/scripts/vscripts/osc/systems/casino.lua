@@ -56,8 +56,29 @@ local function BuildOutcomes()
     return outcomes, math.max(0, loseChance)
 end
 
-local function SendOpen(player, hero, machine, spinning)
+-- Хозяин автомата пользуется им всегда, союзники — если это включено в конфиге.
+-- Чужая команда автомат не использует.
+local function CanUseMachine(hero, playerID, machine)
+    if not machine or machine:IsNull() or machine.osc_casino_owner_player_id == nil then
+        return false
+    end
+    if not hero or hero:IsNull()
+        or (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D()
+            > OSC_CONFIG.CASINO_USE_DISTANCE then
+        return false
+    end
+    if machine.osc_casino_owner_player_id == playerID then
+        return hero.osc_casino_machine == machine
+    end
+    return OSC_CONFIG.CASINO_SHARED_WITH_TEAM == true
+        and hero:GetTeamNumber() == machine:GetTeamNumber()
+end
+
+local function SendOpen(player, playerID, hero, machine)
     local outcomes, loseChance = BuildOutcomes()
+    -- Запоминаем, кому показано окно, чтобы всем сообщить о закрытии автомата
+    machine.osc_casino_viewers = machine.osc_casino_viewers or {}
+    machine.osc_casino_viewers[playerID] = true
     OSC_Notifications.PlayerEvent(player, "osc_casino_open", {
         outcomes = outcomes,
         lose_chance = loseChance,
@@ -66,7 +87,9 @@ local function SendOpen(player, hero, machine, spinning)
         default_stake = OSC_CONFIG.CASINO_DEFAULT_STAKE,
         gold = hero:GetGold(),
         lifetime = OSC_CONFIG.CASINO_MACHINE_LIFETIME,
-        spinning = spinning,
+        -- Анимацию продолжает только тот, кто сам крутит; остальные видят автомат свободным
+        spinning = machine.osc_casino_is_spinning == true
+            and machine.osc_casino_spinner_id == playerID,
     })
 end
 
@@ -81,23 +104,19 @@ function OSC_Casino.OnReopen(sourceIndex, event)
 
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
     local machineIndex = event and tonumber(event.machine_entindex)
-    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi"
-        or not machineIndex or machineIndex ~= math.floor(machineIndex) then
+    if not hero or not machineIndex or machineIndex ~= math.floor(machineIndex) then
         return
     end
 
     local machine = EntIndexToHScript(machineIndex)
-    if not machine or machine:IsNull()
-        or machine.osc_casino_owner_player_id ~= playerID
-        or hero.osc_casino_machine ~= machine
-        or (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D() > 450 then
+    if not CanUseMachine(hero, playerID, machine) then
         return
     end
 
     local player, ownerPlayerID = GetHeroPlayer(hero)
     if not player or ownerPlayerID ~= playerID then return end
 
-    SendOpen(player, hero, machine, machine.osc_casino_is_spinning)
+    SendOpen(player, playerID, hero, machine)
 end
 
 function OSC_Casino.OpenCasino(hero)
@@ -111,7 +130,7 @@ function OSC_Casino.OpenCasino(hero)
 
     local oldMachine = hero.osc_casino_machine
     if oldMachine and not oldMachine:IsNull() then
-        SendOpen(player, hero, oldMachine, oldMachine.osc_casino_is_spinning)
+        SendOpen(player, playerID, hero, oldMachine)
         OSC_Logger.Log("Reopened casino for player " .. tostring(playerID)
             .. " on team " .. hero:GetTeamNumber())
         return
@@ -132,11 +151,11 @@ function OSC_Casino.OpenCasino(hero)
     end
 
     machine:SetMaterialGroup("base")                                              -- фикс материала
-    machine:AddNewModifier(machine, nil, "modifier_osc_casino_visual_offset", {}) -- фикс origin
-
+    machine:SetHullRadius(OSC_CONFIG.CASINO_HULL_RADIUS)
 
     FindClearSpaceForUnit(machine, origin, true)
     machine:SetForwardVector(hero:GetForwardVector() * -1)
+    
     machine:AddNewModifier(machine, nil, "modifier_invulnerable", {})
     machine.osc_casino_owner_player_id = playerID
     machine.osc_casino_is_spinning = false
@@ -148,11 +167,13 @@ function OSC_Casino.OpenCasino(hero)
         end
 
         if not machine:IsNull() then
-            local ownerPlayer = PlayerResource:GetPlayer(playerID)
-            if ownerPlayer then
-                OSC_Notifications.PlayerEvent(ownerPlayer, "osc_casino_closed", {
-                    machine_entindex = machine:entindex(),
-                })
+            for viewerID in pairs(machine.osc_casino_viewers or {}) do
+                local viewer = PlayerResource:GetPlayer(viewerID)
+                if viewer then
+                    OSC_Notifications.PlayerEvent(viewer, "osc_casino_closed", {
+                        machine_entindex = machine:entindex(),
+                    })
+                end
             end
             UTIL_Remove(machine)
         end
@@ -162,7 +183,7 @@ function OSC_Casino.OpenCasino(hero)
         return nil
     end, OSC_CONFIG.CASINO_MACHINE_LIFETIME)
 
-    SendOpen(player, hero, machine)
+    SendOpen(player, playerID, hero, machine)
     OSC_Logger.Log("Opened casino for player " .. tostring(playerID)
         .. " on team " .. hero:GetTeamNumber())
 end
@@ -176,8 +197,8 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         OSC_Notifications.PlayerEvent(player, "osc_casino_result", data)
     end
 
-    if not hero or hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" then
-        SendResult({ error = "osc_casino_err_only_ogre" })
+    if not hero or hero:IsNull() then
+        SendResult({ error = "osc_casino_err_unavailable" })
         return
     end
 
@@ -188,10 +209,7 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     end
 
     local machine = EntIndexToHScript(machineIndex)
-    if not machine or machine:IsNull()
-        or machine.osc_casino_owner_player_id ~= playerID
-        or hero.osc_casino_machine ~= machine
-        or (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D() > 450 then
+    if not CanUseMachine(hero, playerID, machine) then
         SendResult({ error = "osc_casino_err_unavailable" })
         return
     end
@@ -243,6 +261,7 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     end
 
     machine.osc_casino_is_spinning = true
+    machine.osc_casino_spinner_id = playerID
     machine.osc_casino_stake_pending = true
     machine.osc_casino_next_spin_time = GameRules:GetGameTime() + 1
     local stakeRefunded = false
@@ -251,6 +270,9 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     local function SetMachineSpinState(isSpinning)
         if not machine:IsNull() then
             machine.osc_casino_is_spinning = isSpinning
+            if not isSpinning then
+                machine.osc_casino_spinner_id = nil
+            end
             machine.osc_casino_stake_pending = stakePending
         end
     end

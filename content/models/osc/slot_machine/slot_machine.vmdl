@@ -15,7 +15,7 @@
 						remaps = 
 						[
 							{
-								from = ".vmat"
+								from = "slot_machine.vmat"
 								to = "materials/slot_machine.vmat"
 							},
 						]
@@ -39,8 +39,30 @@
 					},
 				]
 			},
+			{
+				_class = "HitboxSetList"
+				children = 
+				[
+					{
+						_class = "HitboxSet"
+						name = "delault"
+						children = 
+						[
+							{
+								_class = "Hitbox"
+								parent_bone = "root"
+								surface_property = ""
+								translation_only = true
+								group_id = 0
+								hitbox_mins = [ -50.162712, -96.899475, -2.9717255 ]
+								hitbox_maxs = [ 47.495354, 52.368256, 176.87529 ]
+							},
+						]
+					},
+				]
+			},
 		]
-		model_archetype = ""
+		model_archetype = "default"
 		primary_associated_entity = ""
 		document_sub_type = "ModelDocSubType_None"
 	}

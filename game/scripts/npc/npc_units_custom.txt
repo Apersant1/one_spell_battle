@@ -97,18 +97,30 @@
 		"Model"						"models/osc/slot_machine/slot_machine.vmdl"
 		"ModelScale"				"1.2"
 		"Level"						"1"
+
+		// Атаки и движения нет
 		"AttackCapabilities"		"DOTA_UNIT_CAP_NO_ATTACK"
 		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_NONE"
+
+		// Размеры: корпус как у постройки, чтобы сквозь автомат нельзя было пройти
+		"BoundsHullName"			"DOTA_HULL_SIZE_BUILDING"
+		"RingRadius"				"90"
+		"HealthBarOffset"			"260"
+
 		"StatusHealth"				"1000"
 		"StatusHealthRegen"			"0"
 		"StatusMana"				"0"
 		"StatusManaRegen"			"0"
 		"ArmorPhysical"				"0"
+
 		"BountyXP"					"0"
 		"BountyGoldMin"				"0"
 		"BountyGoldMax"				"0"
+
 		"VisionDaytimeRange"		"0"
 		"VisionNighttimeRange"		"0"
+
 		"TeamName"					"DOTA_TEAM_NEUTRALS"
+		"UnitRelationshipClass"		"DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT"
 	}
 }

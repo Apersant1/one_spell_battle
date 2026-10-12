@@ -12,6 +12,11 @@
 		"AbilityCooldown"			"8"
 		"AbilityManaCost"			"0"
 		"AbilityTextureName"		"custom/osc_casino"
+		"AbilityValues"
+		{
+			"duration"				"90"
+			"min_stake"				"50"
+		}
 	}
 
 	//=================================================================================================================

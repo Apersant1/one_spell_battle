@@ -31,6 +31,7 @@ OSC_CONFIG = {
     },
     CASINO_SHARED_WITH_TEAM = true,  -- союзники Огра тоже могут играть
     CASINO_USE_DISTANCE = 450,       -- как близко нужно стоять к автомату
+    CASINO_HULL_RADIUS = 80,
     CASINO_DEFAULT_STAKE = 250,
     CASINO_MIN_SPIN_COST = 50,
     CASINO_MACHINE_LIFETIME = 90,
