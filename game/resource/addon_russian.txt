@@ -29,5 +29,25 @@
 		"DOTA_Tooltip_modifier_osc_chaos_mana_free" "Хаос: бесплатные заклинания"
 		"DOTA_Tooltip_modifier_osc_chaos_mana_free_Description" "Способности не расходуют ману."
 		"osc_notify_courier_ability_gained" "Курьер получил способность «{s:ability}» на {s:duration} сек.!"
+		// ---------- Team select: строки из JS ----------
+		"osc_ts_btn_cancel"				"ОТМЕНА"
+		"osc_ts_map"					"КАРТА: {s:map}"
+		"osc_ts_team_light"				"Силы Света"
+		"osc_ts_team_dark"				"Силы Тьмы"
+		"osc_ts_free_slot"				"Свободный слот"
+		"osc_ts_host_badge"				"ХОСТ"
+		"osc_ts_hint_locked"			"КОМАНДЫ ЗАФИКСИРОВАНЫ"
+		"osc_ts_hint_mine"				"ВЫ В ЭТОЙ КОМАНДЕ"
+		"osc_ts_hint_full"				"МЕСТ НЕТ"
+		"osc_ts_click_to_join"			"НАЖМИТЕ, ЧТОБЫ ВСТУПИТЬ"
+		// ---------- Team select: разметка ----------
+		"osc_ts_timer_caption"			"ДО НАЧАЛА"
+		"osc_ts_timer_waiting"		    "ОЖИДАНИЕ"
+		"osc_ts_lobby_title"			"ВЫБИРАЮТ КОМАНДУ"
+		"osc_ts_locked_banner"			"КОМАНДЫ ЗАФИКСИРОВАНЫ · ИГРА ВОТ-ВОТ НАЧНЁТСЯ"
+		"osc_ts_btn_shuffle"			"ПЕРЕМЕШАТЬ"
+		"osc_ts_btn_auto"				"АВТОРАСПРЕДЕЛЕНИЕ"
+		"osc_ts_btn_start"				"НАЧАТЬ ИГРУ"
+ 
 	}
 }

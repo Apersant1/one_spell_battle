@@ -1,7 +1,7 @@
 OSC_TeamShuffle = OSC_TeamShuffle or {}
 local TeamShuffle = OSC_TeamShuffle
 
--- Команды, между которыми мешаем. Добавьте DOTA_TEAM_CUSTOM_*, если используете больше двух.
+-- Команды, между которыми мешаем
 local TEAMS = { DOTA_TEAM_GOODGUYS, DOTA_TEAM_BADGUYS }
 
 local function IsHost(playerID)
@@ -9,9 +9,12 @@ local function IsHost(playerID)
   return player ~= nil and GameRules:PlayerHasCustomGameHostPrivileges(player)
 end
 
-function OSC_TeamShuffle:OnShuffle(event)
-  if GameRules:State_Get() ~= DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP then return end
-  if not IsHost(event.PlayerID) then return end
+local function IsSetup()
+  return GameRules:State_Get() == DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP
+end
+
+function TeamShuffle:OnShuffle(event)
+  if not IsSetup() or not IsHost(event.PlayerID) then return end
 
   local ids = {}
   for id = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
@@ -39,9 +42,29 @@ function OSC_TeamShuffle:OnShuffle(event)
   end
 end
 
-function OSC_TeamShuffle:Init()
+-- Хост перетаскивает игрока в команду
+function TeamShuffle:OnMove(event)
+  if not IsSetup() then return end
+
+  local target = tonumber(event.player_id)
+  local team = tonumber(event.team)
+  if target == nil or team == nil then return end
+
+  -- Себя может двигать любой, других — только хост
+  if target ~= event.PlayerID and not IsHost(event.PlayerID) then return end
+  if not PlayerResource:IsValidPlayerID(target) then return end
+  if PlayerResource:GetCustomTeamAssignment(target) == team then return end
+  if PlayerResource:GetPlayerCountForTeam(team) >= GameRules:GetCustomGameTeamMaxPlayers(team) then return end
+
+  PlayerResource:SetCustomTeamAssignment(target, team)
+end
+
+function TeamShuffle:Init()
   CustomGameEventManager:RegisterListener("osc_team_shuffle", function(_, event)
     self:OnShuffle(event)
+  end)
+  CustomGameEventManager:RegisterListener("osc_team_move", function(_, event)
+    self:OnMove(event)
   end)
 end
 

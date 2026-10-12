@@ -1,10 +1,8 @@
-/* ===================== КОРЕНЬ И ФОН ===================== */
-
+/* ===================== КОРЕНЬ ===================== */
 .TeamSelectContext {
   width: 100%;
   height: 100%;
 }
-
 #ChatLayer {
   width: 100%;
   height: 100%;
@@ -13,55 +11,81 @@
 #LBRoot {
   width: 100%;
   height: 100%;
-  background-color: gradient(
-    radial,
-    50% 45%,
-    0% 0%,
-    75% 75%,
-    from(#1b2130),
-    to(#06070a)
-  );
-  color: #e8e2d4;
+  background-image: url("file://{images}/custom_game/team_select/bg_space.png");
+  background-size: cover;
 }
 
-#Backdrop {
+/* Центральная колонка */
+#Main {
+  width: 100%;
+  height: 100%;
+  flow-children: down;
+}
+
+/* ===================== КОСМОС ===================== */
+#Backdrop,
+#Stars {
   width: 100%;
   height: 100%;
 }
 
-.Aura {
-  width: 900px;
-  height: 900px;
-  vertical-align: center;
-  animation-name: AuraPulse;
-  animation-duration: 6s;
+.Nebula {
+  animation-name: NebulaPulse;
+  animation-duration: 8s;
   animation-iteration-count: infinite;
   animation-timing-function: ease-in-out;
 }
-.AuraLeft {
-  horizontal-align: left;
-  margin-left: -250px;
+.NebulaCenter {
+  width: 1100px;
+  height: 800px;
+  horizontal-align: center;
+  margin-top: -100px;
   background-color: gradient(
     radial,
     50% 50%,
     0% 0%,
     50% 50%,
-    from(#2fbf6a40),
+    from(#4a3a9a40),
     to(#00000000)
   );
 }
-.AuraRight {
-  horizontal-align: right;
-  margin-right: -250px;
+.NebulaLeft {
+  width: 1000px;
+  height: 1000px;
+  vertical-align: center;
+  margin-left: -350px;
   background-color: gradient(
     radial,
     50% 50%,
     0% 0%,
     50% 50%,
-    from(#ff3b3040),
+    from(#1fb3a838),
     to(#00000000)
   );
-  animation-delay: 3s;
+  animation-delay: 2s;
+}
+.NebulaRight {
+  width: 1000px;
+  height: 1000px;
+  vertical-align: center;
+  horizontal-align: right;
+  margin-right: -350px;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#c8203a38),
+    to(#00000000)
+  );
+  animation-delay: 4s;
+}
+.Star {
+  border-radius: 50%;
+  background-color: #ffffff;
+  animation-name: Twinkle;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
 }
 .Vignette {
   width: 100%;
@@ -70,188 +94,221 @@
     radial,
     50% 50%,
     0% 0%,
-    90% 90%,
+    85% 85%,
     from(#00000000),
-    to(#000000cc)
+    to(#000000d0)
   );
 }
 
-/* ===================== ШАПКА ===================== */
+/* ===================== ЗАГОЛОВОК ===================== */
 #Header {
+  width: 760px;
+  height: 180px; /* подгоните под пропорции картинки */
   horizontal-align: center;
-  margin-top: 48px;
-  flow-children: down;
-  animation-name: FadeDown;
-  animation-duration: 0.6s;
-  animation-timing-function: ease-out;
+  overflow: noclip;
 }
-#Title {
-  horizontal-align: center;
-  font-size: 54px;
-  font-weight: bold;
-  letter-spacing: 8px;
-  text-transform: uppercase;
-  color: #f4e3b5;
-  text-shadow: 0px 0px 18px 1.5 #d9a84a88;
-}
-.TitleUnderline {
-  horizontal-align: center;
-  width: 420px;
-  height: 2px;
-  margin-top: 6px;
+#TitleHalo {
+  width: 100%;
+  height: 200px;
+  margin-top: -50px;
   background-color: gradient(
-    linear,
+    radial,
+    50% 50%,
     0% 0%,
-    100% 0%,
-    from(#00000000),
-    color-stop(0.5, #e8c070),
+    50% 50%,
+    from(#f2c96a30),
     to(#00000000)
   );
 }
+#TitlePlaque {
+  width: 100%;
+  height: 100%;
+  margin-top: -30px;
+  background-image: url("file://{images}/custom_game/team_select/title_plaque.png");
+  background-size: 100% 100%;
+  transform: scale3d(1, -1, 1);
+}
+#TitleContent {
+  horizontal-align: center;
+  flow-children: down;
+}
+#Title {
+  horizontal-align: center;
+  font-size: 35px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: #f7dc8f;
+  text-shadow: 0px 0px 22px 2 #d9a84aaa;
+}
 #MapName {
   horizontal-align: center;
-  margin-top: 10px;
-  font-size: 15px;
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: bold;
   letter-spacing: 4px;
-  color: #8f96a8;
+  color: #f2c96a;
 }
 
 /* ===================== ТАЙМЕР ===================== */
 #TimerWrap {
   horizontal-align: right;
-  margin-top: 40px;
-  margin-right: 64px;
+  margin: 20px 36px 0px 0px;
   flow-children: down;
+  overflow: noclip;
 }
 #RingBox {
-  width: 110px;
-  height: 110px;
-  horizontal-align: center;
+  width: 200px;
+  height: 200px;
+  overflow: noclip;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    30% 30%,
+    from(#1a140acc),
+    to(#00000000)
+  );
 }
-#TimerTrack,
-#TimerRing {
+
+/* рамка-медальон */
+#TimerFrame {
   width: 100%;
   height: 100%;
+  background-image: url("file://{images}/custom_game/team_select/timer_border.png");
+  background-size: 100% 100%;
+  transition-property: wash-color, brightness;
+  transition-duration: 0.3s;
+}
+
+/* кольцо прогресса — внутри медальона.
+   width/height подгоните под внутренний край картинки */
+#TimerTrack,
+#TimerRing {
+  width: 112px;
+  height: 112px;
+  horizontal-align: center;
+  vertical-align: center;
   border-radius: 50%;
-  border: 5px solid #ffffff12;
+  border: 4px solid #ffffff10;
 }
 #TimerRing {
-  border: 5px solid #e8c070;
+  border: 4px solid #f2c96a;
+  transition-property: opacity;
+  transition-duration: 0.3s;
 }
+
 #TimerText {
   horizontal-align: center;
   vertical-align: center;
-  font-size: 46px;
+  font-size: 50px;
   font-weight: bold;
-  color: #f4e3b5;
+  color: #f7dc8f;
+  text-shadow: 0px 0px 12px 1 #d9a84a99;
 }
-
 #TimerText.Long {
   font-size: 32px;
 }
 
+/* подпись под медальоном — в одном стиле с «ВЫБИРАЮТ КОМАНДУ» */
 #TimerCaption {
   horizontal-align: center;
-  margin-top: 8px;
-  font-size: 13px;
-  letter-spacing: 3px;
-  color: #8f96a8;
+  margin-top: 6px;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #cbb98c;
+}
+
+/* ожидание: таймер не запущен */
+#TimerWrap.Idle #TimerRing {
+  opacity: 0.2;
+}
+#TimerWrap.Idle #TimerText {
+  font-size: 44px;
+  color: #cbb98c88;
+  text-shadow: none;
+}
+
+/* последние секунды: медальон краснеет и пульсирует */
+#TimerWrap.Urgent #TimerFrame {
+  wash-color: #ff4a3a40;
+  animation-name: TimerPulse;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
 }
 #TimerWrap.Urgent #TimerRing {
-  border: 5px solid #ff5a4e;
+  border: 4px solid #ff5a4e;
 }
 #TimerWrap.Urgent #TimerText {
   color: #ff8a80;
+  text-shadow: 0px 0px 12px 1 #ff3a3a99;
   animation-name: Heartbeat;
   animation-duration: 1s;
   animation-iteration-count: infinite;
 }
-#TimerWrap.Idle #TimerRing {
-  opacity: 0.25;
-}
 
-/* ===================== КАРТОЧКИ КОМАНД ===================== */
+/* ===================== КОМАНДЫ ===================== */
 #TeamsRow {
   horizontal-align: center;
-  vertical-align: center;
-  margin-top: 10px;
+  margin-top: 8px;
   flow-children: right;
+  overflow: noclip;
 }
-.VS {
-  vertical-align: center;
-  margin: 0px 18px;
-  font-size: 64px;
-  font-weight: bold;
-  font-style: italic;
-  letter-spacing: 4px;
-  color: #ffffff22;
-}
-.TeamCard {
-  width: 440px;
+.TeamSlot {
+  width: 500px;
   height: fit-children;
-  margin: 0px 10px;
-  border: 1px solid #ffffff20;
-  border-radius: 8px;
-  background-color: gradient(
-    linear,
-    0% 0%,
-    0% 100%,
-    from(#171c28f0),
-    to(#0a0d13f5)
-  );
-  box-shadow: #000000aa 0px 12px 40px 0px;
-  transition-property: transform, opacity, saturation, brightness;
-  transition-duration: 0.22s;
+  overflow: noclip;
+}
+/* Расстояние между командами — меняйте здесь */
+#TeamGap {
+  width: 30px;
+}
+#TeamLeft {
+  background-image: url("file://{images}/custom_game/team_select/frame_radiant.png");
+  background-size: 100% 100%;
+}
+#TeamRight {
+  background-image: url("file://{images}/custom_game/team_select/frame_dire.png");
+  background-size: 100% 100%;
+}
+
+.TeamCard {
+  width: 100%;
+  height: fit-children;
+  overflow: noclip;
+  transition-property: transform, brightness;
+  transition-duration: 0.2s;
   transition-timing-function: ease-out;
   animation-name: CardIn;
   animation-duration: 0.6s;
   animation-timing-function: ease-out;
 }
 .TeamCard:hover {
-  transform: translateY(-6px);
-  brightness: 1.15;
-}
-.TeamCard:active {
-  transform: translateY(-2px);
+  brightness: 1.12;
 }
 .TeamCard.Full {
-  saturation: 0.25;
-  opacity: 0.6;
+  saturation: 0.35;
 }
-.TeamCard.Full:hover,
 #LBRoot.Locked .TeamCard:hover {
-  transform: translateY(0px);
   brightness: 1;
 }
-#LBRoot.ManyTeams .TeamCard {
-  width: 320px;
-}
 
-.CardGlow {
-  width: 100%;
-  height: 200px;
-  border-radius: 8px 8px 0px 0px;
-}
 .CardBody {
   width: 100%;
   flow-children: down;
-  padding: 22px 22px 18px 22px;
+  padding: 44px 40px 30px 40px;
 }
 .CardHeader {
   width: 100%;
+  padding: 0px 4px 0px 30px; /* отступ от узора рамки слева */
   flow-children: right;
-}
-.ColorBar {
-  width: 4px;
-  height: 30px;
-  margin-right: 12px;
-  vertical-align: center;
-  border-radius: 2px;
 }
 .TeamName {
   width: fill-parent-flow(1);
   vertical-align: center;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: bold;
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -259,9 +316,9 @@
 }
 .TeamCount {
   vertical-align: center;
-  font-size: 18px;
-  letter-spacing: 2px;
-  color: #9aa1b2;
+  font-size: 22px;
+  font-weight: bold;
+  color: #e8e2d4;
 }
 .Divider {
   width: 100%;
@@ -276,44 +333,74 @@
 /* ===================== СЛОТЫ ===================== */
 .Slot {
   width: 100%;
-  height: 60px;
+  height: 54px;
   margin-top: 8px;
   flow-children: right;
   border-radius: 6px;
-  background-color: #ffffff07;
-  border: 1px solid #ffffff0a;
+  border: 1px solid #ffffff22;
+  background-color: #ffffff08;
 }
 .Slot.Filled {
-  background-color: #ffffff0d;
+  background-color: #ffffff10;
 }
 .Slot.Local {
-  border: 1px solid #f4e3b566;
+  border: 2px solid #f2c96a;
+  box-shadow: #f2c96a55 0px 0px 14px 1px;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    100% 0%,
+    from(#f2c96a55),
+    to(#00000000)
+  );
 }
 .Slot.Pop {
   animation-name: SlotPop;
   animation-duration: 0.35s;
   animation-timing-function: ease-out;
 }
+
 .Avatar,
 .AvatarPlaceholder {
-  width: 42px;
-  height: 42px;
-  margin: 0px 12px 0px 9px;
+  width: 40px;
+  height: 40px;
+  margin: 0px 14px 0px 10px;
   vertical-align: center;
-  border-radius: 5px;
+  border-radius: 6px;
 }
 .Avatar {
-  border: 2px solid #ffffff44;
+  border: 2px solid #ffffff55;
 }
 .AvatarPlaceholder {
-  background-color: #ffffff08;
-  border: 1px solid #ffffff10;
+  background-color: #ffffff0c;
+  border: 1px solid #ffffff1a;
+}
+.Slot.Empty .Avatar,
+.Slot.Filled .AvatarPlaceholder {
+  visibility: collapse;
+}
+.SilHead {
+  width: 14px;
+  height: 14px;
+  horizontal-align: center;
+  margin-top: 6px;
+  border-radius: 7px;
+  background-color: #ffffff38;
+}
+.SilBody {
+  width: 26px;
+  height: 12px;
+  horizontal-align: center;
+  vertical-align: bottom;
+  margin-bottom: 4px;
+  border-radius: 13px 13px 3px 3px;
+  background-color: #ffffff38;
 }
 .SlotName {
   width: fill-parent-flow(1);
   vertical-align: center;
-  font-size: 18px;
-  color: #e8e2d4;
+  font-size: 19px;
+  color: #f2ead8;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -321,14 +408,15 @@
   font-size: 14px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #ffffff30;
+  color: #ffffff55;
 }
 .HostBadge {
+  visibility: collapse;
   vertical-align: center;
   margin-right: 12px;
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
   letter-spacing: 2px;
   color: #1a1408;
@@ -340,108 +428,269 @@
     to(#c9973e)
   );
 }
+.Slot.Host .HostBadge {
+  visibility: visible;
+}
 .JoinHint {
   horizontal-align: center;
   margin-top: 16px;
   font-size: 13px;
-  letter-spacing: 3px;
-  color: #ffffff55;
-  transition-property: color;
-  transition-duration: 0.2s;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #ffffff77;
 }
 .TeamCard:hover .JoinHint {
-  color: #ffffffcc;
+  color: #ffffffdd;
 }
 .TeamCard.Mine .JoinHint {
-  color: #f4e3b5;
+  color: #f7dc8f;
 }
 
-/* ===================== НЕОПРЕДЕЛИВШИЕСЯ ===================== */
-#Unassigned {
-  horizontal-align: center;
+/* ===================== ИГРОКИ БЕЗ КОМАНДЫ (ОРБИТА) ===================== */
+#Lobby {
+  horizontal-align: right;
   vertical-align: bottom;
-  margin-bottom: 130px;
+  margin: 0px 40px 36px 0px;
   flow-children: down;
+  overflow: noclip;
+  opacity: 1;
+  transition-property: opacity, transform;
+  transition-duration: 0.35s;
 }
-#UnassignedTitle {
+/* блок гаснет с задержкой, чтобы последний пузырь успел лопнуть */
+#Lobby.Empty {
+  opacity: 0;
+  transform: translateY(12px);
+  transition-delay: 0.5s;
+}
+
+/* размеры #Orbit и .OrbitItem должны совпадать с CFG.orbit в JS */
+#Orbit {
+  width: 240px;
+  height: 240px;
   horizontal-align: center;
-  margin-bottom: 8px;
-  font-size: 13px;
-  letter-spacing: 3px;
-  color: #8f96a8;
+  overflow: noclip;
 }
-#UnassignedList {
-  horizontal-align: center;
-  flow-children: right;
-}
-.Chip {
-  height: 40px;
-  margin: 0px 5px;
-  padding-right: 14px;
-  flow-children: right;
-  border-radius: 20px;
-  background-color: #ffffff10;
-  border: 1px solid #ffffff18;
-}
-.Chip.Local {
-  border: 1px solid #f4e3b5aa;
-  animation-name: Nudge;
-  animation-duration: 1.6s;
+
+#OrbitRing {
+  width: 240px;
+  height: 240px;
+  background-image: url("file://{images}/custom_game/team_select/lobby_orbit.png");
+  background-size: 100% 100%;
+  animation-name: OrbitSpin;
+  animation-duration: 90s;
+  animation-timing-function: linear;
   animation-iteration-count: infinite;
+  box-shadow: #8a6a2a08 0px 0px 54px 0px;
 }
-.ChipAvatar {
-  width: 30px;
-  height: 30px;
-  margin: 0px 8px 0px 5px;
+#OrbitCenter {
+  width: 110px;
+  height: 110px;
+  horizontal-align: center;
   vertical-align: center;
-  border-radius: 15px;
+  border-radius: 50%;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#1a1f2e),
+    to(#07090f)
+  );
+  box-shadow: #00000099 0px 0px 18px 0px;
 }
-.ChipName {
+#LobbyCount {
+  horizontal-align: center;
   vertical-align: center;
-  font-size: 15px;
+  font-size: 45px;
+  font-weight: bold;
+  color: #f7dc8f;
+  text-shadow: 0px 0px 12px 1 #d9a84a99;
+}
+#OrbitItems {
+  width: 100%;
+  height: 100%;
+  overflow: noclip;
+}
+#LobbyTitle {
+  horizontal-align: center;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #d8c9a0;
+}
+
+/* Пузырь с аватаркой */
+.OrbitItem {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid #ffffff28;
+  background-color: #0e1826;
+  box-shadow: #8fd0ff7c 0px 0px 12px 0px;
+  transition-property: opacity, transform;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
+}
+.OrbitItem.Local {
+  border: 2px solid #f2c96a94;
+  box-shadow: #f2c96a88 0px 0px 14px 2px;
+}
+.OrbitItem:hover {
+  brightness: 1.25;
+}
+.OrbitAvatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+.BubbleShine {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: gradient(
+    radial,
+    32% 26%,
+    0% 0%,
+    45% 45%,
+    from(#ffffff99),
+    to(#ffffff00)
+  );
+}
+.OrbitItem.Spawn {
+  animation-name: BubbleIn;
+  animation-duration: 0.45s;
+  animation-timing-function: ease-out;
+}
+/* лопание: пузырь резко раздувается и исчезает */
+.OrbitItem.Popping {
+  opacity: 0;
+  transform: scale3d(1.45, 1.45, 1);
+  transition-duration: 0.18s;
+}
+/* волна от лопнувшего пузыря; базовая прозрачность 0 —
+   после анимации кольцо не вспыхивает обратно */
+.PopRing {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid #ffffffcc;
+  opacity: 0;
+  animation-name: PopRing;
+  animation-duration: 0.4s;
+  animation-timing-function: ease-out;
+}
+/* брызги */
+.PopDrop {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #dff4ff;
+  box-shadow: #8fd0ffaa 0px 0px 6px 0px;
+  transition-property: transform, opacity;
+  transition-duration: 0.45s;
+  transition-timing-function: ease-out;
+}
+
+/* ===================== ЧАТ ===================== */
+/* только подложка; высоту выставляет JS по реальному размеру чата */
+#ChatFrame {
+  width: 380px;
+  height: 300px;
+  horizontal-align: left;
+  vertical-align: bottom;
+  margin: 0px 0px 36px 40px; /* зеркально #Lobby */
+  border-radius: 8px;
+  border: 1px solid #d8b46a40;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#0b0f18e8),
+    to(#05070cf2)
+  );
+  box-shadow: #000000aa 0px 6px 24px 0px;
+}
+#ChatAccent {
+  width: 80%;
+  height: 1px;
+  horizontal-align: center;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    100% 0%,
+    from(#d8b46a00),
+    color-stop(0.5, #d8b46acc),
+    to(#d8b46a00)
+  );
+}
+#LBRoot.Narrow #ChatFrame {
+  width: 300px;
+  margin: 0px 0px 20px 16px;
 }
 
 /* ===================== КНОПКИ ===================== */
 #Footer {
   horizontal-align: center;
-  vertical-align: bottom;
-  margin-bottom: 40px;
+  margin-top: 22px;
   flow-children: down;
+  overflow: noclip;
 }
 #LockedBanner {
   horizontal-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-size: 14px;
   letter-spacing: 3px;
-  color: #f4e3b5;
-  visibility: collapse;
+  color: #f7dc8f;
+  opacity: 0; /* прозрачность вместо collapse: кнопки не прыгают */
 }
 #LBRoot.Locked #LockedBanner {
-  visibility: visible;
+  opacity: 1;
   animation-name: Blink;
   animation-duration: 1.4s;
   animation-iteration-count: infinite;
 }
+#FooterDivider {
+  width: 760px;
+  height: 1px;
+  horizontal-align: center;
+  margin-bottom: 14px;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    100% 0%,
+    from(#d8b46a00),
+    color-stop(0.5, #d8b46acc),
+    to(#d8b46a00)
+  );
+}
 #HostControls {
   horizontal-align: center;
   flow-children: right;
+  height: 76px;
+  overflow: noclip;
 }
 
 .LBButton {
-  height: 54px;
-  margin: 0px 8px;
-  padding: 0px 30px;
-  border-radius: 5px;
+  width: 280px;
+  height: 50px;
+  margin: 0px 6px;
+  padding: 0px 24px;
+  vertical-align: center;
+  overflow: noclip;
   transition-property: brightness, transform, opacity, saturation;
   transition-duration: 0.15s;
 }
 .LBButton Label {
   horizontal-align: center;
   vertical-align: center;
-  font-size: 17px;
+  text-align: center;
+  font-size: 18px;
   font-weight: bold;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   color: #e8e2d4;
+  text-overflow: shrink;
 }
 .LBButton:hover {
   brightness: 1.3;
@@ -453,47 +702,52 @@
 }
 .LBButton:disabled {
   saturation: 0;
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
 .LBButton.Ghost {
-  background-color: #ffffff0c;
-  border: 1px solid #ffffff26;
+  box-shadow: #141313aa 0px 0px 6px 0px;
+  background-image: url("file://{images}/custom_game/team_select/default_bg_button.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  brightness: 0.85;
+}
+
+#StartButton {
+  margin-left: 30px;
 }
 .LBButton.Primary {
   width: 300px;
-  background-color: gradient(
-    linear,
-    0% 0%,
-    0% 100%,
-    from(#f2cf7a),
-    to(#b8862f)
-  );
-  border: 1px solid #ffe7a8;
+  height: 70px;
+  background-image: url("file://{images}/custom_game/team_select/startgame_bg_button.png");
+  background-size: 100% 100%;
+  wash-color: #ffb84a40;
   animation-name: StartGlow;
-  animation-duration: 2s;
+  animation-duration: 2.4s;
+  animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
-
 .LBButton.Primary Label {
   font-size: 20px;
-  color: #20160a;
+  letter-spacing: 3px;
+  color: #ffd98a;
+  text-shadow: 0px 0px 10px 3px #d9902a99;
 }
-
+.LBButton.Primary:hover {
+  brightness: 1.4;
+  animation-name: none;
+}
 .LBButton.Primary:disabled {
   animation-name: none;
-  box-shadow: none;
+  wash-color: #00000000;
 }
-
+.LBButton.Primary:disabled Label {
+  color: #9a917e;
+  text-shadow: none;
+}
 .LBButton.Primary.Cancel {
-  background-color: gradient(
-    linear,
-    0% 0%,
-    0% 100%,
-    from(#e0574c),
-    to(#8f231b)
-  );
-  border: 1px solid #ff9a90;
+  background-image: url("file://{images}/custom_game/team_select/cancel_bg_button.png");
   animation-name: none;
 }
 .LBButton.Primary.Cancel Label {
@@ -504,26 +758,48 @@
   visibility: collapse;
 }
 
+/* ===================== УЗКИЕ ЭКРАНЫ (16:10, 4:3) ===================== */
+/* класс Narrow ставит JS по соотношению сторон экрана */
+#LBRoot.Narrow .LBButton.Ghost {
+  width: 210px;
+}
+#LBRoot.Narrow .LBButton.Ghost Label {
+  font-size: 15px;
+}
+#LBRoot.Narrow .LBButton.Primary {
+  width: 240px;
+}
+#LBRoot.Narrow #StartButton {
+  margin-left: 16px;
+}
+#LBRoot.Narrow #FooterDivider {
+  width: 600px;
+}
+#LBRoot.Narrow #Lobby {
+  margin: 0px 16px 20px 0px;
+}
+
 /* ===================== АНИМАЦИИ ===================== */
-@keyframes 'AuraPulse' {
+@keyframes 'NebulaPulse' {
   0% {
-    opacity: 0.45;
+    opacity: 0.6;
   }
   50% {
-    opacity: 0.85;
+    opacity: 1;
   }
   100% {
-    opacity: 0.45;
+    opacity: 0.6;
   }
 }
-@keyframes 'FadeDown' {
+@keyframes 'Twinkle' {
   0% {
-    opacity: 0;
-    transform: translateY(-20px);
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
   }
   100% {
-    opacity: 1;
-    transform: translateY(0px);
+    opacity: 0.15;
   }
 }
 @keyframes 'CardIn' {
@@ -563,24 +839,13 @@
 }
 @keyframes 'StartGlow' {
   0% {
-    box-shadow: #f2cf7a33 0px 0px 10px 0px;
+    brightness: 1;
   }
   50% {
-    box-shadow: #f2cf7aaa 0px 0px 30px 4px;
+    brightness: 1.2;
   }
   100% {
-    box-shadow: #f2cf7a33 0px 0px 10px 0px;
-  }
-}
-@keyframes 'Nudge' {
-  0% {
-    box-shadow: #f4e3b500 0px 0px 0px 0px;
-  }
-  50% {
-    box-shadow: #f4e3b588 0px 0px 16px 2px;
-  }
-  100% {
-    box-shadow: #f4e3b500 0px 0px 0px 0px;
+    brightness: 1;
   }
 }
 @keyframes 'Blink' {
@@ -592,5 +857,48 @@
   }
   100% {
     opacity: 0.4;
+  }
+}
+@keyframes 'BubbleIn' {
+  0% {
+    opacity: 0;
+    transform: scale3d(0.2, 0.2, 1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale3d(1.12, 1.12, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes 'PopRing' {
+  0% {
+    opacity: 1;
+    transform: scale3d(0.7, 0.7, 1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale3d(1.9, 1.9, 1);
+  }
+}
+@keyframes 'OrbitSpin' {
+  0% {
+    transform: rotateZ(0deg);
+  }
+  100% {
+    transform: rotateZ(-360deg);
+  }
+}
+@keyframes 'TimerPulse' {
+  0% {
+    brightness: 1;
+  }
+  30% {
+    brightness: 1.35;
+  }
+  100% {
+    brightness: 1;
   }
 }

@@ -15,7 +15,7 @@ function OneSpellChaos:Init()
     GameRules:SetCustomGameTeamMaxPlayers(DOTA_TEAM_GOODGUYS, 5)
     GameRules:SetCustomGameTeamMaxPlayers(DOTA_TEAM_BADGUYS, 5)
     GameRules:SetCustomGameSetupAutoLaunchDelay(15)
-    GameRules:SetCustomGameSetupTimeout(60) -- длительность фазы (0 = пропустить, -1 = без лимита)
+    GameRules:SetCustomGameSetupTimeout(-1) -- длительность фазы (0 = пропустить, -1 = без лимита)
     GameRules:LockCustomGameSetupTeamAssignment(false)
 
     CustomNetTables:SetTableValue("osc_state", "version", {

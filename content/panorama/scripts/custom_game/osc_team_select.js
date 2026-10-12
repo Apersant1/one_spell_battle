@@ -3,450 +3,821 @@
 var OSC = OSC || {};
 
 OSC.TeamSelect = (function () {
-  var TIMER_TICK = 0.03;
-  var URGENT_SECONDS = 5; // с этого момента кольцо краснеет и пульсирует
-  var LOCK_COUNTDOWN = 4; // секунд до старта после "Начать игру"
-  var DEFAULT_COLOR = "#E0C27A";
+  // =====================================================================
+  // НАСТРОЙКИ
+  // =====================================================================
 
-  var CHAT_SEARCH_INTERVAL = 0.25;
-  var CHAT_SEARCH_ATTEMPTS = 20; // ~5 секунд
-  var CHAT_MARGIN = "0px 0px 24px 24px";
+  var CFG = {
+    debug: false,
+    tick: 0.03,
+    urgentSeconds: 5, // с этого момента кольцо таймера краснеет
+    lockCountdown: 4, // секунд до старта после «Начать игру»
+    starCount: 90,
+    defaultColor: "#E0C27A",
+    narrowAspect: 1.6, // уже этого (16:10, 4:3) — компактная раскладка
+
+    // Орбита игроков без команды. size / itemSize / radius
+    // должны совпадать с #Orbit, .OrbitItem и #OrbitRing в CSS
+    orbit: {
+      size: 240,
+      itemSize: 52,
+      radius: 90,
+      speed: 0.35, // радиан в секунду
+      ease: 0.12, // плавность перестроения при входе/выходе игрока
+    },
+
+    pop: {
+      lifetime: 0.5, // через сколько удалять панели эффекта
+      droplets: 8,
+      spread: 46, // как далеко разлетаются брызги, px
+      ringSize: 52,
+      dropSize: 8,
+    },
+
+    chat: {
+      linesHeight: 300, // высота области сообщений, px
+      searchInterval: 0.25,
+      searchAttempts: 20, // ~5 секунд
+      // = width и margin у #ChatFrame (обычный / Narrow)
+      frame: { width: 380, left: 40, bottom: 36 },
+      frameNarrow: { width: 300, left: 16, bottom: 20 },
+      padding: { top: 12, side: 10, bottom: 8 }, // отступ чата внутри рамки
+    },
+  };
 
   var TEAM_THEME = {};
   TEAM_THEME[DOTATeam_t.DOTA_TEAM_GOODGUYS] = {
-    name: "Силы Света",
-    color: "#5BE38A",
+    token: "osc_ts_team_light",
+    color: "#45e0d0",
   };
   TEAM_THEME[DOTATeam_t.DOTA_TEAM_BADGUYS] = {
-    name: "Силы Тьмы",
-    color: "#FF5A4E",
-  };
-  TEAM_THEME[DOTATeam_t.DOTA_TEAM_CUSTOM_1] = {
-    name: "Буря",
-    color: "#4FB3FF",
-  };
-  TEAM_THEME[DOTATeam_t.DOTA_TEAM_CUSTOM_2] = {
-    name: "Пламя",
-    color: "#FFB347",
-  };
-  TEAM_THEME[DOTATeam_t.DOTA_TEAM_CUSTOM_3] = {
-    name: "Пустота",
-    color: "#B57CFF",
-  };
-  TEAM_THEME[DOTATeam_t.DOTA_TEAM_CUSTOM_4] = {
-    name: "Мороз",
-    color: "#7FE7F2",
+    token: "osc_ts_team_dark",
+    color: "#FF4A5A",
   };
 
-  var cards = {};
-  var lastLocalTeam = -2;
-  var lastTransition = -1;
-  var timerTotal = 0;
+  // Карточки ставятся слева и справа; экран рассчитан на две команды
+  var TEAM_CONTAINERS = ["#TeamLeft", "#TeamRight"];
 
-  var nativeChat = null;
-  var nativeChatParent = null;
-  var uiContainer = null;
-  // ---------- утилиты ----------
+  // =====================================================================
+  // УТИЛИТЫ
+  // =====================================================================
 
-  function GetTheme(teamId) {
-    return (
-      TEAM_THEME[teamId] || {
-        name: $.Localize(Game.GetTeamDetails(teamId).team_name),
-        color: DEFAULT_COLOR,
-      }
-    );
-  }
+  var U = {
+    // Локализация: токены лежат в resource/addon_<язык>.txt
+    L: function (token) {
+      return $.Localize("#" + token);
+    },
 
-  function IsHost() {
-    var info = Game.GetLocalPlayerInfo();
-    return !!(info && info.player_has_host_privileges);
-  }
+    panel: function (parent, classes, type) {
+      var p = $.CreatePanel(type || "Panel", parent, "");
+      classes.split(" ").forEach(function (cls) {
+        if (cls) p.AddClass(cls);
+      });
+      return p;
+    },
 
-  function GetLocalTeam() {
-    var info = Game.GetLocalPlayerInfo();
-    return info ? info.player_team_id : -1;
-  }
+    label: function (parent, classes, text) {
+      var l = U.panel(parent, classes, "Label");
+      l.text = text;
+      return l;
+    },
 
-  function IsSetupPhase() {
-    return (
-      Game.GetState() === DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP
-    );
-  }
+    avatar: function (parent, classes, steamId) {
+      var a = U.panel(parent, classes, "DOTAAvatarImage");
+      if (steamId) a.steamid = steamId;
+      return a;
+    },
 
-  function MakeLabel(parent, cls, text) {
-    var label = $.CreatePanel("Label", parent, "");
-    label.AddClass(cls);
-    label.text = text;
-    return label;
-  }
+    // Ставит панель так, чтобы её центр оказался в точке (cx, cy)
+    placeAt: function (p, cx, cy, size) {
+      p.style.position =
+        (cx - size / 2).toFixed(1) +
+        "px " +
+        (cy - size / 2).toFixed(1) +
+        "px 0px";
+    },
 
-  function VerticalGradient(color) {
-    return (
-      "gradient(linear, 0% 0%, 0% 100%, from(" + color + "), to(#00000000))"
-    );
-  }
+    hGradient: function (color) {
+      return (
+        "gradient(linear, 0% 0%, 100% 0%, from(" + color + "), to(#00000000))"
+      );
+    },
 
-  function HorizontalGradient(color) {
-    return (
-      "gradient(linear, 0% 0%, 100% 0%, from(" + color + "), to(#00000000))"
-    );
-  }
+    sound: function (name) {
+      if (OSC.Sounds && OSC.Sounds[name]) OSC.Util.PlaySound(OSC.Sounds[name]);
+    },
 
-  function GetTopPanel() {
-    var panel = $.GetContextPanel();
-    while (panel.GetParent() !== null) panel = panel.GetParent();
-    return panel;
-  }
+    isHost: function () {
+      var info = Game.GetLocalPlayerInfo();
+      return !!(info && info.player_has_host_privileges);
+    },
 
-  // ---------- карточки (строятся один раз) ----------
+    localTeam: function () {
+      var info = Game.GetLocalPlayerInfo();
+      return info ? info.player_team_id : -1;
+    },
 
-  function BuildCard(row, teamId) {
-    var theme = GetTheme(teamId);
+    isSetupPhase: function () {
+      return (
+        Game.GetState() ===
+        DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP
+      );
+    },
 
-    var card = $.CreatePanel("Button", row, "");
-    card.AddClass("TeamCard");
-    card.SetPanelEvent("onactivate", function () {
-      OnTeamClicked(teamId);
-    });
+    topPanel: function () {
+      var p = $.GetContextPanel();
+      while (p.GetParent() !== null) p = p.GetParent();
+      return p;
+    },
+  };
 
-    var glow = $.CreatePanel("Panel", card, "");
-    glow.AddClass("CardGlow");
-    glow.style.backgroundColor = VerticalGradient(theme.color + "38");
+  // =====================================================================
+  // АДАПТИВНОСТЬ
+  // =====================================================================
 
-    var body = $.CreatePanel("Panel", card, "");
-    body.AddClass("CardBody");
+  var Layout = (function () {
+    var narrow = null;
 
-    var head = $.CreatePanel("Panel", body, "");
-    head.AddClass("CardHeader");
+    function update() {
+      if (typeof Game.GetScreenWidth !== "function") return;
+      var h = Game.GetScreenHeight();
+      if (!h) return;
 
-    var bar = $.CreatePanel("Panel", head, "");
-    bar.AddClass("ColorBar");
-    bar.style.backgroundColor = theme.color;
+      var isNarrow = Game.GetScreenWidth() / h < CFG.narrowAspect;
+      if (isNarrow === narrow) return;
 
-    MakeLabel(head, "TeamName", theme.name).style.color = theme.color;
-    var count = MakeLabel(head, "TeamCount", "");
+      narrow = isNarrow;
+      $("#LBRoot").SetHasClass("Narrow", narrow);
+    }
 
-    var divider = $.CreatePanel("Panel", body, "");
-    divider.AddClass("Divider");
-    divider.style.backgroundColor = HorizontalGradient(theme.color + "aa");
-
-    var list = $.CreatePanel("Panel", body, "");
-    list.AddClass("SlotList");
-
-    var hint = MakeLabel(body, "JoinHint", "");
-
-    cards[teamId] = {
-      card: card,
-      list: list,
-      count: count,
-      hint: hint,
-      theme: theme,
+    return {
+      update: update,
+      isNarrow: function () {
+        return narrow === true;
+      },
     };
-  }
+  })();
 
-  function BuildCards() {
-    var row = $("#TeamsRow");
-    var teams = Game.GetAllTeamIDs();
+  // =====================================================================
+  // ФОН
+  // =====================================================================
 
-    row.RemoveAndDeleteChildren();
-    cards = {};
-    $("#LBRoot").SetHasClass("ManyTeams", teams.length > 2);
-
-    teams.forEach(function (teamId, i) {
-      if (i > 0 && teams.length === 2) MakeLabel(row, "VS", "VS");
-      BuildCard(row, teamId);
-    });
-  }
-
-  // ---------- слоты и неопределившиеся ----------
-
-  function BuildSlot(parent, playerId, theme, localPlayerId, animate) {
-    var slot = $.CreatePanel("Panel", parent, "");
-    slot.AddClass("Slot");
-
-    if (playerId === undefined) {
-      slot.AddClass("Empty");
-      $.CreatePanel("Panel", slot, "").AddClass("AvatarPlaceholder");
-      MakeLabel(slot, "SlotName", "Свободный слот");
-      return;
-    }
-
-    var info = Game.GetPlayerInfo(playerId);
-    var isLocal = playerId === localPlayerId;
-
-    slot.AddClass("Filled");
-    slot.SetHasClass("Local", isLocal);
-    slot.SetHasClass("Pop", isLocal && animate);
-    if (isLocal)
-      slot.style.backgroundColor = HorizontalGradient(theme.color + "33");
-
-    var avatar = $.CreatePanel("DOTAAvatarImage", slot, "");
-    avatar.AddClass("Avatar");
-    avatar.steamid = info.player_steamid;
-    avatar.style.borderColor = theme.color + "cc";
-
-    MakeLabel(slot, "SlotName", info.player_name);
-    if (info.player_has_host_privileges) MakeLabel(slot, "HostBadge", "ХОСТ");
-  }
-
-  function RefreshCard(teamId, localTeam, localPlayerId, locked, justJoined) {
-    var c = cards[teamId];
-    var details = Game.GetTeamDetails(teamId);
-    var players = Game.GetPlayerIDsOnTeam(teamId);
-    var mine = localTeam === teamId;
-    var full = details.team_num_players >= details.team_max_players;
-
-    c.card.SetHasClass("Mine", mine);
-    c.card.SetHasClass("Full", full && !mine);
-    c.card.style.borderColor = mine ? c.theme.color : c.theme.color + "40";
-    c.card.style.boxShadow = mine
-      ? c.theme.color + "55 0px 0px 48px 4px"
-      : "#000000aa 0px 12px 40px 0px";
-
-    c.count.text = details.team_num_players + " / " + details.team_max_players;
-
-    if (locked) c.hint.text = "КОМАНДЫ ЗАФИКСИРОВАНЫ";
-    else if (mine) c.hint.text = "ВЫ В ЭТОЙ КОМАНДЕ";
-    else if (full) c.hint.text = "МЕСТ НЕТ";
-    else c.hint.text = "НАЖМИТЕ, ЧТОБЫ ВСТУПИТЬ";
-
-    c.list.RemoveAndDeleteChildren();
-    for (var s = 0; s < details.team_max_players; s++) {
-      BuildSlot(c.list, players[s], c.theme, localPlayerId, justJoined && mine);
+  function BuildStars() {
+    var layer = $("#Stars");
+    for (var i = 0; i < CFG.starCount; i++) {
+      var star = U.panel(layer, "Star");
+      var size = 1 + Math.floor(Math.random() * 3);
+      star.style.width = size + "px";
+      star.style.height = size + "px";
+      star.style.position =
+        (Math.random() * 100).toFixed(2) +
+        "% " +
+        (Math.random() * 100).toFixed(2) +
+        "% 0px";
+      star.style.animationDuration = (2 + Math.random() * 4).toFixed(2) + "s";
+      star.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
     }
   }
 
-  function RefreshUnassigned(localPlayerId) {
-    var ids = Game.GetUnassignedPlayerIDs();
-    var list = $("#UnassignedList");
+  function SetMapName() {
+    var map = Game.GetMapInfo();
+    var label = $("#MapName");
+    label.SetDialogVariable("map", (map.map_display_name || "").toUpperCase());
+    label.text = $.Localize("#osc_ts_map", label);
+  }
 
-    $("#Unassigned").SetHasClass("Hidden", ids.length === 0);
-    $("#UnassignedTitle").text = "НЕ ВЫБРАЛИ КОМАНДУ · " + ids.length;
+  // =====================================================================
+  // ДЕЙСТВИЯ ИГРОКА
+  // =====================================================================
 
-    list.RemoveAndDeleteChildren();
-    ids.forEach(function (playerId) {
+  var Actions = {
+    join: function (teamId) {
+      if (Game.GetTeamSelectionLocked()) return;
+      if (U.localTeam() === teamId) return;
+
+      var details = Game.GetTeamDetails(teamId);
+      if (details.team_num_players >= details.team_max_players) return;
+
+      Game.PlayerJoinTeam(teamId);
+      U.sound("teamPick");
+    },
+
+    shuffle: function () {
+      GameEvents.SendCustomGameEventToServer("osc_team_shuffle", {});
+      U.sound("teamShuffle");
+    },
+
+    autoAssign: function () {
+      Game.AutoAssignPlayersToTeams();
+      U.sound("teamAutoAssign");
+    },
+
+    toggleStart: function () {
+      if (Game.GetTeamSelectionLocked()) {
+        Game.SetTeamSelectionLocked(false);
+        Game.SetRemainingSetupTime(-1);
+        U.sound("teamCancel");
+      } else {
+        if (Game.GetUnassignedPlayerIDs().length > 0) return;
+        Game.SetTeamSelectionLocked(true);
+        Game.SetAutoLaunchEnabled(false);
+        Game.SetRemainingSetupTime(CFG.lockCountdown);
+        U.sound("teamLockStart");
+      }
+      Refresh();
+    },
+  };
+
+  // =====================================================================
+  // КАРТОЧКИ КОМАНД
+  // Слоты создаются один раз и дальше только обновляются,
+  // без пересоздания панелей на каждое событие.
+  // =====================================================================
+
+  var Cards = (function () {
+    var cards = {};
+    var lastLocalTeam = -2;
+
+    function theme(teamId) {
+      var t = TEAM_THEME[teamId];
+      if (t) return { name: U.L(t.token), color: t.color };
+      return {
+        name: $.Localize(Game.GetTeamDetails(teamId).team_name),
+        color: CFG.defaultColor,
+      };
+    }
+
+    function buildSlot(parent, color) {
+      var root = U.panel(parent, "Slot Empty");
+
+      var placeholder = U.panel(root, "AvatarPlaceholder");
+      U.panel(placeholder, "SilHead");
+      U.panel(placeholder, "SilBody");
+
+      var avatar = U.avatar(root, "Avatar");
+      avatar.style.borderColor = color + "cc";
+
+      var name = U.label(root, "SlotName", U.L("osc_ts_free_slot"));
+      U.label(root, "HostBadge", U.L("osc_ts_host_badge"));
+
+      return { root: root, avatar: avatar, name: name, playerId: -1 };
+    }
+
+    function updateSlot(slot, playerId, localId) {
+      var info = playerId !== undefined ? Game.GetPlayerInfo(playerId) : null;
+      var filled = !!info;
+
+      slot.root.SetHasClass("Empty", !filled);
+      slot.root.SetHasClass("Filled", filled);
+      slot.root.SetHasClass("Local", filled && playerId === localId);
+      slot.root.SetHasClass(
+        "Host",
+        filled && !!info.player_has_host_privileges,
+      );
+
+      if (!filled) {
+        slot.playerId = -1;
+        slot.name.text = U.L("osc_ts_free_slot");
+        return;
+      }
+
+      if (slot.playerId !== playerId) {
+        slot.playerId = playerId;
+        slot.avatar.steamid = info.player_steamid;
+      }
+      slot.name.text = info.player_name;
+    }
+
+    function buildCard(container, teamId) {
+      var t = theme(teamId);
+      var details = Game.GetTeamDetails(teamId);
+      container.RemoveAndDeleteChildren();
+
+      var card = U.panel(container, "TeamCard", "Button");
+      card.SetPanelEvent("onactivate", function () {
+        Actions.join(teamId);
+      });
+
+      var body = U.panel(card, "CardBody");
+      var head = U.panel(body, "CardHeader");
+      U.label(head, "TeamName", t.name).style.color = t.color;
+      var count = U.label(head, "TeamCount", "");
+
+      U.panel(body, "Divider").style.backgroundColor = U.hGradient(
+        t.color + "aa",
+      );
+
+      var list = U.panel(body, "SlotList");
+      var slots = [];
+      for (var i = 0; i < details.team_max_players; i++) {
+        slots.push(buildSlot(list, t.color));
+      }
+
+      var hint = U.label(body, "JoinHint", "");
+
+      cards[teamId] = { card: card, count: count, hint: hint, slots: slots };
+    }
+
+    function build() {
+      var teams = Game.GetAllTeamIDs();
+      cards = {};
+      for (var i = 0; i < TEAM_CONTAINERS.length && i < teams.length; i++) {
+        buildCard($(TEAM_CONTAINERS[i]), teams[i]);
+      }
+    }
+
+    function hintToken(locked, mine, full) {
+      if (locked) return "osc_ts_hint_locked";
+      if (mine) return "osc_ts_hint_mine";
+      if (full) return "osc_ts_hint_full";
+      return "osc_ts_click_to_join";
+    }
+
+    function refresh(s) {
+      var justJoined = s.localTeam !== lastLocalTeam;
+      lastLocalTeam = s.localTeam;
+
+      for (var key in cards) {
+        var teamId = Number(key);
+        var c = cards[key];
+        var details = Game.GetTeamDetails(teamId);
+        var players = Game.GetPlayerIDsOnTeam(teamId);
+        var mine = s.localTeam === teamId;
+        var full = details.team_num_players >= details.team_max_players;
+
+        c.card.SetHasClass("Mine", mine);
+        c.card.SetHasClass("Full", full && !mine);
+        c.count.text =
+          details.team_num_players + "/" + details.team_max_players;
+        c.hint.text = U.L(hintToken(s.locked, mine, full));
+
+        for (var i = 0; i < c.slots.length; i++) {
+          updateSlot(c.slots[i], players[i], s.localId);
+          if (justJoined && mine && players[i] === s.localId) {
+            c.slots[i].root.TriggerClass("Pop");
+          }
+        }
+      }
+    }
+
+    return { build: build, refresh: refresh };
+  })();
+
+  // =====================================================================
+  // ИГРОКИ БЕЗ КОМАНДЫ: аватарки-пузыри на орбите
+  // Новый игрок появляется с эффектом надувания,
+  // выбравший команду — лопается.
+  // =====================================================================
+
+  var Lobby = (function () {
+    var root, layer, countLabel;
+    var items = {}; // playerId -> { panel, offset, x, y }
+    var order = []; // порядок на орбите
+    var angle = 0;
+
+    function init() {
+      root = $("#Lobby");
+      layer = $("#OrbitItems");
+      countLabel = $("#LobbyCount");
+    }
+
+    function add(playerId) {
       var info = Game.GetPlayerInfo(playerId);
+      if (!info) return;
 
-      var chip = $.CreatePanel("Panel", list, "");
-      chip.AddClass("Chip");
-      chip.SetHasClass("Local", playerId === localPlayerId);
+      var p = U.panel(layer, "OrbitItem Spawn");
+      U.avatar(p, "OrbitAvatar", info.player_steamid).hittest = false;
+      U.panel(p, "BubbleShine").hittest = false;
 
-      var avatar = $.CreatePanel("DOTAAvatarImage", chip, "");
-      avatar.AddClass("ChipAvatar");
-      avatar.steamid = info.player_steamid;
+      p.SetPanelEvent("onmouseover", function () {
+        $.DispatchEvent("DOTAShowTextTooltip", p, info.player_name);
+      });
+      p.SetPanelEvent("onmouseout", function () {
+        $.DispatchEvent("DOTAHideTextTooltip", p);
+      });
 
-      MakeLabel(chip, "ChipName", info.player_name);
-    });
-  }
-
-  function RefreshButtons(locked) {
-    $("#HostControls").SetHasClass("Hidden", !IsHost());
-    $("#LBRoot").SetHasClass("Locked", locked);
-    $("#StartLabel").text = locked ? "ОТМЕНА" : "НАЧАТЬ ИГРУ";
-    $("#StartButton").SetHasClass("Cancel", locked);
-    $("#StartButton").enabled =
-      locked || Game.GetUnassignedPlayerIDs().length === 0;
-    $("#ShuffleButton").enabled = !locked;
-    $("#AutoButton").enabled = !locked;
-  }
-
-  function Refresh() {
-    var localTeam = GetLocalTeam();
-    var localPlayerId = Players.GetLocalPlayer();
-    var locked = Game.GetTeamSelectionLocked();
-    var justJoined = localTeam !== lastLocalTeam;
-
-    lastLocalTeam = localTeam;
-
-    for (var key in cards) {
-      RefreshCard(Number(key), localTeam, localPlayerId, locked, justJoined);
+      items[playerId] = { panel: p, offset: null, x: 0, y: 0 };
+      order.push(playerId);
+      U.sound("lobbyJoin");
     }
-    RefreshUnassigned(localPlayerId);
-    RefreshButtons(locked);
-  }
 
-  // ---------- действия ----------
-
-  function OnTeamClicked(teamId) {
-    if (Game.GetTeamSelectionLocked() || GetLocalTeam() === teamId) return;
-
-    var details = Game.GetTeamDetails(teamId);
-    if (details.team_num_players >= details.team_max_players) return;
-
-    Game.PlayerJoinTeam(teamId);
-    OSC.Util.PlaySound(OSC.Sounds.teamPick);
-  }
-
-  function OnShuffle() {
-    GameEvents.SendCustomGameEventToServer("osc_team_shuffle", {});
-    OSC.Util.PlaySound(OSC.Sounds.teamShuffle);
-  }
-
-  function OnAutoAssign() {
-    Game.AutoAssignPlayersToTeams();
-    OSC.Util.PlaySound(OSC.Sounds.teamAutoAssign);
-  }
-
-  function OnStartPressed() {
-    if (Game.GetTeamSelectionLocked()) {
-      Game.SetTeamSelectionLocked(false);
-      Game.SetRemainingSetupTime(-1);
-      OSC.Util.PlaySound(OSC.Sounds.teamCancel);
-    } else {
-      if (Game.GetUnassignedPlayerIDs().length > 0) return;
-      Game.SetTeamSelectionLocked(true);
-      Game.SetAutoLaunchEnabled(false);
-      Game.SetRemainingSetupTime(LOCK_COUNTDOWN);
-      OSC.Util.PlaySound(OSC.Sounds.teamLockStart);
+    function remove(playerId) {
+      var item = items[playerId];
+      delete items[playerId];
+      order.splice(order.indexOf(playerId), 1);
+      pop(item);
     }
-    Refresh();
-  }
 
-  // ---------- родной чат Dota ----------
+    function pop(item) {
+      var p = item.panel;
+      var half = CFG.orbit.itemSize / 2;
+      var cx = item.x + half;
+      var cy = item.y + half;
 
-  // Чат экрана настройки: DOTAChat с id "Chat" (HudChat — внутриигровой, его не трогаем)
-  function FindNativeChat() {
-    var queue = [GetTopPanel()];
-    while (queue.length > 0) {
-      var panel = queue.shift();
-      if (panel.paneltype === "DOTAChat" && panel.id === "Chat") return panel;
-      for (var i = 0; i < panel.GetChildCount(); i++)
-        queue.push(panel.GetChild(i));
-    }
-    return null;
-  }
+      $.DispatchEvent("DOTAHideTextTooltip", p);
+      p.hittest = false;
+      p.RemoveClass("Spawn");
+      p.AddClass("Popping");
+      p.DeleteAsync(CFG.pop.lifetime);
 
-  // Переносим чат в наш верхний слой, чтобы он был поверх экрана
-  function BringChatToFront() {
-    var attempts = 0;
+      var ring = U.panel(layer, "PopRing");
+      ring.hittest = false;
+      U.placeAt(ring, cx, cy, CFG.pop.ringSize);
+      ring.DeleteAsync(CFG.pop.lifetime);
 
-    OSC.Util.Loop(CHAT_SEARCH_INTERVAL, function () {
-      if (!IsSetupPhase()) return false;
-
-      var chat = FindNativeChat();
-      if (chat !== null) {
-        nativeChat = chat;
-        nativeChatParent = chat.GetParent();
-
-        chat.SetParent($("#ChatLayer"));
-        chat.style.align = "left bottom";
-        chat.style.margin = CHAT_MARGIN;
-        return false;
+      for (var k = 0; k < CFG.pop.droplets; k++) {
+        var a = (Math.PI * 2 * k) / CFG.pop.droplets + Math.random() * 0.4;
+        var dist = CFG.pop.spread * (0.7 + Math.random() * 0.5);
+        spawnDrop(cx, cy, Math.cos(a) * dist, Math.sin(a) * dist);
       }
 
-      attempts++;
-      if (attempts >= CHAT_SEARCH_ATTEMPTS) {
-        $.Msg("[OSC] native chat not found");
-        return false;
+      U.sound("lobbyPop");
+    }
+
+    function spawnDrop(cx, cy, dx, dy) {
+      var d = U.panel(layer, "PopDrop");
+      d.hittest = false;
+      U.placeAt(d, cx, cy, CFG.pop.dropSize);
+      d.DeleteAsync(CFG.pop.lifetime);
+
+      // через кадр, чтобы сработал transition из CSS
+      $.Schedule(0.01, function () {
+        if (!d.IsValid()) return;
+        d.style.transform =
+          "translate3d(" +
+          dx.toFixed(1) +
+          "px, " +
+          dy.toFixed(1) +
+          "px, 0px) scale3d(0.3, 0.3, 1)";
+        d.style.opacity = "0";
+      });
+    }
+
+    function refresh(localId) {
+      var ids = Game.GetUnassignedPlayerIDs();
+      var present = {};
+
+      ids.forEach(function (id) {
+        present[id] = true;
+        if (!items[id]) add(id);
+      });
+
+      order.slice().forEach(function (id) {
+        if (!present[id]) remove(id);
+      });
+
+      for (var id in items) {
+        items[id].panel.SetHasClass("Local", Number(id) === localId);
       }
-      return true;
-    });
-  }
 
-  // Возвращаем чат на место перед выбором героев
-  function RestoreChat() {
-    if (
-      nativeChat !== null &&
-      nativeChat.IsValid() &&
-      nativeChatParent !== null &&
-      nativeChatParent.IsValid()
-    ) {
-      nativeChat.style.align = null;
-      nativeChat.style.margin = null;
-      nativeChat.SetParent(nativeChatParent);
-    }
-    nativeChat = null;
-    nativeChatParent = null;
-  }
-
-  // ---------- отступ контейнера Dota слева ----------
-
-  // CustomUIContainer сдвинут на 35px под левую кнопку Dota — растягиваем на весь экран
-  function FixLeftOffset() {
-    var panel = $.GetContextPanel();
-    while (panel !== null && panel.id !== "CustomUIContainer")
-      panel = panel.GetParent();
-    if (panel === null) return;
-
-    uiContainer = panel;
-    uiContainer.style.margin = "0px";
-    uiContainer.style.padding = "0px";
-    uiContainer.style.position = "0px 0px 0px";
-    uiContainer.style.width = "100%";
-  }
-
-  function RestoreLeftOffset() {
-    if (uiContainer !== null && uiContainer.IsValid()) {
-      uiContainer.style.margin = null;
-      uiContainer.style.padding = null;
-      uiContainer.style.position = null;
-      uiContainer.style.width = null;
-    }
-    uiContainer = null;
-  }
-
-  // ---------- таймер ----------
-
-  function UpdateTimer() {
-    if (!IsSetupPhase()) {
-      RestoreLeftOffset();
-      RestoreChat();
-      return false; // останавливает OSC.Util.Loop
+      countLabel.text = String(ids.length);
+      root.SetHasClass("Empty", ids.length === 0);
     }
 
-    var transition = Game.GetStateTransitionTime();
-    var wrap = $("#TimerWrap");
-    var ring = $("#TimerRing");
-    var text = $("#TimerText");
+    function tick(dt) {
+      var n = order.length;
+      if (n === 0) return;
 
-    if (transition >= 0) {
+      var o = CFG.orbit;
+      var center = o.size / 2;
+      var half = o.itemSize / 2;
+      angle = (angle + o.speed * dt) % (Math.PI * 2);
+
+      for (var i = 0; i < n; i++) {
+        var item = items[order[i]];
+        var target = (Math.PI * 2 * i) / n;
+
+        item.offset =
+          item.offset === null
+            ? target
+            : item.offset + (target - item.offset) * o.ease;
+
+        var a = angle + item.offset;
+        item.x = center + Math.cos(a) * o.radius - half;
+        item.y = center + Math.sin(a) * o.radius - half;
+        item.panel.style.position =
+          item.x.toFixed(1) + "px " + item.y.toFixed(1) + "px 0px";
+      }
+    }
+
+    return { init: init, refresh: refresh, tick: tick };
+  })();
+
+  // =====================================================================
+  // КНОПКИ ХОСТА
+  // =====================================================================
+
+  var Controls = {
+    bind: function () {
+      $("#ShuffleButton").SetPanelEvent("onactivate", Actions.shuffle);
+      $("#AutoButton").SetPanelEvent("onactivate", Actions.autoAssign);
+      $("#StartButton").SetPanelEvent("onactivate", Actions.toggleStart);
+    },
+
+    refresh: function (locked) {
+      var unassigned = Game.GetUnassignedPlayerIDs().length;
+
+      $("#HostControls").SetHasClass("Hidden", !U.isHost());
+      $("#LBRoot").SetHasClass("Locked", locked);
+      $("#StartLabel").text = U.L(
+        locked ? "osc_ts_btn_cancel" : "osc_ts_btn_start",
+      );
+      $("#StartButton").SetHasClass("Cancel", locked);
+      $("#StartButton").enabled = locked || unassigned === 0;
+      $("#ShuffleButton").enabled = !locked;
+      $("#AutoButton").enabled = !locked;
+    },
+  };
+
+  // =====================================================================
+  // ТАЙМЕР
+  // =====================================================================
+
+  var Timer = (function () {
+    var lastTransition = -1;
+    var total = 0;
+
+    function update() {
+      var transition = Game.GetStateTransitionTime();
+      var wrap = $("#TimerWrap");
+      var ring = $("#TimerRing");
+      var text = $("#TimerText");
+
+      if (transition < 0) {
+        lastTransition = -1;
+        ring.style.clip = "radial(50% 50%, 0deg, 360deg)";
+        text.text = "∞";
+        text.SetHasClass("Long", false);
+        $("#TimerCaption").text = U.L("osc_ts_timer_waiting");
+        wrap.SetHasClass("Urgent", false);
+        wrap.SetHasClass("Idle", true);
+        return;
+      }
+      $("#TimerCaption").text = U.L("osc_ts_timer_caption");
       var left = Math.max(0, transition - Game.GetGameTime());
-
       if (transition !== lastTransition) {
         // таймер запущен или перезапущен
         lastTransition = transition;
-        timerTotal = left;
+        total = left;
       }
 
-      var deg = timerTotal > 0 ? (360 * left) / timerTotal : 0;
+      var deg = total > 0 ? (360 * left) / total : 0;
       ring.style.clip = "radial(50% 50%, 0deg, " + deg.toFixed(1) + "deg)";
 
       var long = left >= 60;
       text.text = long ? OSC.Util.FormatTime(left) : String(Math.ceil(left));
       text.SetHasClass("Long", long);
 
-      wrap.SetHasClass("Urgent", left <= URGENT_SECONDS);
+      wrap.SetHasClass("Urgent", left <= CFG.urgentSeconds);
       wrap.SetHasClass("Idle", false);
-    } else {
-      lastTransition = -1;
-      ring.style.clip = "radial(50% 50%, 0deg, 360deg)";
-      text.text = "—";
-      text.SetHasClass("Long", false);
-      wrap.SetHasClass("Urgent", false);
-      wrap.SetHasClass("Idle", true);
     }
 
+    return { update: update };
+  })();
+
+  // =====================================================================
+  // РОДНОЙ ЧАТ DOTA: лежит поверх своей подложки #ChatFrame,
+  // подложка каждый кадр подстраивается под его реальную высоту
+  // =====================================================================
+
+  var Chat = (function () {
+    var chat = null;
+    var originalParent = null;
+    var touched = []; // [panel, styleProp] — чтобы всё вернуть при выходе
+    var lastNarrow = null;
+
+    // внутренние подложки чата, которые дают «двухцветный» фон
+    var INNER_BG = /ChatMain|ChatLines|Background/i;
+
+    function setStyle(p, prop, value) {
+      touched.push([p, prop]);
+      p.style[prop] = value;
+    }
+
+    function find() {
+      var queue = [U.topPanel()];
+      while (queue.length > 0) {
+        var p = queue.shift();
+        if (p.paneltype === "DOTAChat" && p.id === "Chat") return p;
+        for (var i = 0; i < p.GetChildCount(); i++) queue.push(p.GetChild(i));
+      }
+      return null;
+    }
+
+    function clearInnerBackgrounds(p) {
+      for (var i = 0; i < p.GetChildCount(); i++) {
+        var c = p.GetChild(i);
+        if (INNER_BG.test(c.id)) {
+          setStyle(c, "backgroundColor", "#00000000");
+          setStyle(c, "boxShadow", "none");
+        }
+        clearInnerBackgrounds(c);
+      }
+    }
+
+    function dump(p, depth) {
+      var scale = p.actualuiscale_y || 1;
+      $.Msg(
+        new Array(depth + 1).join("  ") +
+          p.paneltype +
+          " #" +
+          p.id +
+          "  h=" +
+          Math.round(p.actuallayoutheight / scale),
+      );
+      for (var i = 0; i < p.GetChildCount(); i++)
+        dump(p.GetChild(i), depth + 1);
+    }
+
+    // позиция и ширина чата внутри рамки
+    function place(narrow) {
+      var f = narrow ? CFG.chat.frameNarrow : CFG.chat.frame;
+      var pad = CFG.chat.padding;
+      chat.style.width = f.width - pad.side * 2 + "px";
+      chat.style.margin =
+        "0px 0px " +
+        (f.bottom + pad.bottom) +
+        "px " +
+        (f.left + pad.side) +
+        "px";
+    }
+
+    // каждый кадр: подложка повторяет высоту чата
+    function sync(narrow) {
+      if (chat === null || !chat.IsValid()) return;
+
+      if (narrow !== lastNarrow) {
+        lastNarrow = narrow;
+        place(narrow);
+      }
+
+      var scale = chat.actualuiscale_y || 1;
+      var h = chat.actuallayoutheight / scale;
+      if (h > 0) {
+        var pad = CFG.chat.padding;
+        $("#ChatFrame").style.height =
+          Math.round(h + pad.top + pad.bottom) + "px";
+      }
+    }
+
+    function attach() {
+      var attempts = 0;
+
+      OSC.Util.Loop(CFG.chat.searchInterval, function () {
+        if (!U.isSetupPhase()) return false;
+
+        var found = find();
+        if (found === null) {
+          attempts++;
+          if (attempts >= CFG.chat.searchAttempts) {
+            $.Msg("[OSC] native chat not found");
+            return false;
+          }
+          return true;
+        }
+
+        chat = found;
+        originalParent = found.GetParent();
+        if (CFG.debug) {
+          $.Schedule(1, function () {
+            if (chat !== null && chat.IsValid()) dump(chat, 0);
+          });
+        }
+
+        // в конец #ChatLayer — поверх подложки
+        chat.SetParent($("#ChatLayer"));
+        setStyle(chat, "align", "left bottom");
+        setStyle(chat, "backgroundColor", "#00000000");
+        setStyle(chat, "boxShadow", "none");
+        setStyle(chat, "borderRadius", "0px");
+        touched.push([chat, "width"], [chat, "margin"]);
+        clearInnerBackgrounds(chat);
+
+        // скрытая справка занимает 196px над сообщениями — убираем её и кнопку «?»
+        var help = chat.FindChildTraverse("ChatHelpPanel");
+        if (help) setStyle(help, "visibility", "collapse");
+        var helpBtn = chat.FindChildTraverse("ChatTabHelpButton");
+        if (helpBtn) setStyle(helpBtn, "visibility", "collapse");
+
+        // отдаём освободившееся место сообщениям
+        var area = chat.FindChildTraverse("ChatLinesArea");
+        if (area) setStyle(area, "height", CFG.chat.linesHeight + "px");
+        ["ChatChannelArea", "ChatLinesContainer"].forEach(function (id) {
+          var p = chat.FindChildTraverse(id);
+          if (p) setStyle(p, "height", "100%");
+        });
+
+        lastNarrow = null;
+        sync(Layout.isNarrow());
+        $("#ChatFrame").RemoveClass("Hidden");
+        return false;
+      });
+    }
+
+    function restore() {
+      touched.forEach(function (t) {
+        if (t[0].IsValid()) t[0].style[t[1]] = null;
+      });
+      touched = [];
+
+      if (
+        chat !== null &&
+        chat.IsValid() &&
+        originalParent !== null &&
+        originalParent.IsValid()
+      ) {
+        chat.SetParent(originalParent);
+      }
+      chat = null;
+      originalParent = null;
+    }
+
+    return { attach: attach, restore: restore, sync: sync };
+  })();
+
+  // =====================================================================
+  // КОНТЕЙНЕР DOTA: убираем его отступ слева, чтобы центр совпадал с экраном
+  // =====================================================================
+
+  var Container = (function () {
+    var container = null;
+
+    function fix() {
+      var p = $.GetContextPanel();
+      while (p !== null && p.id !== "CustomUIContainer") p = p.GetParent();
+      if (p === null) return;
+
+      container = p;
+      container.style.margin = "0px";
+      container.style.padding = "0px";
+      container.style.position = "0px 0px 0px";
+      container.style.width = "100%";
+      container.style.height = "100%";
+    }
+
+    function restore() {
+      if (container !== null && container.IsValid()) {
+        container.style.margin = null;
+        container.style.padding = null;
+        container.style.position = null;
+        container.style.width = null;
+        container.style.height = null;
+      }
+      container = null;
+    }
+
+    return { fix: fix, restore: restore };
+  })();
+
+  // =====================================================================
+  // ОБНОВЛЕНИЕ И ЦИКЛ
+  // =====================================================================
+
+  function Refresh() {
+    var s = {
+      localTeam: U.localTeam(),
+      localId: Players.GetLocalPlayer(),
+      locked: Game.GetTeamSelectionLocked(),
+    };
+
+    Cards.refresh(s);
+    Lobby.refresh(s.localId);
+    Controls.refresh(s.locked);
+  }
+
+  var lastFrame = Date.now();
+
+  function Tick() {
+    if (!U.isSetupPhase()) {
+      Container.restore();
+      Chat.restore();
+      return false; // останавливает OSC.Util.Loop
+    }
+
+    var now = Date.now();
+    var dt = Math.min(0.1, (now - lastFrame) / 1000);
+    lastFrame = now;
+
+    Layout.update();
+    Timer.update();
+    Lobby.tick(dt);
+    Chat.sync(Layout.isNarrow());
     return true;
   }
 
-  // ---------- инициализация ----------
-
-  function BindButtons() {
-    $("#ShuffleButton").SetPanelEvent("onactivate", OnShuffle);
-    $("#AutoButton").SetPanelEvent("onactivate", OnAutoAssign);
-    $("#StartButton").SetPanelEvent("onactivate", OnStartPressed);
-  }
-
   function Init() {
-    var map = Game.GetMapInfo();
-    $("#MapName").text = "КАРТА: " + (map.map_display_name || "").toUpperCase();
+    Container.fix();
+    BuildStars();
+    SetMapName();
 
-    BindButtons();
-    BuildCards();
+    Controls.bind();
+    Cards.build();
+    Lobby.init();
+
     Refresh();
-    OSC.Util.Loop(TIMER_TICK, UpdateTimer);
-    BringChatToFront();
-    FixLeftOffset();
+    Layout.update();
+    OSC.Util.Loop(CFG.tick, Tick);
+    Chat.attach();
 
     $.RegisterForUnhandledEvent("DOTAGame_TeamPlayerListChanged", Refresh);
     $.RegisterForUnhandledEvent("DOTAGame_PlayerDetailsChanged", Refresh);
