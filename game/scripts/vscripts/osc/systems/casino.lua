@@ -88,7 +88,9 @@ local function CanUseMachine(hero, playerID, machine)
     return true
 end
 
--- Красная подсказка внизу экрана, как у стандартных ошибок Dota
+-- Красная подсказка внизу экрана, как у стандартных ошибок Dota.
+-- Сервер не может вызвать её напрямую: шлём своё событие, а клиент
+-- (osc_casino.js, OnHudError) превращает его в стандартную ошибку HUD.
 local function ShowHudError(player, token)
     if player then
         CustomGameEventManager:Send_ServerToPlayer(player, "osc_hud_error", {
@@ -108,6 +110,8 @@ local function SendOpen(player, playerID, hero, machine)
         machine_entindex = machine:entindex(),
         min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
         default_stake = OSC_CONFIG.CASINO_DEFAULT_STAKE,
+        item_bets = OSC_CONFIG.CASINO_ITEM_BETS ~= false,
+        item_value_factor = OSC_CONFIG.CASINO_ITEM_VALUE_FACTOR or 0.5,
         gold = hero:GetGold(),
         lifetime = OSC_CONFIG.CASINO_MACHINE_LIFETIME,
         -- Анимацию продолжает только тот, кто сам крутит; остальные видят автомат свободным
@@ -135,7 +139,7 @@ function OSC_Casino.OnReopen(sourceIndex, event)
         return
     end
 
-       local machine = EntIndexToHScript(machineIndex)
+    local machine = EntIndexToHScript(machineIndex)
     local canUse, reason = CanUseMachine(hero, playerID, machine)
     if not canUse then
         -- Клиент повторяет запрос, пока герой идёт к автомату; такие повторы
@@ -152,6 +156,22 @@ function OSC_Casino.OnReopen(sourceIndex, event)
     if not player or ownerPlayerID ~= playerID then return end
 
     SendOpen(player, playerID, hero, machine)
+end
+
+-- Только для DEVELOPMENT_MODE: следующие спины всегда дают тройку этого символа
+-- ("seven" — джекпот); nil — обычный случайный результат
+function OSC_Casino.DebugForceSymbol(symbol)
+    if symbol == nil then
+        OSC_Casino.debug_forced_symbol = nil
+        return true
+    end
+    for _, outcome in ipairs(OSC_CONFIG.CASINO_OUTCOMES) do
+        if outcome.symbol == symbol then
+            OSC_Casino.debug_forced_symbol = symbol
+            return true
+        end
+    end
+    return false, "unknown casino symbol: " .. tostring(symbol)
 end
 
 -- Вспышка и звук на автомате при выигрыше; джекпот — эффект побольше
@@ -251,6 +271,65 @@ function OSC_Casino.SpawnMachine(hero)
     return true
 end
 
+-- ================= Ставка предметом =================
+
+-- Сколько золота стоит предмет как ставка: доля цены покупки, как при продаже
+local function GetItemStakeValue(item)
+    local factor = OSC_CONFIG.CASINO_ITEM_VALUE_FACTOR or 0.5
+    return math.floor(item:GetCost() * factor)
+end
+
+-- Предмет можно поставить, только если он лежит в основном инвентаре героя,
+-- куплен этим игроком и продаётся. Минимальная ставка проверяется по сумме
+-- всех поставленных предметов. Возвращает предмет или nil и ключ ошибки.
+local function ValidateStakeItem(hero, itemIndex)
+    if OSC_CONFIG.CASINO_ITEM_BETS == false then
+        return nil, "osc_casino_err_item_disabled"
+    end
+
+    local item = EntIndexToHScript(itemIndex)
+    if not item or item:IsNull() or not item.IsItem or not item:IsItem() then
+        return nil, "osc_casino_err_bad_item"
+    end
+
+    local inInventory = false
+    for slot = 0, 5 do -- шесть основных слотов инвентаря
+        if hero:GetItemInSlot(slot) == item then
+            inInventory = true
+            break
+        end
+    end
+    if not inInventory then
+        return nil, "osc_casino_err_bad_item"
+    end
+
+    if item:GetPurchaser() ~= hero then
+        return nil, "osc_casino_err_item_not_yours"
+    end
+    if not item:IsSellable() or GetItemStakeValue(item) <= 0 then
+        return nil, "osc_casino_err_item_unsellable"
+    end
+    return item
+end
+
+-- Индексы предметов из события: "12,34,56" (item_entindices) или один item_entindex
+local function ParseItemIndices(event)
+    local result = {}
+    local seen = {}
+    local raw = event and event.item_entindices
+    if raw == nil and event and event.item_entindex ~= nil then
+        raw = tostring(event.item_entindex)
+    end
+    for part in string.gmatch(tostring(raw or ""), "[^,]+") do
+        local index = tonumber(part)
+        if index and index >= 0 and index == math.floor(index) and not seen[index] then
+            seen[index] = true
+            table.insert(result, index)
+        end
+    end
+    return result
+end
+
 function OSC_Casino.OnSpin(sourceIndex, event)
     local player, playerID = GetPlayer(sourceIndex, event)
     if not player then return end
@@ -288,23 +367,74 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         return
     end
 
-    local stake = event and tonumber(event.stake)
-    if not stake or stake ~= math.floor(stake)
-        or stake < OSC_CONFIG.CASINO_MIN_SPIN_COST
-        or stake > hero:GetGold() then
-        SendResult({
-            error = "osc_casino_err_stake",
-            min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
-            gold = hero:GetGold(),
-        })
-        return
+    -- Ставка золотом или предметами (item_entindices), предметы оцениваются
+    -- по стоимости продажи и складываются
+    local stake
+    local stakeItems = {}
+    local itemIndices = ParseItemIndices(event)
+    if #itemIndices > 0 then
+        if #itemIndices > 6 then
+            SendResult({ error = "osc_casino_err_bad_item", gold = hero:GetGold() })
+            return
+        end
+        stake = 0
+        for _, itemIndex in ipairs(itemIndices) do
+            local item, itemError = ValidateStakeItem(hero, itemIndex)
+            if not item then
+                SendResult({ error = itemError, gold = hero:GetGold() })
+                return
+            end
+            table.insert(stakeItems, item)
+            stake = stake + GetItemStakeValue(item)
+        end
+        if stake < OSC_CONFIG.CASINO_MIN_SPIN_COST then
+            SendResult({ error = "osc_casino_err_item_cheap", gold = hero:GetGold() })
+            return
+        end
+    else
+        stake = event and tonumber(event.stake)
+        if not stake or stake ~= math.floor(stake)
+            or stake < OSC_CONFIG.CASINO_MIN_SPIN_COST
+            or stake > hero:GetGold() then
+            SendResult({
+                error = "osc_casino_err_stake",
+                min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
+                gold = hero:GetGold(),
+            })
+            return
+        end
     end
+    local stakeItemNames = {}
+    for _, item in ipairs(stakeItems) do
+        table.insert(stakeItemNames, item:GetAbilityName())
+    end
+    local isItemStake = #stakeItems > 0
 
-    local goldBefore = PlayerResource:GetGold(playerID)
-    local reliableBefore = PlayerResource:GetReliableGold(playerID)
-    PlayerResource:SpendGold(playerID, stake, DOTA_ModifyGold_Unspecified)
-    local spent = goldBefore - PlayerResource:GetGold(playerID)
-    local reliableSpent = math.max(0, reliableBefore - PlayerResource:GetReliableGold(playerID))
+    local spent = stake
+    local reliableSpent = 0
+    if isItemStake then
+        -- Забираем предметы из инвентаря; до расчёта они хранятся «в автомате».
+        -- Если какой-то не забрался — возвращаем уже взятые и отменяем спин.
+        local taken = {}
+        for _, item in ipairs(stakeItems) do
+            local removed = hero:TakeItem(item)
+            if not removed then
+                for _, back in ipairs(taken) do
+                    hero:AddItem(back)
+                end
+                SendResult({ error = "osc_casino_err_not_charged", gold = hero:GetGold() })
+                return
+            end
+            table.insert(taken, removed)
+        end
+        stakeItems = taken
+    else
+        local goldBefore = PlayerResource:GetGold(playerID)
+        local reliableBefore = PlayerResource:GetReliableGold(playerID)
+        PlayerResource:SpendGold(playerID, stake, DOTA_ModifyGold_Unspecified)
+        spent = goldBefore - PlayerResource:GetGold(playerID)
+        reliableSpent = math.max(0, reliableBefore - PlayerResource:GetReliableGold(playerID))
+    end
 
     local function ReturnGold(amount)
         local reliablePart = math.min(amount, reliableSpent)
@@ -313,6 +443,53 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         end
         if amount > reliablePart then
             PlayerResource:ModifyGold(playerID, amount - reliablePart, false, DOTA_ModifyGold_Unspecified)
+        end
+    end
+
+    -- Возвращает предметы-ставку герою; что не влезло — кладёт рядом с ним
+    -- (или у автомата, если героя нет)
+    local function GiveItemsBack()
+        local owner = PlayerResource:GetSelectedHeroEntity(playerID)
+        local ownerValid = owner and not owner:IsNull()
+        for _, item in ipairs(stakeItems) do
+            if not item:IsNull() and not (ownerValid and owner:AddItem(item)) then
+                local position = ownerValid and owner:GetAbsOrigin()
+                    or (not machine:IsNull() and machine:GetAbsOrigin())
+                if position then
+                    CreateItemOnPositionSync(position, item)
+                end
+            end
+        end
+        stakeItems = {}
+    end
+
+    local function RefundStake()
+        if isItemStake then
+            GiveItemsBack()
+        else
+            ReturnGold(stake)
+        end
+    end
+
+    -- Выплата: золото по множителю. Предметы при ×1 возвращаются как есть,
+    -- в остальных случаях сгорают (при выигрыше — вместо них золото)
+    local function PayOut(payout, multiplier)
+        if not isItemStake then
+            ReturnGold(payout)
+            return
+        end
+        if multiplier == 1 then
+            GiveItemsBack()
+            return
+        end
+        for _, item in ipairs(stakeItems) do
+            if not item:IsNull() then
+                UTIL_Remove(item)
+            end
+        end
+        stakeItems = {}
+        if payout > 0 then
+            PlayerResource:ModifyGold(playerID, payout, false, DOTA_ModifyGold_Unspecified)
         end
     end
 
@@ -343,11 +520,16 @@ function OSC_Casino.OnSpin(sourceIndex, event)
 
     local roll = RandomInt(1, 100)
     local payout = 0
+    local multiplier = 0
     local reels
+    local forced = OSC_Casino.debug_forced_symbol
     for _, outcome in ipairs(OSC_CONFIG.CASINO_OUTCOMES) do
-        if roll <= outcome.chance then
+        -- Режим разработки: команда -casino <символ> подкручивает результат
+        if (forced and outcome.symbol == forced)
+            or (not forced and roll <= outcome.chance) then
             reels = { outcome.symbol, outcome.symbol, outcome.symbol }
             payout = stake * outcome.multiplier
+            multiplier = outcome.multiplier
             break
         end
         roll = roll - outcome.chance
@@ -370,14 +552,14 @@ function OSC_Casino.OnSpin(sourceIndex, event)
             local ok, currentGold, failureReason = pcall(function()
                 local currentHero = PlayerResource:GetSelectedHeroEntity(playerID)
                 if not currentHero or currentHero:IsNull() then
-                    ReturnGold(stake)
+                    RefundStake()
                     stakePending = false
                     stakeRefunded = true
                     SetMachineSpinState(false)
                     return nil, "hero is unavailable"
                 end
 
-                ReturnGold(payout)
+                PayOut(payout, multiplier)
                 stakePending = false
                 SetMachineSpinState(false)
                 return currentHero:GetGold()
@@ -387,7 +569,7 @@ function OSC_Casino.OnSpin(sourceIndex, event)
                 local reason = failureReason or tostring(currentGold)
                 OSC_Logger.Error("Casino settlement failed: " .. reason)
                 if stakePending then
-                    ReturnGold(stake)
+                    RefundStake()
                     stakePending = false
                     stakeRefunded = true
                 end
@@ -403,10 +585,13 @@ function OSC_Casino.OnSpin(sourceIndex, event)
             if payout > 0 then
                 PlayWinEffects(machine, reels[1] == "seven")
             end
+
             SendResult({
                 stake = stake,
                 payout = payout,
                 net = payout - stake,
+                multiplier = multiplier,
+                items = isItemStake and table.concat(stakeItemNames, ",") or nil,
                 reel1 = reels[1],
                 reel2 = reels[2],
                 reel3 = reels[3],

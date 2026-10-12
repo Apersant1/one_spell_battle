@@ -65,6 +65,12 @@
                     <TextEntry id="CasinoStake" text="250" maxchars="8" />
                     <Label id="CasinoStakeLimit" class="OSCTextSmall OSCMuted" text="" />
                 </Panel>
+                <!-- Ставка предметом: заполняется из osc_casino.js -->
+                <Panel id="CasinoItemsRow" class="Hidden">
+                    <Label id="CasinoItemsLabel" class="OSCTextSmall OSCMuted"
+                        text="#osc_casino_items_label" />
+                    <Panel id="CasinoItems" />
+                </Panel>
                 <Panel id="CasinoReels">
                     <Label id="CasinoReel1" class="CasinoReel" text="7" />
                     <Label id="CasinoReel2" class="CasinoReel" text="★" />

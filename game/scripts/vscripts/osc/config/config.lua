@@ -39,6 +39,8 @@ OSC_CONFIG = {
     CASINO_DEFAULT_STAKE = 250,
     CASINO_MIN_SPIN_COST = 50,
     CASINO_MACHINE_LIFETIME = 90,
+    CASINO_ITEM_BETS = true,
+    CASINO_ITEM_VALUE_FACTOR = 0.5,
     CASINO_OUTCOMES = {
         { chance = 10, symbol = "circle", multiplier = 1 },
         { chance = 15, symbol = "diamond", multiplier = 2 },

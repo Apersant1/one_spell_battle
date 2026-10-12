@@ -35,6 +35,10 @@ OSC.Casino = (function () {
   var minSpinHandle = null;
   var stakeMinimum = DEFAULT_STAKE_MINIMUM;
   var currentGold = NaN;
+  var itemBets = true; // сервер разрешает ставить предметы
+  var itemValueFactor = 0.5; // предмет стоит эту долю цены (как при продаже)
+  var selectedItems = []; // предметы, выбранные ставкой (можно несколько)
+  var itemsSignature = ""; // чтобы не перестраивать ряд предметов без нужды
   var lastSelectedMachine = -1;
   var selectionSuppressed = false;
 
@@ -112,6 +116,18 @@ OSC.Casino = (function () {
     var spinButton = $("#CasinoSpinButton");
     // При горячей перезагрузке разметки панели на миг пропадают
     if (!stakeEntry || !spinButton) return;
+
+    // Выбраны предметы — ставка считается по ним, поле золота не нужно
+    stakeEntry.enabled = selectedItems.length === 0;
+    if (selectedItems.length > 0) {
+      spinButton.enabled =
+        machine >= 0 &&
+        !waiting &&
+        !animating &&
+        GetSelectedValue() >= stakeMinimum;
+      return;
+    }
+
     var stake = parseInt(stakeEntry.text, 10);
     var gold = currentGold;
     spinButton.enabled =
@@ -171,6 +187,163 @@ OSC.Casino = (function () {
     $.Schedule(JACKPOT_PARTICLE_LIFETIME, function () {
       if (scene && scene.IsValid()) scene.DeleteAsync(0);
     });
+  }
+
+  // ================= Ставка предметом =================
+  function GetLocalHero() {
+    return Players.GetPlayerHeroEntityIndex(Players.GetLocalPlayer());
+  }
+
+  function GetItemValue(item) {
+    return Math.floor(Items.GetCost(item) * itemValueFactor);
+  }
+
+  // Почему предмет нельзя поставить (то же, что проверяет сервер), или ""
+  function GetItemRejectReason(item, hero) {
+    if (!Items.IsSellable(item) || GetItemValue(item) <= 0)
+      return "не продаётся";
+    if (Items.GetPurchaser(item) !== hero) return "куплен не вами";
+    return "";
+  }
+
+  // Предметы основного инвентаря, которые можно поставить
+  function GetStakeableItems(debugLog) {
+    var hero = GetLocalHero();
+    var result = [];
+    if (!itemBets || hero === undefined || hero === -1) return result;
+    for (var slot = 0; slot < 6; slot++) {
+      var item = Entities.GetItemInSlot(hero, slot);
+      if (item === undefined || item === -1) continue;
+      var reason = GetItemRejectReason(item, hero);
+      if (reason) {
+        if (debugLog) {
+          $.Msg(
+            "[OSC] casino item skipped: ",
+            Abilities.GetAbilityName(item),
+            " (",
+            reason,
+            ", value ",
+            GetItemValue(item),
+            ")",
+          );
+        }
+        continue;
+      }
+      result.push(item);
+    }
+    return result;
+  }
+
+  function GetSelectedValue() {
+    var total = 0;
+    for (var i = 0; i < selectedItems.length; i++) {
+      total += GetItemValue(selectedItems[i]);
+    }
+    return total;
+  }
+
+  // Подпись справа от поля ставки: лимит золота или сумма выбранных предметов
+  function UpdateStakeLabel() {
+    var label = $("#CasinoStakeLimit");
+    if (!label) return;
+    if (selectedItems.length > 0) {
+      var value = GetSelectedValue();
+      SetLocalized(
+        label,
+        value >= stakeMinimum
+          ? "osc_casino_stake_items"
+          : "osc_casino_stake_items_low",
+        { count: selectedItems.length, value: value, min: stakeMinimum },
+      );
+    } else {
+      SetLocalized(label, "osc_casino_stake_limit", {
+        min: stakeMinimum,
+        max: currentGold,
+      });
+    }
+  }
+
+  // Клик по предмету добавляет его в ставку или убирает из неё
+  function SelectItem(item) {
+    if (waiting || animating) return;
+    var index = selectedItems.indexOf(item);
+    if (index >= 0) {
+      selectedItems.splice(index, 1);
+    } else {
+      selectedItems.push(item);
+    }
+    var buttons = $("#CasinoItems").Children();
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].SetHasClass(
+        "Selected",
+        selectedItems.indexOf(buttons[i].GetAttributeInt("osc_item", -1)) >= 0,
+      );
+    }
+    UpdateStakeLabel();
+    UpdateSpinButton();
+  }
+
+  function ClearItemSelection() {
+    selectedItems = [];
+    UpdateStakeLabel();
+  }
+
+  // Названия предметов из ответа сервера ("item_a,item_b") через запятую
+  function LocalizeItemList(names) {
+    return String(names)
+      .split(",")
+      .map(function (name) {
+        return $.Localize("#DOTA_Tooltip_Ability_" + name);
+      })
+      .join(", ");
+  }
+
+  // Перестраивает ряд предметов, только если инвентарь изменился
+  function RefreshItems(force) {
+    var container = $("#CasinoItems");
+    var row = $("#CasinoItemsRow");
+    if (!container || !row) return;
+
+    var items = GetStakeableItems(force);
+    var signature = items.join(",");
+    if (!force && signature === itemsSignature) return;
+    itemsSignature = signature;
+
+    // Убираем из выбора предметы, которых больше нет в инвентаре
+    selectedItems = selectedItems.filter(function (item) {
+      return items.indexOf(item) >= 0;
+    });
+    UpdateStakeLabel();
+
+    container.RemoveAndDeleteChildren();
+    // Ряд виден всегда, когда ставки предметами включены; если ставить
+    // нечего — показываем подсказку, а не прячем блок
+    row.SetHasClass("Hidden", !itemBets);
+    var empty = $("#CasinoItemsEmpty");
+    if (empty) empty.SetHasClass("Hidden", items.length > 0);
+    items.forEach(function (item) {
+      var button = $.CreatePanel("Button", container, "");
+      button.AddClass("CasinoItem");
+      button.SetHasClass("Selected", selectedItems.indexOf(item) >= 0);
+      button.SetAttributeInt("osc_item", item);
+
+      var image = $.CreatePanel("DOTAItemImage", button, "");
+      image.itemname = Abilities.GetAbilityName(item);
+      image.hittest = false;
+
+      var price = $.CreatePanel("Label", button, "");
+      price.AddClass("CasinoItemPrice");
+      price.text = String(GetItemValue(item));
+
+      button.SetPanelEvent("onactivate", function () {
+        SelectItem(item);
+      });
+    });
+  }
+
+  function PollItems() {
+    if (OSC.Util.IsPostGame()) return false;
+    if (machine >= 0 && !waiting && !animating) RefreshItems(false);
   }
 
   // ================= Жизненный цикл спина =================
@@ -249,6 +422,7 @@ OSC.Casino = (function () {
     animating = false;
     revealing = false;
     $("#CasinoWindow").RemoveClass("Spinning");
+    RefreshItems(true);
     SetResult(token, {
       min_stake: (data && data.min_stake) || stakeMinimum,
     });
@@ -277,11 +451,20 @@ OSC.Casino = (function () {
     }
 
     var net = result.net > 0 ? "+" + result.net : String(result.net);
-    if (payout > 0) {
+    var itemNames = result.items ? LocalizeItemList(result.items) : "";
+    if (result.items && result.multiplier === 1) {
+      SetResult("osc_casino_result_item_return", { item: itemNames });
+    } else if (payout > 0) {
       SetResult("osc_casino_result_win", { payout: payout, net: net });
+    } else if (result.items) {
+      SetResult("osc_casino_result_item_lose", { item: itemNames });
     } else {
       SetResult("osc_casino_result_lose", { stake: result.stake });
     }
+
+    // Поставленные предметы ушли в автомат — снимаем выбор
+    ClearItemSelection();
+    RefreshItems(true);
     UpdateSpinButton();
   }
 
@@ -302,6 +485,8 @@ OSC.Casino = (function () {
     machine = event.machine_entindex;
     stakeMinimum = event.min_stake || DEFAULT_STAKE_MINIMUM;
     selectionSuppressed = false;
+    itemBets = event.item_bets !== false && event.item_bets !== 0;
+    itemValueFactor = event.item_value_factor || 0.5;
 
     SetBalance(event.gold);
     SetRules(event.outcomes, event.lose_chance);
@@ -319,6 +504,11 @@ OSC.Casino = (function () {
       $("#CasinoStake").text = String(
         Math.min(event.default_stake, event.gold),
       );
+    }
+
+    if (!animating && !waiting) {
+      ClearItemSelection();
+      RefreshItems(true);
     }
 
     if (event.spinning && !animating) {
@@ -364,6 +554,17 @@ OSC.Casino = (function () {
 
   // ================= Действия игрока =================
   function Spin() {
+    if (selectedItems.length > 0) {
+      if (machine < 0 || waiting || animating) return;
+      if (GetSelectedValue() < stakeMinimum) return;
+      StartSpinVisuals();
+      GameEvents.SendCustomGameEventToServer("osc_casino_spin", {
+        machine_entindex: machine,
+        item_entindices: selectedItems.join(","),
+      });
+      return;
+    }
+
     var stake = parseInt($("#CasinoStake").text, 10);
     if (
       machine < 0 ||
@@ -389,7 +590,7 @@ OSC.Casino = (function () {
     $("#CasinoPanel").RemoveClass("Visible");
   }
 
-  // ================= Повторное открытие по выделению ================
+  // ================= Повторное открытие по выделению =================
   var nextReopenTime = 0;
 
   function PollSelection() {
@@ -469,6 +670,9 @@ OSC.Casino = (function () {
     }
   }
 
+  // ================= Подсказки об отказе =================
+  // Сервер присылает ключ локализации, а показываем его штатной красной
+  // строкой Dota над панелью способностей (со звуком ошибки)
   function OnHudError(event) {
     if (!event || !event.message) return;
     GameEvents.SendEventClientSide("dota_hud_error_message", {
@@ -487,6 +691,7 @@ OSC.Casino = (function () {
     $("#CasinoStake").SetPanelEvent("ontextentrychange", UpdateSpinButton);
     OSC.Util.Loop(SELECTION_POLL, PollSelection);
     OSC.Util.Loop(RANGE_POLL, UpdateRangeDisplay);
+    OSC.Util.Loop(0.5, PollItems);
   }
 
   return {

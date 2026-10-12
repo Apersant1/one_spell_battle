@@ -391,6 +391,50 @@
   border: 1px solid #e8b84f80;
 }
 
+#CasinoItemsRow {
+  margin-top: 10px;
+  horizontal-align: center;
+  flow-children: down;
+}
+#CasinoItemsRow.Hidden {
+  visibility: collapse;
+}
+#CasinoItemsLabel {
+  horizontal-align: center;
+  margin-bottom: 4px;
+}
+#CasinoItems {
+  horizontal-align: center;
+  flow-children: right;
+}
+.CasinoItem {
+  width: 60px;
+  margin: 0px 3px;
+  padding: 3px;
+  flow-children: down;
+  border: 1px solid #e8b84f30;
+  background-color: #08070b;
+  transition-property: border, background-color;
+  transition-duration: 0.12s;
+}
+.CasinoItem:hover {
+  border: 1px solid #e8b84f90;
+}
+.CasinoItem.Selected {
+  border: 2px solid #ffe89a;
+  background-color: #3a2c0a;
+}
+.CasinoItem DOTAItemImage {
+  width: 52px;
+  height: 38px;
+  horizontal-align: center;
+}
+.CasinoItemPrice {
+  horizontal-align: center;
+  font-size: 13px;
+  color: #ffe89a;
+}
+
 #CasinoStake:focus {
   border: 1px solid #e8b84f;
 }
