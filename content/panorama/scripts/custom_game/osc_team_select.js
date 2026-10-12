@@ -686,7 +686,11 @@ OSC.TeamSelect = (function () {
 
         // в конец #ChatLayer — поверх подложки
         chat.SetParent($("#ChatLayer"));
-        setStyle(chat, "align", "left bottom");
+        // в обычном клиенте Дота сама сдвигает чат — обнуляем её позиционирование
+        setStyle(chat, "position", "0px 0px 0px");
+        setStyle(chat, "transform", "none");
+        setStyle(chat, "horizontalAlign", "left");
+        setStyle(chat, "verticalAlign", "bottom");
         setStyle(chat, "backgroundColor", "#00000000");
         setStyle(chat, "boxShadow", "none");
         setStyle(chat, "borderRadius", "0px");
@@ -715,11 +719,7 @@ OSC.TeamSelect = (function () {
     }
 
     function restore() {
-      touched.forEach(function (t) {
-        if (t[0].IsValid()) t[0].style[t[1]] = null;
-      });
-      touched = [];
-
+      // сначала возвращаем чат Доте — это важнее стилей
       if (
         chat !== null &&
         chat.IsValid() &&
@@ -728,6 +728,17 @@ OSC.TeamSelect = (function () {
       ) {
         chat.SetParent(originalParent);
       }
+
+      touched.forEach(function (t) {
+        if (!t[0].IsValid()) return;
+        try {
+          t[0].style[t[1]] = null;
+        } catch (e) {
+          $.Msg("[OSC] can't reset style ", t[1], ": ", e);
+        }
+      });
+      touched = [];
+
       chat = null;
       originalParent = null;
     }
