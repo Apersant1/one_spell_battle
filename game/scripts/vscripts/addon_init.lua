@@ -21,3 +21,9 @@ LinkLuaModifier(
     "osc/modifiers/modifier_osc_casino_visual_offset",
      LUA_MODIFIER_MOTION_NONE
 )
+
+LinkLuaModifier(
+    "modifier_osc_courier_lost",
+    "osc/modifiers/modifier_osc_courier_lost",
+    LUA_MODIFIER_MOTION_NONE
+)

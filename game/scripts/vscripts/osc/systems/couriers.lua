@@ -102,15 +102,35 @@ local function StartDrunkAbility(courier)
     ApplyCourierAbility(courier, abilities[RandomInt(1, #abilities)])
 end
 
+-- Случайный живой союзник, кроме владельца предмета, у которого есть место
+local function PickWrongRecipient(owner)
+    local candidates = {}
+    for _, teammate in ipairs(GetTeamHeroes(owner:GetTeamNumber())) do
+        if teammate ~= owner and teammate:IsAlive() and HasInventorySpace(teammate) then
+            table.insert(candidates, teammate)
+        end
+    end
+    if #candidates == 0 then
+        return nil
+    end
+    return candidates[RandomInt(1, #candidates)]
+end
+
 local function StartDelivery(courier, hero, item)
-    local removedItem = hero:TakeItem(item)
+    local owner = hero
+    -- Заблудший курьер везёт предмет не тому; если некому — везёт владельцу
+    if courier:HasModifier("modifier_osc_courier_lost") then
+        hero = PickWrongRecipient(owner) or owner
+    end
+
+    local removedItem = owner:TakeItem(item)
     if not removedItem then
         return false
     end
 
     local courierItem = courier:AddItem(removedItem)
     if not courierItem then
-        hero:AddItem(removedItem)
+        owner:AddItem(removedItem)
         OSC_Logger.Error("Failed to move stash item into courier inventory")
         return false
     end
@@ -118,6 +138,7 @@ local function StartDelivery(courier, hero, item)
     courier.osc_delivery_hero = hero
     courier.osc_delivery_item = courierItem
     courier.osc_delivery_player_id = hero:GetPlayerOwnerID()
+    courier.osc_delivery_owner = hero ~= owner and owner or nil
     courier.osc_returning_home = nil
     IssueMoveOrder(courier, hero:GetAbsOrigin())
     return true
@@ -141,6 +162,17 @@ local function FinishDelivery(courier, hero)
         courier:AddItem(removedItem)
         OSC_Logger.Error("Failed to add delivered item to hero inventory")
         return false
+    end
+
+    local owner = courier.osc_delivery_owner
+    courier.osc_delivery_owner = nil
+    if owner and not owner:IsNull() and owner ~= hero then
+        OSC_Notifications.Notify("courier_wrong_delivery", {
+            team = hero:GetTeamNumber(),
+            owner = "#" .. owner:GetUnitName(),
+            recipient = "#" .. hero:GetUnitName(),
+            item = "#DOTA_Tooltip_Ability_" .. heroItem:GetAbilityName(),
+        })
     end
 
     courier.osc_delivery_hero = nil

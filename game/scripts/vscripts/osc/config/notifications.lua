@@ -65,5 +65,9 @@ OSC_NOTIFICATIONS_CONFIG = {
             category = "player",
             feed = { token = "#osc_notify_courier_ability_gained", color = "#FFB347", scope = "team" },
         },
+        courier_wrong_delivery = {
+            category = "player",
+            feed = { token = "#osc_notify_courier_wrong_delivery", color = "#FFB347", scope = "team" },
+        },
     },
 }

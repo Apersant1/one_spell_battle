@@ -110,4 +110,12 @@ OSC_COURIER_ABILITY_POOL = {
         interval_min = 60,
         interval_max = 180,
     },
+    {
+        name = "lost",
+        name_token = "DOTA_Tooltip_modifier_osc_courier_lost",
+        modifier = "modifier_osc_courier_lost",
+        duration = 30,
+        interval_min = 60,
+        interval_max = 180,
+    },
 }
