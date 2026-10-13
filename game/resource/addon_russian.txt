@@ -110,5 +110,7 @@
 		"osc_hud_chaos_time_left"		"До конца: {s:time}"
 		"osc_hud_chaos_time_until"		"До события: {s:time}"
 		"osc_hud_popup_title"		"Новая способность"
+		"osc_hud_choice_header"		"Выберите следующую способность"
+		"osc_hud_choice_time_left"		"Осталось {s:time}"
 	}
 }
