@@ -1,10 +1,12 @@
 require("osc/core/heroes")
 require("osc/core/game_events")
 require("osc/core/hero_state")
+require("osc/systems/rotation_choice")
 
 OSC_Rotation = OSC_Rotation or {
     timer_started = false,
     warned = false,
+    round = 0, -- номер ближайшей ротации; растёт в момент предупреждения
 }
 
 local function PublishTimer()
@@ -14,17 +16,34 @@ local function PublishTimer()
     })
 end
 
-
+-- Новая способность героя на ротации: выбранная из трёх (или случайная из
+-- предложенных), а без предложения — случайная. Предложение закрывается в
+-- любом случае, даже если выдача сорвалась.
+local function RotateHero(hero, round)
+    local entry = OSC_RotationChoice.TakeEntry(hero, round)
+    local ok, result = pcall(function()
+        if entry then
+            return OSC_Abilities.Give(hero, "ability", entry, true)
+        end
+        return OSC_Abilities.GiveRandom(hero, true)
+    end)
+    local chosen = ok and result and result.name or OSC_HeroState.Get(hero).ability
+    OSC_RotationChoice.Close(hero, chosen)
+    if not ok then
+        error(result, 0)
+    end
+end
 
 local function RotateAll()
     local ok, err = pcall(OSC_Notifications.RotationStarted)
     if not ok then OSC_Logger.Error("RotationStarted: " .. tostring(err)) end
 
+    local round = OSC_Rotation.round or 0
     OSC_Heroes.ForEachPlayerHero(function(hero, playerID)
         if OSC_HeroState.Get(hero).initialized then
-            local ok, err = pcall(OSC_Abilities.GiveRandom, hero, true)
-            if not ok then
-                OSC_Logger.Error("GiveRandom for player " .. playerID .. ": " .. tostring(err))
+            local heroOk, heroErr = pcall(RotateHero, hero, round)
+            if not heroOk then
+                OSC_Logger.Error("Rotation for player " .. playerID .. ": " .. tostring(heroErr))
             end
         end
     end)
@@ -38,7 +57,9 @@ function OSC_Rotation.Think()
     local timeLeft = OSC_Rotation.next_time - GameRules:GetGameTime()
     if not OSC_Rotation.warned and timeLeft <= OSC_CONFIG.WARNING_TIME then
         OSC_Rotation.warned = true
+        OSC_Rotation.round = (OSC_Rotation.round or 0) + 1
         OSC_Notifications.RotationWarning(OSC_CONFIG.WARNING_TIME)
+        OSC_RotationChoice.OfferAll(OSC_Rotation.round, OSC_Rotation.next_time)
     end
 
     if timeLeft <= 0 then
@@ -63,6 +84,7 @@ end
 
 function OSC_Rotation.Init()
     PublishTimer()
+    OSC_RotationChoice.Init()
     OSC_GameEvents.Subscribe("game_started", "rotation", function()
         StartTimer()
     end)

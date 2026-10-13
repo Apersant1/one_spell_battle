@@ -20,6 +20,10 @@ OSC_CONFIG = {
     -- Не выдавать герою больше MAX_SAME_TAG_STREAK способностей подряд с
     -- одним тегом (отдельно для основной способности и ультимейта). Если
     -- подходящих способностей не остаётся, правило не применяется.
+    -- Выбор из трёх: на предупреждении о ротации игрок получает
+    -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них
+    ROTATION_CHOICE_ENABLED = true,
+    ROTATION_CHOICE_COUNT = 3,
     ABILITY_TAG_STREAK_ENABLED = true,
     MAX_SAME_TAG_STREAK = 2,
     CHAT_MESSAGES = true,

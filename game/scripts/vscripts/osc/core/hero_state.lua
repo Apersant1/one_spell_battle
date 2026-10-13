@@ -34,9 +34,10 @@ local FIELDS = {
     -- События движка (game_events)
     { name = "spawn_seen", default = false, doc = "npc_spawned уже приходил" },
 
-    -- Задел на этап 1
+    -- Ротация с выбором (этап 1)
     { name = "anchored", default = false, doc = "«Якорь»: пропустить следующую ротацию (1.5)" },
-    { name = "pending_choices", doc = "кандидаты выбора из трёх, выданные игроку (1.4)" },
+    { name = "pending_choices",
+      doc = "открытый выбор из трёх: { round, deadline, duration, options = { имена }, picked }" },
 }
 
 -- Заполняет недостающие поля значениями по умолчанию. schema — таблица
