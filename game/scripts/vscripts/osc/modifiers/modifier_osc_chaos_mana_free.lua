@@ -7,7 +7,7 @@ function modifier_osc_chaos_mana_free:GetTexture()     return "item_arcane_boots
 
 function modifier_osc_chaos_mana_free:OnCreated()
     if IsServer() then
-        self:SetStackCount(OSC_CONFIG.CHAOS_ROUNDS.MANA_COST_REDUCTION_PCT or 100)
+        self:SetStackCount(OSC_Config.Get("CHAOS_ROUNDS.MANA_COST_REDUCTION_PCT") or 100)
     end
 end
 

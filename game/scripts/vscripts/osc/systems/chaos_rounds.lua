@@ -1,3 +1,4 @@
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/game_events")
 
@@ -7,8 +8,8 @@ local THINK_INTERVAL = 0.25
 local SPAWN_APPLY_DELAY = 0.5
 local STATE = { IDLE = "idle", WARNING = "warning", ACTIVE = "active" }
 
-local function config()
-    return OSC_CONFIG.CHAOS_ROUNDS
+local function config(key)
+    return OSC_Config.Get("CHAOS_ROUNDS." .. key)
 end
 
 local function now()
@@ -38,11 +39,11 @@ local function callHook(ev, hookName, ...)
 end
 
 local function notifyWarning(ev)
-    OSC_Notifications.ChaosRoundWarning(ev.title_key, config().WARNING_TIME)
+    OSC_Notifications.ChaosRoundWarning(ev.title_key, config("WARNING_TIME"))
 end
 
 local function notifyStarted(ev)
-    OSC_Notifications.ChaosRoundStarted("#" .. ev.title_key, ev.duration)
+    OSC_Notifications.ChaosRoundStarted("#" .. ev.title_key, OSC_ChaosEvents:Duration(ev))
 end
 
 local function notifyEnded(ev)
@@ -76,7 +77,7 @@ function OSC_ChaosRounds:OnGameStarted()
     end
 
     self.running = true
-    self:ScheduleNext(config().INTERVAL)
+    self:ScheduleNext(config("INTERVAL"))
     GameRules:GetGameModeEntity():SetContextThink(
         "osc_chaos_rounds_think",
         function()
@@ -111,7 +112,7 @@ function OSC_ChaosRounds:Think()
         if not self.pending then
             self.pending = OSC_ChaosEvents:PickRandom(self.lastId, time)
         end
-        if self.pending and time >= self.nextStart - config().WARNING_TIME then
+        if self.pending and time >= self.nextStart - config("WARNING_TIME") then
             self.state = STATE.WARNING
             self:Publish()
             notifyWarning(self.pending)
@@ -125,7 +126,7 @@ function OSC_ChaosRounds:Think()
         if time >= self.endTime then
             self:EndEvent(false)
         elseif ev.OnInterval and time >= self.nextTick then
-            self.nextTick = time + ev.tick_interval
+            self.nextTick = time + OSC_ChaosEvents:TickInterval(ev)
             callHook(ev, "OnInterval", self:Context())
         end
     end
@@ -151,8 +152,8 @@ function OSC_ChaosRounds:StartEvent(ev)
     self.pending = nil
     self.state = STATE.ACTIVE
     self.startTime = now()
-    self.endTime = self.startTime + ev.duration
-    self.nextTick = self.startTime + ev.tick_interval
+    self.endTime = self.startTime + OSC_ChaosEvents:Duration(ev)
+    self.nextTick = self.startTime + OSC_ChaosEvents:TickInterval(ev)
 
     callHook(ev, "OnStart", self:Context())
     forEachHero(function(hero)
@@ -183,9 +184,9 @@ function OSC_ChaosRounds:EndEvent(debugStop)
 
     local nextDelay
     if debugStop then
-        nextDelay = config().INTERVAL
+        nextDelay = config("INTERVAL")
     else
-        nextDelay = math.max(0, self.nextStart + config().INTERVAL - now())
+        nextDelay = math.max(0, self.nextStart + config("INTERVAL") - now())
     end
     self:ScheduleNext(nextDelay)
     return true
@@ -221,7 +222,7 @@ function OSC_ChaosRounds:Publish()
         event_id = ev and ev.id or "",
         title_key = ev and ev.title_key or "",
         desc_key = ev and ev.desc_key or "",
-        desc_params = ev and ev.description_params or {},
+        desc_params = ev and OSC_ChaosEvents:DescriptionParams(ev) or {},
         start_time = active and self.startTime or self.nextStart,
         end_time = active and self.endTime or 0,
     })
@@ -238,7 +239,7 @@ function OSC_ChaosRounds:DebugStart(id)
     else
         event = OSC_ChaosEvents:PickRandom(self.lastId, now())
     end
-    if not event or event.enabled == false or event.weight <= 0 then
+    if not event or event.enabled == false or OSC_ChaosEvents:Weight(event) <= 0 then
         return false, "неизвестное или отключённое событие: " .. tostring(id)
     end
 

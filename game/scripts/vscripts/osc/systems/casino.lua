@@ -1,3 +1,4 @@
+require("osc/core/runtime_config")
 require("osc/core/client_commands")
 require("osc/core/hero_state")
 
@@ -33,7 +34,7 @@ end
 local function BuildOutcomes()
     local outcomes = {}
     local loseChance = 100
-    for index, outcome in ipairs(OSC_CONFIG.CASINO_OUTCOMES) do
+    for index, outcome in ipairs(OSC_Config.Get("CASINO_OUTCOMES")) do
         outcomes[tostring(index)] = {
             symbol = outcome.symbol,
             chance = outcome.chance,
@@ -63,7 +64,7 @@ local function CanUseMachine(hero, playerID, machine)
         return false, "osc_casino_err_unavailable"
     end
     if not isOwner then
-        local access = OSC_CONFIG.CASINO_ACCESS or "team"
+        local access = OSC_Config.Get("CASINO_ACCESS") or "team"
         if access == "owner" then
             return false, "osc_casino_err_owner_only"
         end
@@ -73,7 +74,7 @@ local function CanUseMachine(hero, playerID, machine)
     end
 
     local distance = (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D()
-    if distance > (OSC_CONFIG.CASINO_USE_DISTANCE or 450) then
+    if distance > (OSC_Config.Get("CASINO_USE_DISTANCE") or 450) then
         return false, "osc_casino_err_too_far"
     end
     return true
@@ -99,12 +100,12 @@ local function SendOpen(player, playerID, hero, machine)
         outcomes = outcomes,
         lose_chance = loseChance,
         machine_entindex = machine:entindex(),
-        min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
-        default_stake = OSC_CONFIG.CASINO_DEFAULT_STAKE,
-        item_bets = OSC_CONFIG.CASINO_ITEM_BETS ~= false,
-        item_value_factor = OSC_CONFIG.CASINO_ITEM_VALUE_FACTOR or 0.5,
+        min_stake = OSC_Config.Get("CASINO_MIN_SPIN_COST"),
+        default_stake = OSC_Config.Get("CASINO_DEFAULT_STAKE"),
+        item_bets = OSC_Config.Get("CASINO_ITEM_BETS") ~= false,
+        item_value_factor = OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR") or 0.5,
         gold = hero:GetGold(),
-        lifetime = OSC_CONFIG.CASINO_MACHINE_LIFETIME,
+        lifetime = OSC_Config.Get("CASINO_MACHINE_LIFETIME"),
         -- Анимацию продолжает только тот, кто сам крутит; остальные видят автомат свободным
         spinning = machine.osc_casino_is_spinning == true
             and machine.osc_casino_spinner_id == playerID,
@@ -152,7 +153,7 @@ function OSC_Casino.ValidateOutcomes(outcomes)
 end
 
 function OSC_Casino.Init()
-    local valid, result = OSC_Casino.ValidateOutcomes(OSC_CONFIG.CASINO_OUTCOMES)
+    local valid, result = OSC_Casino.ValidateOutcomes(OSC_Config.Get("CASINO_OUTCOMES"))
     if valid then
         OSC_Logger.Log(string.format(
             "Casino expected payout %.2f of the stake (house edge %.0f%%)",
@@ -163,7 +164,7 @@ function OSC_Casino.Init()
 
     -- Клиенту нужен радиус, чтобы рисовать зону действия по Alt
     CustomNetTables:SetTableValue("osc_state", "casino", {
-        use_distance = OSC_CONFIG.CASINO_USE_DISTANCE or 450,
+        use_distance = OSC_Config.Get("CASINO_USE_DISTANCE") or 450,
     })
     CustomGameEventManager:RegisterListener("osc_casino_spin", OSC_Casino.OnSpin)
     CustomGameEventManager:RegisterListener("osc_casino_reopen", OSC_Casino.OnReopen)
@@ -203,7 +204,7 @@ function OSC_Casino.DebugForceSymbol(symbol)
         OSC_Casino.debug_forced_symbol = nil
         return true
     end
-    for _, outcome in ipairs(OSC_CONFIG.CASINO_OUTCOMES) do
+    for _, outcome in ipairs(OSC_Config.Get("CASINO_OUTCOMES")) do
         if outcome.symbol == symbol then
             OSC_Casino.debug_forced_symbol = symbol
             return true
@@ -216,10 +217,10 @@ end
 local function PlayWinEffects(machine, isJackpot)
     if not machine or machine:IsNull() then return end
 
-    local particleName = isJackpot and OSC_CONFIG.CASINO_JACKPOT_PARTICLE
-        or OSC_CONFIG.CASINO_WIN_PARTICLE
-    local soundName = isJackpot and OSC_CONFIG.CASINO_JACKPOT_SOUND
-        or OSC_CONFIG.CASINO_WIN_SOUND
+    local particleName = isJackpot and OSC_Config.Get("CASINO_JACKPOT_PARTICLE")
+        or OSC_Config.Get("CASINO_WIN_PARTICLE")
+    local soundName = isJackpot and OSC_Config.Get("CASINO_JACKPOT_SOUND")
+        or OSC_Config.Get("CASINO_WIN_SOUND")
 
     if particleName and particleName ~= "" then
         local particle = ParticleManager:CreateParticle(
@@ -284,7 +285,7 @@ function OSC_Casino.SpawnMachine(hero)
     end
 
     machine:SetMaterialGroup("base")                                              -- фикс материала
-    machine:SetHullRadius(OSC_CONFIG.CASINO_HULL_RADIUS)
+    machine:SetHullRadius(OSC_Config.Get("CASINO_HULL_RADIUS"))
 
     FindClearSpaceForUnit(machine, origin, true)
     machine:SetForwardVector(hero:GetForwardVector() * -1)
@@ -302,7 +303,7 @@ function OSC_Casino.SpawnMachine(hero)
         end
         RemoveMachine(machine)
         return nil
-    end, OSC_CONFIG.CASINO_MACHINE_LIFETIME)
+    end, OSC_Config.Get("CASINO_MACHINE_LIFETIME"))
 
     OSC_Logger.Log("Spawned casino for player " .. tostring(playerID)
         .. " on team " .. hero:GetTeamNumber())
@@ -313,7 +314,7 @@ end
 
 -- Сколько золота стоит предмет как ставка: доля цены покупки, как при продаже
 local function GetItemStakeValue(item)
-    local factor = OSC_CONFIG.CASINO_ITEM_VALUE_FACTOR or 0.5
+    local factor = OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR") or 0.5
     return math.floor(item:GetCost() * factor)
 end
 
@@ -321,7 +322,7 @@ end
 -- куплен этим игроком и продаётся. Минимальная ставка проверяется по сумме
 -- всех поставленных предметов. Возвращает предмет или nil и ключ ошибки.
 local function ValidateStakeItem(hero, itemIndex)
-    if OSC_CONFIG.CASINO_ITEM_BETS == false then
+    if OSC_Config.Get("CASINO_ITEM_BETS") == false then
         return nil, "osc_casino_err_item_disabled"
     end
 
@@ -425,18 +426,18 @@ function OSC_Casino.OnSpin(sourceIndex, event)
             table.insert(stakeItems, item)
             stake = stake + GetItemStakeValue(item)
         end
-        if stake < OSC_CONFIG.CASINO_MIN_SPIN_COST then
+        if stake < OSC_Config.Get("CASINO_MIN_SPIN_COST") then
             SendResult({ error = "osc_casino_err_item_cheap", gold = hero:GetGold() })
             return
         end
     else
         stake = event and tonumber(event.stake)
         if not stake or stake ~= math.floor(stake)
-            or stake < OSC_CONFIG.CASINO_MIN_SPIN_COST
+            or stake < OSC_Config.Get("CASINO_MIN_SPIN_COST")
             or stake > hero:GetGold() then
             SendResult({
                 error = "osc_casino_err_stake",
-                min_stake = OSC_CONFIG.CASINO_MIN_SPIN_COST,
+                min_stake = OSC_Config.Get("CASINO_MIN_SPIN_COST"),
                 gold = hero:GetGold(),
             })
             return
@@ -561,7 +562,7 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     local multiplier = 0
     local reels
     local forced = OSC_Casino.debug_forced_symbol
-    for _, outcome in ipairs(OSC_CONFIG.CASINO_OUTCOMES) do
+    for _, outcome in ipairs(OSC_Config.Get("CASINO_OUTCOMES")) do
         -- Режим разработки: команда -casino <символ> подкручивает результат
         if (forced and outcome.symbol == forced)
             or (not forced and roll <= outcome.chance) then

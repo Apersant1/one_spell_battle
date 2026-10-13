@@ -11,6 +11,7 @@
 -- Кандидаты лежат в состоянии героя: pending_choices =
 --   { round, deadline, duration, options = { имена }, picked = имя | nil }.
 
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/hero_state")
 require("osc/core/client_commands")
@@ -24,7 +25,7 @@ OSC_RotationChoice = OSC_RotationChoice or {
 local SLOT = "ability"
 
 function OSC_RotationChoice.IsEnabled()
-    return OSC_CONFIG.ROTATION_CHOICE_ENABLED == true
+    return OSC_Config.Get("ROTATION_CHOICE_ENABLED") == true
 end
 
 local function NetTableKey(hero)
@@ -66,7 +67,7 @@ function OSC_RotationChoice.Offer(hero, round, deadline)
         return false
     end
 
-    local count = OSC_CONFIG.ROTATION_CHOICE_COUNT
+    local count = OSC_Config.Get("ROTATION_CHOICE_COUNT")
     if type(count) ~= "number" or count < 1 then
         error("[OSC] ROTATION_CHOICE_COUNT must be at least 1")
     end
@@ -120,7 +121,7 @@ local function LogRefusal(senderKey, message)
     OSC_RotationChoice.refusal_log = OSC_RotationChoice.refusal_log or {}
     local record = OSC_RotationChoice.refusal_log[senderKey]
     local now = GameRules:GetGameTime()
-    local interval = OSC_CONFIG.ROTATION_CHOICE_REFUSAL_LOG_INTERVAL or 0
+    local interval = OSC_Config.Get("ROTATION_CHOICE_REFUSAL_LOG_INTERVAL") or 0
     if record and now - record.time < interval then
         record.suppressed = record.suppressed + 1
         return

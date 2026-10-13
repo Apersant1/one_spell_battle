@@ -149,6 +149,20 @@ def check_item_costs():
     return errors
 
 
+def check_config_reads():
+    """Конфиг читается только через OSC_Config.Get (core/runtime_config.lua)."""
+    errors = []
+    sources = list((VSCRIPTS / "osc").rglob("*.lua")) + [VSCRIPTS / "addon_game_mode.lua"]
+    for path in sources:
+        rel = path.relative_to(VSCRIPTS).as_posix()
+        if rel.startswith("osc/config/") or rel == "osc/core/runtime_config.lua":
+            continue
+        for number, line in enumerate(read_text(path).splitlines(), 1):
+            if "OSC_CONFIG" in line and not line.strip().startswith("--"):
+                errors.append(f"{rel}:{number}: read config through OSC_Config.Get")
+    return errors
+
+
 def run_lua_tests():
     failures, passed = [], 0
     for path in sorted(TESTS.glob("test_*.lua")):
@@ -176,6 +190,7 @@ def main():
         ("JS syntax", check_js_syntax),
         ("Localization", check_localization),
         ("Item costs", check_item_costs),
+        ("Config reads", check_config_reads),
     ):
         errors = check()
         print(f"{title}: {'OK' if not errors else 'FAIL'}")

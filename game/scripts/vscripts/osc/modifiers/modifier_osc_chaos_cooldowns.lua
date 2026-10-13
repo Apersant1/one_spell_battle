@@ -20,8 +20,11 @@ function modifier_osc_chaos_cooldowns:GetTexture()
     return "item_octarine_core"
 end
 
+-- Величину берёт сервер из OSC_Config, клиенту она приходит числом стаков
 function modifier_osc_chaos_cooldowns:OnCreated()
-    self.cooldownReductionPct = OSC_CONFIG.CHAOS_ROUNDS.COOLDOWN_REDUCTION_PCT
+    if IsServer() then
+        self:SetStackCount(OSC_Config.Get("CHAOS_ROUNDS.COOLDOWN_REDUCTION_PCT") or 0)
+    end
 end
 
 function modifier_osc_chaos_cooldowns:DeclareFunctions()
@@ -29,5 +32,5 @@ function modifier_osc_chaos_cooldowns:DeclareFunctions()
 end
 
 function modifier_osc_chaos_cooldowns:GetModifierPercentageCooldown()
-    return self.cooldownReductionPct or OSC_CONFIG.CHAOS_ROUNDS.COOLDOWN_REDUCTION_PCT
+    return self:GetStackCount()
 end

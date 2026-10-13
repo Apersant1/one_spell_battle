@@ -1,3 +1,4 @@
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/game_events")
 require("osc/core/hero_state")
@@ -13,7 +14,7 @@ OSC_Rotation = OSC_Rotation or {
 local function PublishTimer()
     CustomNetTables:SetTableValue("osc_state", "timer", {
         next_rotation = OSC_Rotation.next_time or -1,
-        interval = OSC_CONFIG.ROTATION_INTERVAL,
+        interval = OSC_Config.Get("ROTATION_INTERVAL"),
     })
 end
 
@@ -63,16 +64,16 @@ function OSC_Rotation.Think()
     end
 
     local timeLeft = OSC_Rotation.next_time - GameRules:GetGameTime()
-    if not OSC_Rotation.warned and timeLeft <= OSC_CONFIG.WARNING_TIME then
+    if not OSC_Rotation.warned and timeLeft <= OSC_Config.Get("WARNING_TIME") then
         OSC_Rotation.warned = true
         OSC_Rotation.round = (OSC_Rotation.round or 0) + 1
-        OSC_Notifications.RotationWarning(OSC_CONFIG.WARNING_TIME)
+        OSC_Notifications.RotationWarning(OSC_Config.Get("WARNING_TIME"))
         OSC_RotationChoice.OfferAll(OSC_Rotation.round, OSC_Rotation.next_time)
     end
 
     if timeLeft <= 0 then
         RotateAll()
-        OSC_Rotation.next_time = OSC_Rotation.next_time + OSC_CONFIG.ROTATION_INTERVAL
+        OSC_Rotation.next_time = OSC_Rotation.next_time + OSC_Config.Get("ROTATION_INTERVAL")
         OSC_Rotation.warned = false
         PublishTimer()
     end
@@ -83,7 +84,7 @@ end
 local function StartTimer()
     if OSC_Rotation.timer_started then return end
     OSC_Rotation.timer_started = true
-    OSC_Rotation.next_time = GameRules:GetGameTime() + OSC_CONFIG.ROTATION_INTERVAL
+    OSC_Rotation.next_time = GameRules:GetGameTime() + OSC_Config.Get("ROTATION_INTERVAL")
     OSC_Rotation.warned = false
     PublishTimer()
     OSC_Logger.Log("Rotation timer started")

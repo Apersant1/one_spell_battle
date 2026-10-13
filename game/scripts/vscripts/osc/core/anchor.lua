@@ -6,6 +6,7 @@
 -- таймера ротации в HUD. Постановка якоря рассылается событием
 -- hero_anchored (OSC_GameEvents): ротация по нему закрывает уже выданный выбор.
 
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/hero_state")
 require("osc/core/game_events")
@@ -13,7 +14,7 @@ require("osc/core/game_events")
 OSC_Anchor = OSC_Anchor or {}
 
 function OSC_Anchor.IsEnabled()
-    return OSC_CONFIG.ANCHOR_ENABLED == true
+    return OSC_Config.Get("ANCHOR_ENABLED") == true
 end
 
 function OSC_Anchor.IsActive(hero)

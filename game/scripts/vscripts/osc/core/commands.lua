@@ -1,3 +1,4 @@
+require("osc/core/runtime_config")
 require("osc/core/hero_state")
 
 OSC_Commands = OSC_Commands or {}
@@ -18,7 +19,7 @@ local function OnPlayerChat(event)
         return
     end
 
-    if not OSC_CONFIG.DEVELOPMENT_MODE then
+    if not OSC_Config.Get("DEVELOPMENT_MODE") then
         OSC_Logger.Log("Ignored development chat command: " .. text)
         return
     end

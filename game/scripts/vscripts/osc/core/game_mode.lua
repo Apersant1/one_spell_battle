@@ -1,3 +1,4 @@
+require("osc/core/runtime_config")
 if OneSpellChaos == nil then
     OneSpellChaos = class({})
 end
@@ -19,7 +20,7 @@ function OneSpellChaos:Init()
     GameRules:LockCustomGameSetupTeamAssignment(false)
 
     CustomNetTables:SetTableValue("osc_state", "version", {
-        version = OSC_CONFIG.VERSION,
+        version = OSC_Config.Get("VERSION"),
     })
 
     local ok, err = pcall(OSC_AbilitySelection.ValidatePools)

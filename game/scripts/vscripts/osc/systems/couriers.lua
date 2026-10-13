@@ -1,7 +1,10 @@
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/game_events")
 
-local COURIER_CONFIG = OSC_CONFIG.COURIERS
+local function cfg(key)
+    return OSC_Config.Get("COURIERS." .. key)
+end
 
 OSC_Couriers = OSC_Couriers or {}
 OSC_Couriers.Abilities = OSC_COURIER_ABILITY_POOL
@@ -21,7 +24,7 @@ local function GetTeamHeroes(team)
 end
 
 local function HasInventorySpace(hero)
-    for slot = COURIER_CONFIG.INVENTORY_FIRST_SLOT, COURIER_CONFIG.INVENTORY_LAST_SLOT do
+    for slot = cfg("INVENTORY_FIRST_SLOT"), cfg("INVENTORY_LAST_SLOT") do
         if not hero:GetItemInSlot(slot) then
             return true
         end
@@ -30,7 +33,7 @@ local function HasInventorySpace(hero)
 end
 
 local function FindStashItem(hero)
-    for slot = COURIER_CONFIG.STASH_FIRST_SLOT, COURIER_CONFIG.STASH_LAST_SLOT do
+    for slot = cfg("STASH_FIRST_SLOT"), cfg("STASH_LAST_SLOT") do
         local item = hero:GetItemInSlot(slot)
         if IsValidEntity(item) then
             return item
@@ -54,8 +57,8 @@ function OSC_Couriers.GetHomePositions(origin, forward, right, count)
         local row = math.floor((index - 1) / 2)
         local side = index % 2 == 1 and 1 or -1
         positions[index] = origin
-            + forward * (COURIER_CONFIG.HOME_FORWARD_OFFSET + row * COURIER_CONFIG.HOME_ROW_SPACING)
-            + right * (COURIER_CONFIG.HOME_SIDE_OFFSET * side)
+            + forward * (cfg("HOME_FORWARD_OFFSET") + row * cfg("HOME_ROW_SPACING"))
+            + right * (cfg("HOME_SIDE_OFFSET") * side)
     end
     return positions
 end
@@ -192,12 +195,12 @@ local function ThinkReturnHome(courier, now)
     end
 
     if (courier:GetAbsOrigin() - home):Length2D()
-        <= COURIER_CONFIG.FOUNTAIN_ARRIVAL_DISTANCE then
+        <= cfg("FOUNTAIN_ARRIVAL_DISTANCE") then
         courier.osc_returning_home = nil
         return
     end
 
-    if now - (courier.osc_last_move_order_time or 0) >= COURIER_CONFIG.MOVE_ORDER_INTERVAL then
+    if now - (courier.osc_last_move_order_time or 0) >= cfg("MOVE_ORDER_INTERVAL") then
         IssueMoveOrder(courier, home)
     end
 end
@@ -208,7 +211,7 @@ local function ThinkCourier(courier)
     end
     -- Мёртвый курьер ничего не берёт и не везёт; доставка продолжится после возрождения
     if not courier:IsAlive() then
-        return COURIER_CONFIG.THINK_INTERVAL
+        return cfg("THINK_INTERVAL")
     end
 
     local now = GameRules:GetGameTime()
@@ -235,10 +238,10 @@ local function ThinkCourier(courier)
             and hero:IsAlive() and HasInventorySpace(hero) then
             courier.osc_returning_home = nil
             if (courier:GetAbsOrigin() - hero:GetAbsOrigin()):Length2D()
-                <= COURIER_CONFIG.HERO_DELIVERY_DISTANCE then
+                <= cfg("HERO_DELIVERY_DISTANCE") then
                 FinishDelivery(courier, hero)
             elseif now - (courier.osc_last_move_order_time or 0)
-                >= COURIER_CONFIG.MOVE_ORDER_INTERVAL then
+                >= cfg("MOVE_ORDER_INTERVAL") then
                 IssueMoveOrder(courier, hero:GetAbsOrigin())
             end
         else
@@ -246,12 +249,12 @@ local function ThinkCourier(courier)
             courier.osc_returning_home = true
             ThinkReturnHome(courier, now)
         end
-        return COURIER_CONFIG.THINK_INTERVAL
+        return cfg("THINK_INTERVAL")
     end
 
     if courier.osc_returning_home then
         ThinkReturnHome(courier, now)
-        return COURIER_CONFIG.THINK_INTERVAL
+        return cfg("THINK_INTERVAL")
     end
 
     courier.osc_delivery_hero = nil
@@ -266,7 +269,7 @@ local function ThinkCourier(courier)
         end
     end
 
-    return COURIER_CONFIG.THINK_INTERVAL
+    return cfg("THINK_INTERVAL")
 end
 
 local function InitializeCourier(courier, homePosition)
@@ -278,8 +281,8 @@ local function InitializeCourier(courier, homePosition)
     courier.osc_home_position = homePosition
     courier.osc_next_ability_time = GameRules:GetGameTime()
         + RandomInt(
-            COURIER_CONFIG.INITIAL_ABILITY_INTERVAL_MIN,
-            COURIER_CONFIG.INITIAL_ABILITY_INTERVAL_MAX
+            cfg("INITIAL_ABILITY_INTERVAL_MIN"),
+            cfg("INITIAL_ABILITY_INTERVAL_MAX")
         )
 
     FindClearSpaceForUnit(courier, homePosition, true)
@@ -294,7 +297,7 @@ local function InitializeCourier(courier, homePosition)
         function()
             return ThinkCourier(courier)
         end,
-        COURIER_CONFIG.THINK_INTERVAL
+        cfg("THINK_INTERVAL")
     )
 end
 
@@ -316,7 +319,7 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
         fountain:GetAbsOrigin(),
         fountain:GetForwardVector(),
         fountain:GetRightVector(),
-        COURIER_CONFIG.COUNT_PER_TEAM
+        cfg("COUNT_PER_TEAM")
     )
     local couriers = {}
     for _, courier in pairs(Entities:FindAllByClassname("npc_dota_courier") or {}) do
@@ -325,7 +328,7 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
         end
     end
 
-    for i = #couriers + 1, COURIER_CONFIG.COUNT_PER_TEAM do
+    for i = #couriers + 1, cfg("COUNT_PER_TEAM") do
         local courier = CreateUnitByName(
             "npc_dota_courier",
             homePositions[i],
@@ -342,7 +345,7 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
         table.insert(couriers, courier)
     end
 
-    for index = 1, math.min(#couriers, COURIER_CONFIG.COUNT_PER_TEAM) do
+    for index = 1, math.min(#couriers, cfg("COUNT_PER_TEAM")) do
         InitializeCourier(couriers[index], homePositions[index])
     end
     return true

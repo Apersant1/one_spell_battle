@@ -8,6 +8,7 @@
 --   мягкие — серия тегов (MAX_SAME_TAG_STREAK): ослабляется, если
 --     кандидатов не хватает.
 
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/hero_state")
 
@@ -152,10 +153,10 @@ end
 -- ================= Серия тегов =================
 
 local function StreakLimit()
-    if OSC_CONFIG.ABILITY_TAG_STREAK_ENABLED ~= true then
+    if OSC_Config.Get("ABILITY_TAG_STREAK_ENABLED") ~= true then
         return nil
     end
-    local limit = OSC_CONFIG.MAX_SAME_TAG_STREAK
+    local limit = OSC_Config.Get("MAX_SAME_TAG_STREAK")
     if type(limit) ~= "number" or limit < 1 or limit ~= math.floor(limit) then
         OSC_Logger.Error("MAX_SAME_TAG_STREAK must be a positive integer, got " .. tostring(limit))
         return nil
@@ -218,7 +219,7 @@ function OSC_AbilitySelection.Remember(hero, slot, entry)
     table.insert(history, tags)
 
     -- Для проверки серии нужны только последние MAX_SAME_TAG_STREAK записей
-    local keep = OSC_CONFIG.MAX_SAME_TAG_STREAK
+    local keep = OSC_Config.Get("MAX_SAME_TAG_STREAK")
     keep = type(keep) == "number" and keep >= 1 and math.floor(keep) or 1
     while #history > keep do
         table.remove(history, 1)
@@ -253,7 +254,7 @@ local function BuildTiers(hero, slot, exclude)
 
     local isAllowed = function() return true end
     if slot == "ultimate" then
-        local maxDuplicates = OSC_CONFIG.MAX_DUPLICATE_ULTIMATES_PER_TEAM
+        local maxDuplicates = OSC_Config.Get("MAX_DUPLICATE_ULTIMATES_PER_TEAM")
         if type(maxDuplicates) ~= "number" or maxDuplicates < 1 then
             error("[OSC] MAX_DUPLICATE_ULTIMATES_PER_TEAM must be at least 1")
         end

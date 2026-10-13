@@ -3,6 +3,7 @@
 
 local MODULES = {
     { file = "osc/core/logger", global = "OSC_Logger" },
+    { file = "osc/core/runtime_config", global = "OSC_Config" },
     { file = "osc/core/notifications", global = "OSC_Notifications" },
     { file = "osc/core/commands", global = "OSC_Commands" },
     { file = "osc/core/heroes", global = "OSC_Heroes" },

@@ -2,6 +2,7 @@
 -- удаление старой, связанные подспособности, синхронизация копий героя.
 -- Что выдавать, решает OSC_AbilitySelection.
 
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/hero_state")
 require("osc/systems/ability_selection")
@@ -128,7 +129,7 @@ local function RetireAbility(unit, ability)
             RemoveNow(unit, ability)
         end
         return nil
-    end, OSC_CONFIG.ROTATION_OLD_ABILITY_LIFETIME)
+    end, OSC_Config.Get("ROTATION_OLD_ABILITY_LIFETIME"))
 end
 
 -- Снимает подспособности записи (Ethereal Jaunt и т. п.)
@@ -184,14 +185,14 @@ end
 
 -- Перезарядка способности, пришедшей на смену прежней (NEW_ABILITY_COOLDOWN_MODE)
 local function ApplyNewAbilityCooldown(ability)
-    local mode = OSC_CONFIG.NEW_ABILITY_COOLDOWN_MODE or "ready"
+    local mode = OSC_Config.Get("NEW_ABILITY_COOLDOWN_MODE") or "ready"
     if mode == "ready" then return end
     if mode ~= "partial" then
         OSC_Logger.Error("Unknown NEW_ABILITY_COOLDOWN_MODE: " .. tostring(mode))
         return
     end
 
-    local fraction = OSC_CONFIG.NEW_ABILITY_COOLDOWN_FRACTION
+    local fraction = OSC_Config.Get("NEW_ABILITY_COOLDOWN_FRACTION")
     if type(fraction) ~= "number" or fraction < 0 or fraction > 1 then
         OSC_Logger.Error("NEW_ABILITY_COOLDOWN_FRACTION must be between 0 and 1, got "
             .. tostring(fraction))
@@ -207,11 +208,11 @@ end
 -- ================= Отсрочка на время фазы каста =================
 
 local function CanDefer()
-    return OSC_CONFIG.ROTATION_CAST_PHASE_DEFER == true
-        and type(OSC_CONFIG.ROTATION_MAX_DEFER) == "number"
-        and OSC_CONFIG.ROTATION_MAX_DEFER > 0
-        and type(OSC_CONFIG.ROTATION_DEFER_STEP) == "number"
-        and OSC_CONFIG.ROTATION_DEFER_STEP > 0
+    return OSC_Config.Get("ROTATION_CAST_PHASE_DEFER") == true
+        and type(OSC_Config.Get("ROTATION_MAX_DEFER")) == "number"
+        and OSC_Config.Get("ROTATION_MAX_DEFER") > 0
+        and type(OSC_Config.Get("ROTATION_DEFER_STEP")) == "number"
+        and OSC_Config.Get("ROTATION_DEFER_STEP") > 0
 end
 
 -- Способность слота юнита (или её подспособность) в фазе каста: скрытие или
@@ -240,13 +241,13 @@ end
 
 -- Ставит отложенную замену слота юнита; thinkFn(unit, slot) — шаг таймера
 local function Defer(unit, slot, pending, thinkName)
-    pending.deadline = Now() + OSC_CONFIG.ROTATION_MAX_DEFER
+    pending.deadline = Now() + OSC_Config.Get("ROTATION_MAX_DEFER")
     OSC_HeroState.Get(unit).deferred[slot] = pending
     OSC_Logger.Log("Deferred " .. slot .. " change for " .. unit:GetUnitName()
         .. ": " .. tostring(OSC_HeroState.Get(unit)[slot]) .. " is in cast phase")
     unit:SetContextThink("osc_deferred_" .. slot, function()
         return OSC_Abilities[thinkName](unit, slot)
-    end, OSC_CONFIG.ROTATION_DEFER_STEP)
+    end, OSC_Config.Get("ROTATION_DEFER_STEP"))
 end
 
 -- ================= Замена в слоте =================
@@ -322,7 +323,7 @@ end
 -- владельца, иначе у клона был бы бесплатный каст. В режиме ready копия,
 -- как и раньше, получает способность готовой.
 local function InheritCooldown(ability, source)
-    if OSC_CONFIG.NEW_ABILITY_COOLDOWN_MODE ~= "partial" then return end
+    if OSC_Config.Get("NEW_ABILITY_COOLDOWN_MODE") ~= "partial" then return end
     local remaining = source and source:GetCooldownTimeRemaining() or 0
     if remaining > 0 then
         ability:StartCooldown(remaining)
@@ -435,7 +436,7 @@ function OSC_Abilities.ProcessCopyDeferred(unit, slot)
     if not pending then return nil end
 
     if IsInCastPhase(unit, slot) and Now() < pending.deadline then
-        return OSC_CONFIG.ROTATION_DEFER_STEP
+        return OSC_Config.Get("ROTATION_DEFER_STEP")
     end
 
     state.deferred[slot] = nil
@@ -488,7 +489,7 @@ function OSC_Abilities.ProcessDeferred(hero, slot)
     if not pending then return nil end
 
     if IsInCastPhase(hero, slot) and Now() < pending.deadline then
-        return OSC_CONFIG.ROTATION_DEFER_STEP
+        return OSC_Config.Get("ROTATION_DEFER_STEP")
     end
 
     state.deferred[slot] = nil

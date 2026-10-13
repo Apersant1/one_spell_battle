@@ -1,6 +1,7 @@
 require("osc/config/config")
 require("osc/config/ability_pools")
 require("osc/core/logger")
+require("osc/core/runtime_config")
 require("osc/core/notifications")
 require("osc/core/heroes")
 require("osc/core/game_events")
@@ -47,14 +48,14 @@ function Precache(context)
     PrecacheUnitByNameSync("npc_osc_casino_test_object", context)
     PrecacheResource("particle", "particles/generic_hero_status/hero_levelup.vpcf", context)
     
-    for _, particle in ipairs({ OSC_CONFIG.CASINO_WIN_PARTICLE, OSC_CONFIG.CASINO_JACKPOT_PARTICLE }) do
+    for _, particle in ipairs({ OSC_Config.Get("CASINO_WIN_PARTICLE"), OSC_Config.Get("CASINO_JACKPOT_PARTICLE") }) do
         if particle and particle ~= "" then
             PrecacheResource("particle", particle, context)
         end
     end
 
     -- Погодные хаос-события: частицы и звуки героев, которых может не быть в матче
-    local weather = OSC_CONFIG.CHAOS_ROUNDS.WEATHER
+    local weather = OSC_Config.Get("CHAOS_ROUNDS.WEATHER")
     PrecacheResource("particle", weather.WARNING_RING, context)
     for _, event in ipairs({ weather.STORM, weather.TORRENT, weather.DRONES }) do
         for _, key in ipairs({ "PARTICLE", "WARN_PARTICLE" }) do

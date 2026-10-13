@@ -1,6 +1,7 @@
 -- Общие функции для «погодных» хаос-событий (гроза, потоки, дроны).
 -- Урон считается от максимального здоровья и никогда не добивает героя.
 
+require("osc/core/runtime_config")
 require("osc/core/heroes")
 
 OSC_Weather = OSC_Weather or {}
@@ -78,7 +79,7 @@ end
 
 -- Круг-предупреждение на земле: показываем, куда сейчас прилетит
 function OSC_Weather.ShowWarning(position, radius, duration)
-    local name = OSC_CONFIG.CHAOS_ROUNDS.WEATHER.WARNING_RING
+    local name = OSC_Config.Get("CHAOS_ROUNDS.WEATHER.WARNING_RING")
     if not name or name == "" then return end
     local particle = ParticleManager:CreateParticle(name, PATTACH_WORLDORIGIN, nil)
     ParticleManager:SetParticleControl(particle, 0, position)
