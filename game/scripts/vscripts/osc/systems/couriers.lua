@@ -1,8 +1,7 @@
 local COURIER_CONFIG = OSC_CONFIG.COURIERS
 
-OSC_Couriers = {
-    Abilities = OSC_COURIER_ABILITY_POOL,
-}
+OSC_Couriers = OSC_Couriers or {}
+OSC_Couriers.Abilities = OSC_COURIER_ABILITY_POOL
 
 local function IsValidEntity(entity)
     return entity and not entity:IsNull()
@@ -310,7 +309,7 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
         OSC_Logger.Error(
             "Could not find fountain for team " .. team .. "; couriers were not initialized"
         )
-        return
+        return false
     end
 
     local homePositions = OSC_Couriers.GetHomePositions(
@@ -337,7 +336,7 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
         )
         if not courier then
             OSC_Logger.Error("Failed to create team courier for team " .. team)
-            return
+            return false
         end
 
         table.insert(couriers, courier)
@@ -346,6 +345,29 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
     for index = 1, math.min(#couriers, COURIER_CONFIG.COUNT_PER_TEAM) do
         InitializeCourier(couriers[index], homePositions[index])
     end
+    return true
+end
+
+-- Курьеры команды запускаются, когда у неё появляется первый настоящий герой.
+-- Если не вышло (нет фонтана), пробуем снова при следующем появлении.
+local function OnNPCSpawned(event)
+    local unit = EntIndexToHScript(event.entindex)
+    if not IsValidEntity(unit) or not unit.IsRealHero or not unit:IsRealHero() then
+        return
+    end
+
+    local team = unit:GetTeamNumber()
+    if OSC_Couriers.ready_teams[team] then
+        return
+    end
+    if OSC_Couriers.EnsureTeamCouriers(unit) then
+        OSC_Couriers.ready_teams[team] = true
+    end
+end
+
+function OSC_Couriers.Init()
+    OSC_Couriers.ready_teams = {}
+    ListenToGameEvent("npc_spawned", OnNPCSpawned, nil)
 end
 
 function OSC_Couriers.DebugAbility(team, abilityName)

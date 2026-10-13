@@ -18,7 +18,7 @@ end
 local function levelUp(hero, level)
     hero.level = level
     H.entities[1] = hero
-    H.gameEvents["dota_player_gained_level"].fn({ hero_entindex = 1, level = level })
+    H.FireGameEvent("dota_player_gained_level", { hero_entindex = 1, level = level })
 end
 
 return {
@@ -56,5 +56,16 @@ return {
 
         H.eq(ogre:GetAbilityByIndex(0).name, "test_a", "rotating ability in slot Q")
         H.eq(ogre:GetAbilityByIndex(1).name, "ogre_magi_casino", "casino in slot W")
+    end,
+    init_does_not_depend_on_couriers = function()
+        setup()
+        OSC_Couriers = nil
+        local hero = H.NewHero({ abilities = { "test_a" } })
+        H.AddPlayer(0, hero)
+
+        OSC_HeroLifecycle.TryInitializeUnit(hero, "test")
+        H.RunThink("osc_init")
+
+        H.eq(hero.osc_initialized, true, "hero initialized without the courier system")
     end,
 }

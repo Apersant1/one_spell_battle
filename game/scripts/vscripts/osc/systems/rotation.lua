@@ -1,4 +1,4 @@
-OSC_Rotation = {
+OSC_Rotation = OSC_Rotation or {
     timer_started = false,
     warned = false,
 }

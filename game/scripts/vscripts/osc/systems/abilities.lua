@@ -1,4 +1,4 @@
-OSC_Abilities = {}
+OSC_Abilities = OSC_Abilities or {}
 
 -- Слот способности на панели задают AddAbility (первый свободный слот) и
 -- SwapAbilities; SetAbilityIndex в игре способности не переставляет.
@@ -12,9 +12,22 @@ local function IsInnateAbility(ability)
     )
 end
 
-local function ShouldKeep(ability)
+local function HeroExtras(hero)
+    return (OSC_HERO_EXTRA_ABILITIES or {})[hero:GetUnitName()] or {}
+end
+
+local function IsHeroExtra(hero, name)
+    for _, extra in ipairs(HeroExtras(hero)) do
+        if extra == name then
+            return true
+        end
+    end
+    return false
+end
+
+local function ShouldKeep(hero, ability)
     local name = ability:GetAbilityName()
-    if OSC_KEEP_ABILITIES[name] then
+    if OSC_KEEP_ABILITIES[name] or IsHeroExtra(hero, name) then
         return true
     end
     if string.sub(name, 1, 14) == "special_bonus_" then
@@ -36,7 +49,7 @@ function OSC_Abilities.StripHero(hero)
     local toRemove = {}
     for i = 0, hero:GetAbilityCount() - 1 do
         local ability = hero:GetAbilityByIndex(i)
-        if ability and not ShouldKeep(ability) then
+        if ability and not ShouldKeep(hero, ability) then
             table.insert(toRemove, ability:GetAbilityName())
         end
     end
@@ -46,19 +59,18 @@ function OSC_Abilities.StripHero(hero)
     end
 end
 
-function OSC_Abilities.EnsureOgreCasinoAbility(hero)
-    if hero:GetUnitName() ~= "npc_dota_hero_ogre_magi" then return end
-
-    local ability = hero:FindAbilityByName("ogre_magi_casino")
-    if not ability then
-        ability = hero:AddAbility("ogre_magi_casino")
+-- Выдаёт герою его способности из OSC_HERO_EXTRA_ABILITIES (казино Огра)
+function OSC_Abilities.GrantHeroExtras(hero)
+    for _, name in ipairs(HeroExtras(hero)) do
+        local ability = hero:FindAbilityByName(name) or hero:AddAbility(name)
+        if not ability then
+            error("[OSC] Failed to add hero ability " .. name)
+        end
+        if ability:GetLevel() < 1 then
+            ability:SetLevel(1)
+        end
+        ability:SetHidden(false)
     end
-    if not ability then
-        error("[OSC] Failed to add Ogre casino ability")
-    end
-
-    ability:SetLevel(1)
-    ability:SetHidden(false)
 end
 
 -- ================= Пулы =================

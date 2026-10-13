@@ -29,6 +29,7 @@ function OneSpellChaos:Init()
     SafeInit("Casino", OSC_Casino)
     SafeInit("Commands", OSC_Commands)
     SafeInit("HeroLifecycle", OSC_HeroLifecycle)
+    SafeInit("Couriers", OSC_Couriers)
     SafeInit("Rotation", OSC_Rotation)
     SafeInit("ChaosRounds", OSC_ChaosRounds)
 

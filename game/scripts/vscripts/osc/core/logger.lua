@@ -1,4 +1,4 @@
-OSC_Logger = {}
+OSC_Logger = OSC_Logger or {}
 
 function OSC_Logger.Log(message)
     print("[OSC] " .. tostring(message))

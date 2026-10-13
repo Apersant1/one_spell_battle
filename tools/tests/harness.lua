@@ -81,7 +81,21 @@ function EmitSoundOn() end
 function EmitSoundOnLocationWithCaster() end
 function FindClearSpaceForUnit() end
 function UTIL_Remove(entity) entity._null = true end
-function ListenToGameEvent(name, fn, ctx) H.gameEvents[name] = { fn = fn, ctx = ctx } end
+function ListenToGameEvent(name, fn, ctx)
+    H.gameEvents[name] = H.gameEvents[name] or {}
+    table.insert(H.gameEvents[name], { fn = fn, ctx = ctx })
+end
+
+-- Вызывает всех подписчиков события движка
+function H.FireGameEvent(name, data)
+    for _, listener in ipairs(H.gameEvents[name] or {}) do
+        if listener.ctx ~= nil then
+            listener.fn(listener.ctx, data)
+        else
+            listener.fn(data)
+        end
+    end
+end
 function Dynamic_Wrap(cls, name) return function(...) return cls[name](...) end end
 function EntIndexToHScript(index) return H.entities[index] end
 function GetAbilityKeyValuesByName(name) return H.kv[name] end

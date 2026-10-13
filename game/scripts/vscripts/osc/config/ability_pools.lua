@@ -5,7 +5,13 @@ OSC_KEEP_ABILITIES = {
     twin_gate_portal_warp          = true,
     abyssal_underlord_portal_warp = true,
     ogre_magi_unrefined_fireblast = true,
-    ogre_magi_casino = true,
+}
+
+-- Собственные способности героев в этом режиме. Выдаются при инициализации
+-- сразу после основной способности (порядок выдачи задаёт слоты: основная —
+-- Q, первая из этих — W) и не снимаются ротацией.
+OSC_HERO_EXTRA_ABILITIES = {
+    npc_dota_hero_ogre_magi = { "ogre_magi_casino" },
 }
 
 -- Запись пула: name, hero (для прекэша), label, weight (по умолчанию 4),

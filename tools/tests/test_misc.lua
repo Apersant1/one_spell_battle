@@ -93,4 +93,19 @@ return {
         OSC_TeamShuffle:OnMove({ PlayerID = 0, player_id = 0, team = DOTA_TEAM_BADGUYS })
         H.eq(H.assignments[0], DOTA_TEAM_BADGUYS, "Dire accepted")
     end,
+    couriers_start_on_first_hero_spawn = function()
+        setupCouriers()
+        OSC_CONFIG.COURIERS.COUNT_PER_TEAM = 1
+        local hero = H.NewHero({})
+        H.entities[7] = hero
+        local fountain = H.NewHero({ name = "ent_dota_fountain" })
+        local courier = H.NewHero({ name = "npc_dota_courier" })
+        H.byClass.ent_dota_fountain = { fountain }
+        H.byClass.npc_dota_courier = { courier }
+
+        OSC_Couriers.Init()
+        H.FireGameEvent("npc_spawned", { entindex = 7 })
+
+        H.eq(courier.osc_courier_ai_initialized, true, "team courier initialized")
+    end,
 }

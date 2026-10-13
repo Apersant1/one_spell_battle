@@ -1,4 +1,4 @@
-OSC_Casino = {}
+OSC_Casino = OSC_Casino or {}
 
 -- Символы барабанов; исходы CASINO_OUTCOMES могут использовать только их
 local SYMBOLS = { "circle", "diamond", "star", "seven" }

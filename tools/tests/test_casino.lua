@@ -82,7 +82,7 @@ return {
         OSC_CONFIG.DEVELOPMENT_MODE = true
         H.AddPlayer(0, H.NewHero({}))
         OSC_Commands.Init()
-        local chat = H.gameEvents["player_chat"].fn
+        local function chat(data) H.FireGameEvent("player_chat", data) end
 
         chat({ text = "-casino seven", playerid = 0 })
         H.eq(OSC_Casino.debug_forced_symbol, "seven", "forced symbol")

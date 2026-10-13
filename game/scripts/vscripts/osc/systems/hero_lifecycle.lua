@@ -1,4 +1,4 @@
-OSC_HeroLifecycle = {}
+OSC_HeroLifecycle = OSC_HeroLifecycle or {}
 
 local MAX_INIT_ATTEMPTS = 3
 local RETRY_DELAY = 1
@@ -25,9 +25,9 @@ local function InitializeHeroAbilities(hero, source)
         local ok, err = pcall(function()
             OSC_Abilities.StripHero(hero)
             -- Порядок выдачи задаёт слоты: способность первой встаёт на Q,
-            -- казино Огра — следующим на W
+            -- собственные способности героя (казино Огра) — следом на W
             OSC_Abilities.GiveRandom(hero, true)
-            OSC_Abilities.EnsureOgreCasinoAbility(hero)
+            OSC_Abilities.GrantHeroExtras(hero)
             if hero:GetLevel() >= 6 then
                 OSC_Abilities.GiveRandomUltimate(hero, true)
             end
@@ -78,7 +78,6 @@ function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
     end
 
     if not unit:IsRealHero() then return end
-    OSC_Couriers.EnsureTeamCouriers(unit)
     if unit.osc_initialized or unit.osc_init_state then return end
     InitializeHeroAbilities(unit, source)
 end

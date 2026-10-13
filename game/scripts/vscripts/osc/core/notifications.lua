@@ -1,6 +1,6 @@
 require("osc/config/notifications")
 
-OSC_Notifications = {}
+OSC_Notifications = OSC_Notifications or {}
 
 local FEED_EVENT = "osc_notification"
 

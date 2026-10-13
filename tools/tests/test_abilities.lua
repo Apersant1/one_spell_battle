@@ -289,4 +289,32 @@ return {
         H.RunThinksMatching("osc_retire_ability")
         H.truthy(hero:FindAbilityByName("test_a"), "pending removal does not take the new ability")
     end,
+    hero_extras_granted_from_config = function()
+        setup()
+        H.DefineAbility("test_extra", { maxLevel = 1 })
+        OSC_HERO_EXTRA_ABILITIES = { npc_dota_hero_lina = { "test_extra" } }
+        local lina = H.NewHero({ name = "npc_dota_hero_lina" })
+        local axe = H.NewHero({ name = "npc_dota_hero_axe" })
+
+        OSC_Abilities.GrantHeroExtras(lina)
+        OSC_Abilities.GrantHeroExtras(axe)
+
+        local extra = lina:FindAbilityByName("test_extra")
+        H.truthy(extra, "extra ability granted")
+        H.eq(extra:GetLevel(), 1, "extra ability learned")
+        H.eq(extra:IsHidden(), false, "extra ability visible")
+        H.eq(axe:FindAbilityByName("test_extra"), nil, "other heroes do not get it")
+    end,
+
+    hero_extras_survive_strip = function()
+        setup()
+        H.DefineAbility("test_extra")
+        OSC_HERO_EXTRA_ABILITIES = { npc_dota_hero_lina = { "test_extra" } }
+        local lina = H.NewHero({ name = "npc_dota_hero_lina", abilities = { "test_extra", "lina_dragon_slave" } })
+
+        OSC_Abilities.StripHero(lina)
+
+        H.truthy(lina:FindAbilityByName("test_extra"), "extra ability kept")
+        H.eq(lina:FindAbilityByName("lina_dragon_slave"), nil, "regular ability stripped")
+    end,
 }

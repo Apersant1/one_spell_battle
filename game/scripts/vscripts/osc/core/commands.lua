@@ -1,4 +1,4 @@
-OSC_Commands = {}
+OSC_Commands = OSC_Commands or {}
 
 local function OnPlayerChat(event)
     local text = string.lower(string.match(event.text or "", "^%s*(.-)%s*$"))
