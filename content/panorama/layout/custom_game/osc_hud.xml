@@ -10,6 +10,8 @@
         <include src="file://{resources}/scripts/custom_game/osc_timer.js" />
         <include src="file://{resources}/scripts/custom_game/osc_chaos_round.js" />
         <include src="file://{resources}/scripts/custom_game/osc_ability_popup.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_rotation_choice.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/osc_notification_feed.js" />
         <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
@@ -35,6 +37,24 @@
                 <Panel id="TimerRingHole" hittest="false" />
             </Panel>
             <Label id="TimerLabel" class="OSCTextBody OSCBold" />
+            <!-- Якорь: виден, пока следующая ротация пропускается (osc_anchor.js) -->
+            <Panel id="AnchorBadge" hittest="true">
+                <DOTAAbilityImage id="AnchorIcon" abilityname="tidehunter_anchor_smash"
+                    hittest="false" />
+            </Panel>
+        </Panel>
+
+        <!-- Выбор следующей способности: под таймером, кликабельны только карточки -->
+        <Panel id="ChoicePanel" class="OSCSurface OSCChaos" hittest="false">
+            <Panel id="ChoiceHeaderRow" hittest="false">
+                <Label id="ChoiceHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
+                    hittest="false" />
+                <Label id="ChoiceTimer" class="OSCTextSmall OSCBold OSCGold" hittest="false" />
+            </Panel>
+            <Panel id="ChoiceCards" hittest="false" />
+            <Panel id="ChoiceProgress" hittest="false">
+                <Panel id="ChoiceProgressFill" hittest="false" />
+            </Panel>
         </Panel>
 
         <Panel id="ChaosRoundPanel" class="OSCSurface OSCChaos" hittest="false">

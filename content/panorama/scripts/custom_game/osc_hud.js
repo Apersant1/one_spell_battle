@@ -5,6 +5,8 @@
   OSC.Timer.Init();
   OSC.ChaosRound.Init();
   OSC.AbilityPopup.Init();
+  OSC.RotationChoice.Init();
+  OSC.Anchor.Init();
   OSC.Casino.Init();
   OSC.NotificationFeed.Init();
 })();
