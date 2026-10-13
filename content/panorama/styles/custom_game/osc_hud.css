@@ -229,6 +229,36 @@
   vertical-align: center;
 }
 
+/* ---------- Якорь у таймера ---------- */
+#AnchorBadge {
+  width: 28px;
+  height: 28px;
+  margin-left: 10px;
+  vertical-align: center;
+  visibility: collapse;
+  border: 1px solid #efc96c;
+  border-radius: 4px;
+  box-shadow: #efc96c88 0px 0px 8px 0px;
+}
+
+#AnchorBadge.Active {
+  visibility: visible;
+}
+
+#AnchorIcon {
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+}
+
+#TimerPanel.Anchored {
+  border: 1px solid #efc96c;
+}
+
+#TimerPanel.Anchored #TimerRingFill {
+  background-color: #efc96c;
+}
+
 /* ---------- Выбор следующей способности ---------- */
 @keyframes 'OSCChoiceIn' {
   0% {

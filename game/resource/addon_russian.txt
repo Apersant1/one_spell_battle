@@ -112,5 +112,7 @@
 		"osc_hud_popup_title"		"Новая способность"
 		"osc_hud_choice_header"		"Выберите следующую способность"
 		"osc_hud_choice_time_left"		"Осталось {s:time}"
+		"osc_hud_anchor_title"		"Якорь"
+		"osc_hud_anchor_tooltip"		"Следующая ротация будет пропущена: текущая способность останется у вас."
 	}
 }

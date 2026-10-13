@@ -11,6 +11,7 @@
         <include src="file://{resources}/scripts/custom_game/osc_chaos_round.js" />
         <include src="file://{resources}/scripts/custom_game/osc_ability_popup.js" />
         <include src="file://{resources}/scripts/custom_game/osc_rotation_choice.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/osc_notification_feed.js" />
         <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
@@ -36,6 +37,11 @@
                 <Panel id="TimerRingHole" hittest="false" />
             </Panel>
             <Label id="TimerLabel" class="OSCTextBody OSCBold" />
+            <!-- Якорь: виден, пока следующая ротация пропускается (osc_anchor.js) -->
+            <Panel id="AnchorBadge" hittest="true">
+                <DOTAAbilityImage id="AnchorIcon" abilityname="tidehunter_anchor_smash"
+                    hittest="false" />
+            </Panel>
         </Panel>
 
         <!-- Выбор следующей способности: под таймером, кликабельны только карточки -->
