@@ -49,7 +49,9 @@ function OSC_ClientCommands.Integer(opts)
     opts = opts or {}
     return function(value)
         local number = tonumber(value)
-        if number == nil or number ~= math.floor(number) then
+        -- NaN не равен сам себе; бесконечности и огромные числа не нужны
+        if number == nil or number ~= number or math.abs(number) >= 2 ^ 31
+            or number ~= math.floor(number) then
             return false
         end
         if (opts.min and number < opts.min) or (opts.max and number > opts.max) then

@@ -84,4 +84,25 @@ return {
         H.eq(OSC_HeroState.Get(hero).ability, "test_c", "state updated")
         H.eq(hero:GetAbilityByIndex(0).name, "test_c", "in the old slot")
     end,
+
+    casino_machine_lives_in_hero_state = function()
+        setup()
+        require("osc/systems/casino")
+        local ogre = H.NewHero({ name = "npc_dota_hero_ogre_magi" })
+        H.AddPlayer(0, ogre)
+        local machine = H.NewHero({ name = "npc_osc_casino_test_object" })
+        machine.index = 42
+        machine.SetMaterialGroup = function() end
+        machine.SetHullRadius = function() end
+        machine.SetForwardVector = function() end
+        CreateUnitByName = function() return machine end
+
+        OSC_Casino.SpawnMachine(ogre)
+
+        H.eq(OSC_HeroState.Get(ogre).casino_machine, machine, "machine stored in hero state")
+        H.eq(ogre.osc_casino_machine, nil, "no loose field on the hero")
+        local text = table.concat(OSC_HeroState.Describe(ogre), "\n")
+        H.truthy(string.find(text, "casino_machine = <npc_osc_casino_test_object #42>", 1, true),
+            "shown by -hero_state: " .. text)
+    end,
 }

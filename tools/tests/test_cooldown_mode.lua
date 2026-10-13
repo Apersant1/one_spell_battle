@@ -77,4 +77,20 @@ return {
         H.eq(clone:FindAbilityByName("test_b"):GetCooldownTimeRemaining(), 6,
             "Meepo clone does not get a free cast")
     end,
+
+    copies_get_ready_ability_in_ready_mode = function()
+        local hero = setup()
+        hero:FindAbilityByName("test_a").cooldown = 0
+        local clone = H.NewHero({ abilities = { "test_a" }, copy = "clone" })
+        OSC_HeroState.Get(clone).ability = "test_a"
+        OSC_Abilities.Give(hero, "ability", OSC_ABILITY_POOL[2], false)
+        hero:FindAbilityByName("test_b"):StartCooldown(9) -- владелец уже скастовал
+
+        local illusion = H.NewHero({ copy = "illusion" })
+        OSC_Abilities.CopyFromOwner(illusion, hero)
+
+        H.eq(clone:FindAbilityByName("test_b"):GetCooldownTimeRemaining(), 0, "clone ready as before")
+        H.eq(illusion:FindAbilityByName("test_b"):GetCooldownTimeRemaining(), 0,
+            "new copy does not inherit the owner cooldown in ready mode")
+    end,
 }

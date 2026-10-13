@@ -1,4 +1,5 @@
 require("osc/core/client_commands")
+require("osc/core/hero_state")
 
 OSC_Casino = OSC_Casino or {}
 
@@ -58,7 +59,7 @@ local function CanUseMachine(hero, playerID, machine)
     end
 
     local isOwner = machine.osc_casino_owner_player_id == playerID
-    if isOwner and hero.osc_casino_machine ~= machine then
+    if isOwner and OSC_HeroState.Get(hero).casino_machine ~= machine then
         return false, "osc_casino_err_unavailable"
     end
     if not isOwner then
@@ -247,8 +248,8 @@ local function RemoveMachine(machine)
     end
 
     local owner = machine.osc_casino_owner_hero
-    if owner and not owner:IsNull() and owner.osc_casino_machine == machine then
-        owner.osc_casino_machine = nil
+    if owner and not owner:IsNull() and OSC_HeroState.Get(owner).casino_machine == machine then
+        OSC_HeroState.Get(owner).casino_machine = nil
     end
     UTIL_Remove(machine)
 end
@@ -259,7 +260,7 @@ end
 function OSC_Casino.SpawnMachine(hero)
     local _, playerID = GetHeroPlayer(hero)
 
-    local oldMachine = hero.osc_casino_machine
+    local oldMachine = OSC_HeroState.Get(hero).casino_machine
     if oldMachine and not oldMachine:IsNull() then
         if oldMachine.osc_casino_is_spinning then
             ShowHudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
@@ -291,7 +292,7 @@ function OSC_Casino.SpawnMachine(hero)
     machine.osc_casino_owner_player_id = playerID
     machine.osc_casino_owner_hero = hero
     machine.osc_casino_is_spinning = false
-    hero.osc_casino_machine = machine
+    OSC_HeroState.Get(hero).casino_machine = machine
 
     machine:SetContextThink("osc_casino_expire", function()
         if machine:IsNull() then return nil end

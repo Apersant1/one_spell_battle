@@ -167,7 +167,10 @@ return {
 
         H.eq(OSC_HeroState.Get(owner).ability, "test_b", "owner ability")
         H.truthy(clone:FindAbilityByName("test_b"), "clone got new ability")
-        H.eq(clone:FindAbilityByName("test_a"), nil, "clone lost old ability")
+        H.eq(clone:FindAbilityByName("test_a"):IsHidden(), true, "old ability of the clone hidden")
+        H.eq(slotOf(clone, "test_b"), 0, "new ability in the old slot of the clone")
+        H.RunThinksMatching("osc_retire_ability")
+        H.eq(clone:FindAbilityByName("test_a"), nil, "clone lost old ability after the delay")
         H.truthy(enemyClone:FindAbilityByName("test_a"), "other player's copy untouched")
     end,
 

@@ -64,7 +64,7 @@ return {
         H.eq(OSC_Heroes.GetCopyOwner(f.main), nil, "main hero has no owner")
     end,
 
-    hero_spawned_dispatched_once_per_spawn = function()
+    hero_spawned_fires_on_both_engine_events = function()
         setup()
         OSC_GameEvents.Init()
         local seen = {}
@@ -80,14 +80,99 @@ return {
 
         spawn(2, hero)
         H.FireGameEvent("dota_on_hero_finish_spawn", { heroindex = 2 })
-        H.eq(#seen, 1, "finish_spawn after npc_spawned is not repeated")
+        H.eq(#seen, 2, "finish_spawn is a second chance, not swallowed")
+        H.eq(seen[2], "dota_on_hero_finish_spawn", "source passed")
 
         spawn(2, hero)
-        H.eq(#seen, 2, "respawn dispatched again")
+        H.eq(#seen, 3, "respawn dispatched again")
+    end,
 
-        H.entities[3] = H.NewHero({})
-        H.FireGameEvent("dota_on_hero_finish_spawn", { heroindex = 3 })
-        H.eq(seen[3], "dota_on_hero_finish_spawn", "finish_spawn works as a fallback")
+    init_gets_second_chance_when_owner_set_late = function()
+        setup()
+        require("osc/systems/abilities")
+        require("osc/systems/hero_lifecycle")
+        OSC_GameEvents.Init()
+        OSC_HeroLifecycle.Init()
+        H.DefineAbility("test_a")
+        OSC_ABILITY_POOL = { { name = "test_a", hero = "npc_dota_hero_axe", label = "A", tags = { "damage" } } }
+        local hero = H.NewHero({ playerID = 0 })
+
+        -- На npc_spawned игроку ещё не назначен выбранный герой
+        spawn(1, hero)
+        H.eq(H.thinks.osc_init, nil, "not recognized as a main hero yet")
+
+        H.AddPlayer(0, hero)
+        H.FireGameEvent("dota_on_hero_finish_spawn", { heroindex = 1 })
+        H.RunThink("osc_init")
+        H.eq(OSC_HeroState.Get(hero).initialized, true, "initialized on the second event")
+
+        spawn(1, hero)
+        H.FireGameEvent("dota_on_hero_finish_spawn", { heroindex = 1 })
+        H.eq(H.thinks.osc_init, nil, "repeated events do not initialize again")
+    end,
+
+    subscribers_are_idempotent = function()
+        setup()
+        require("osc/systems/abilities")
+        require("osc/systems/hero_lifecycle")
+        require("osc/systems/couriers")
+        OSC_GameEvents.Init()
+        OSC_HeroLifecycle.Init()
+        OSC_Couriers.Init()
+        H.DefineAbility("test_a")
+        OSC_ABILITY_POOL = { { name = "test_a", hero = "npc_dota_hero_axe", label = "A", tags = { "damage" } } }
+        OSC_CONFIG.COURIERS.COUNT_PER_TEAM = 1
+        H.byClass.ent_dota_fountain = { H.NewHero({ name = "ent_dota_fountain", playerID = 9 }) }
+        local courier = H.NewHero({ name = "npc_dota_courier", playerID = 9 })
+        H.byClass.npc_dota_courier = { courier }
+        local f = family()
+
+        for _ = 1, 2 do
+            spawn(1, f.main)
+            H.FireGameEvent("dota_on_hero_finish_spawn", { heroindex = 1 })
+        end
+        H.RunThink("osc_init")
+        H.eq(OSC_HeroState.Get(f.main).init_attempts, 1, "initialized once")
+
+        for _ = 1, 2 do
+            spawn(2, f.clone)
+            H.FireGameEvent("dota_on_hero_finish_spawn", { heroindex = 2 })
+        end
+        H.RunThink("osc_copy")
+        local count = 0
+        for index = 0, f.clone:GetAbilityCount() - 1 do
+            local ability = f.clone:GetAbilityByIndex(index)
+            if ability and ability.name == "test_a" then count = count + 1 end
+        end
+        H.eq(count, 1, "clone copied once")
+        H.eq(courier.osc_courier_ai_initialized, true, "couriers started once")
+    end,
+
+    monkey_king_soldiers_are_ignored = function()
+        setup()
+        local king = H.NewHero({ name = "npc_dota_hero_monkey_king", playerID = 0 })
+        H.AddPlayer(0, king)
+        local soldier = H.NewHero({ name = "npc_dota_hero_monkey_king", playerID = 0 })
+        soldier:AddNewModifier(soldier, nil, "modifier_monkey_king_fur_army_soldier", {})
+        local plain = H.NewHero({ name = "npc_dota_hero_monkey_king", playerID = 0 })
+
+        H.eq(OSC_Heroes.IsMainHero(king), true, "Monkey King himself")
+        for _, unit in ipairs({ soldier, plain }) do
+            H.eq(OSC_Heroes.IsMainHero(unit), false, "soldier is not the selected hero")
+            H.eq(OSC_Heroes.IsCombatHero(unit), false, "soldier gets no chaos or weather")
+            H.eq(OSC_Heroes.IsCopy(unit), false, "soldier is not a copy")
+        end
+        soldier.copy = "clone"
+        H.eq(OSC_Heroes.IsCombatHero(soldier), false, "soldier modifier wins over clone flags")
+    end,
+
+    replica_illusion_has_no_owner = function()
+        setup()
+        local f = family()
+        local replica = H.NewHero({ name = "npc_dota_hero_lina", playerID = 0, copy = "illusion" })
+
+        H.eq(OSC_Heroes.GetCopyOwner(replica), nil, "illusion of another hero keeps its abilities")
+        H.eq(OSC_Heroes.GetCopyOwner(f.illusion), f.main, "own illusion has an owner")
     end,
 
     game_started_fires_once = function()

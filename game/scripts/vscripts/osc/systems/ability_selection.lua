@@ -231,11 +231,16 @@ local function GetAlliedUltimateCount(hero, abilityName)
     local count = 0
     local team = hero:GetTeamNumber()
 
+    -- Ультимейт, ожидающий конца фазы каста, тоже считается: через пару
+    -- секунд он будет у союзника
     OSC_Heroes.ForEachPlayerHero(function(teammate)
         local state = OSC_HeroState.Peek(teammate)
-        if teammate ~= hero and teammate:GetTeamNumber() == team
-            and state and state.ultimate == abilityName then
-            count = count + 1
+        if teammate ~= hero and teammate:GetTeamNumber() == team and state then
+            local pending = state.deferred and state.deferred.ultimate
+            if state.ultimate == abilityName
+                or (pending and pending.entry and pending.entry.name == abilityName) then
+                count = count + 1
+            end
         end
     end)
 

@@ -4,9 +4,11 @@
 --
 -- События:
 --   hero_spawned(unit, source) — герой (основной или копия) появился или
---     возродился. source — имя события движка. Первое появление может прийти
---     дважды (npc_spawned и dota_on_hero_finish_spawn), поэтому обработчики
---     должны быть идемпотентными. Кто нужен — фильтруют через OSC_Heroes.
+--     возродился. source — имя события движка. Первое появление приходит
+--     дважды (npc_spawned и dota_on_hero_finish_spawn) — это второй шанс,
+--     если на npc_spawned юнит ещё не распознан (владелец не выставлен) или
+--     обработчик упал. Поэтому обработчики обязаны быть идемпотентными.
+--     Кто нужен — фильтруют через OSC_Heroes.
 --   hero_initialized(hero) — основной герой получил способности режима
 --     (присылает hero_lifecycle).
 --   game_started() — игра перешла в GAME_IN_PROGRESS; приходит один раз.
@@ -19,7 +21,6 @@
 
 require("osc/core/logger")
 require("osc/core/heroes")
-require("osc/core/hero_state")
 
 OSC_GameEvents = OSC_GameEvents or {
     handlers = {},
@@ -75,17 +76,13 @@ end
 function OSC_GameEvents.OnNPCSpawned(event)
     local unit = EntIndexToHScript(event.entindex)
     if not OSC_Heroes.IsHeroUnit(unit) then return end
-    OSC_HeroState.Get(unit).spawn_seen = true
     OSC_GameEvents.Emit("hero_spawned", unit, "npc_spawned")
 end
 
--- Запасной путь: у героя, чей npc_spawned уже пришёл, повтор не нужен
+-- Второй шанс для первого появления (см. hero_spawned выше)
 function OSC_GameEvents.OnHeroFinishSpawn(event)
     local unit = EntIndexToHScript(event.heroindex)
     if not OSC_Heroes.IsHeroUnit(unit) then return end
-    local state = OSC_HeroState.Get(unit)
-    if state.spawn_seen then return end
-    state.spawn_seen = true
     OSC_GameEvents.Emit("hero_spawned", unit, "dota_on_hero_finish_spawn")
 end
 

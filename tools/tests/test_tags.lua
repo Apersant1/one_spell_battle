@@ -194,4 +194,25 @@ return {
         H.eq(#picked, 1, "only one allowed")
         H.eq(picked[1].name, "test_u2", "ally's ultimate excluded")
     end,
+
+    pending_ultimate_counts_for_team_limit = function()
+        setup()
+        OSC_CONFIG.MAX_DUPLICATE_ULTIMATES_PER_TEAM = 1
+        H.DefineAbility("test_u1", { ultimate = true })
+        H.DefineAbility("test_u2", { ultimate = true })
+        OSC_ULTIMATE_POOL = {
+            { name = "test_u1", hero = "npc_dota_hero_axe", label = "U1", tags = { "damage" } },
+            { name = "test_u2", hero = "npc_dota_hero_axe", label = "U2", tags = { "disable" } },
+        }
+        local hero = H.NewHero({ level = 6 })
+        H.AddPlayer(0, hero)
+        local ally = H.NewHero({ level = 6 })
+        H.AddPlayer(1, ally)
+        -- Союзник ждёт конца каста, чтобы получить test_u1
+        OSC_HeroState.Get(ally).deferred.ultimate = { entry = OSC_ULTIMATE_POOL[1], deadline = 3 }
+
+        for _ = 1, 10 do
+            H.eq(OSC_AbilitySelection.Pick(hero, "ultimate").name, "test_u2", "pending ultimate counted")
+        end
+    end,
 }

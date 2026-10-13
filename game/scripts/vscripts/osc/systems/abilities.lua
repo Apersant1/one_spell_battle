@@ -204,36 +204,97 @@ local function ApplyNewAbilityCooldown(ability)
     end
 end
 
+-- ================= Отсрочка на время фазы каста =================
+
+local function CanDefer()
+    return OSC_CONFIG.ROTATION_CAST_PHASE_DEFER == true
+        and type(OSC_CONFIG.ROTATION_MAX_DEFER) == "number"
+        and OSC_CONFIG.ROTATION_MAX_DEFER > 0
+        and type(OSC_CONFIG.ROTATION_DEFER_STEP) == "number"
+        and OSC_CONFIG.ROTATION_DEFER_STEP > 0
+end
+
+-- Способность слота юнита (или её подспособность) в фазе каста: скрытие или
+-- удаление в этот момент может сорвать каст
+local function IsInCastPhase(unit, slot)
+    local name = OSC_HeroState.Get(unit)[slot]
+    if not name then return false end
+
+    local names = { name }
+    local entry = FindEntry(name)
+    for _, link in ipairs(entry and entry.linked or {}) do
+        table.insert(names, link.name)
+    end
+    for _, abilityName in ipairs(names) do
+        local ability = unit:FindAbilityByName(abilityName)
+        if ability and ability.IsInAbilityPhase and ability:IsInAbilityPhase() then
+            return true
+        end
+    end
+    return false
+end
+
+local function Now()
+    return GameRules:GetGameTime()
+end
+
+-- Ставит отложенную замену слота юнита; thinkFn(unit, slot) — шаг таймера
+local function Defer(unit, slot, pending, thinkName)
+    pending.deadline = Now() + OSC_CONFIG.ROTATION_MAX_DEFER
+    OSC_HeroState.Get(unit).deferred[slot] = pending
+    OSC_Logger.Log("Deferred " .. slot .. " change for " .. unit:GetUnitName()
+        .. ": " .. tostring(OSC_HeroState.Get(unit)[slot]) .. " is in cast phase")
+    unit:SetContextThink("osc_deferred_" .. slot, function()
+        return OSC_Abilities[thinkName](unit, slot)
+    end, OSC_CONFIG.ROTATION_DEFER_STEP)
+end
+
+-- ================= Замена в слоте =================
+
 -- Новая способность добавляется до снятия старой (если движок её не выдал,
--- у героя остаётся прежняя) и через SwapAbilities встаёт в слот старой.
--- slot — "ability" или "ultimate" (поле состояния героя).
-local function SwapEntry(hero, slot, entry)
-    ClearRetired(hero, entry.name)
+-- у юнита остаётся прежняя) и через SwapAbilities встаёт в слот старой;
+-- старая снимается через RetireAbility. slot — "ability" или "ultimate"
+-- (поле состояния). levelOf(ability) — уровень новой способности.
+-- Возвращает новую способность и имя прежней или nil.
+local function SwapEntry(unit, slot, entry, levelOf)
+    ClearRetired(unit, entry.name)
     for _, link in ipairs(entry.linked or {}) do
-        ClearRetired(hero, link.name)
+        ClearRetired(unit, link.name)
     end
 
-    local ability = hero:AddAbility(entry.name)
+    local ability = unit:AddAbility(entry.name)
     if not ability then
         OSC_Logger.Error("Failed to add ability: " .. entry.name)
+        return nil
+    end
+
+    local state = OSC_HeroState.Get(unit)
+    local oldName = state[slot]
+    local old = oldName and unit:FindAbilityByName(oldName)
+    if old and old ~= ability then
+        unit:SwapAbilities(oldName, entry.name, false, true)
+        RetireAbility(unit, old)
+    end
+    RetireLinked(unit, oldName)
+
+    PlaceEntry(unit, entry, ability, levelOf(ability))
+    ability:EndCooldown()
+    state[slot] = entry.name
+    return ability, oldName
+end
+
+-- Замена у основного героя: уровень по уровню героя, перезарядка по
+-- NEW_ABILITY_COOLDOWN_MODE (только если была прежняя), теги в историю
+local function SwapOwnerEntry(hero, slot, entry)
+    local ability, oldName = SwapEntry(hero, slot, entry, function(added)
+        return OSC_Abilities.CalcLevel(hero:GetLevel(), added)
+    end)
+    if not ability then
         return false
     end
-
-    local state = OSC_HeroState.Get(hero)
-    local oldName = state[slot]
-    local old = oldName and hero:FindAbilityByName(oldName)
-    if old then
-        hero:SwapAbilities(oldName, entry.name, false, true)
-        RetireAbility(hero, old)
-    end
-    RetireLinked(hero, oldName)
-
-    PlaceEntry(hero, entry, ability, OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
-    ability:EndCooldown()
     if oldName then
         ApplyNewAbilityCooldown(ability)
     end
-    state[slot] = entry.name
     OSC_AbilitySelection.Remember(hero, slot, entry)
     return true
 end
@@ -255,6 +316,19 @@ function OSC_Abilities.SetEntryLevel(hero, name, level)
     end
 end
 
+-- ================= Копии =================
+
+-- В режиме partial копия получает способность с оставшейся перезарядкой
+-- владельца, иначе у клона был бы бесплатный каст. В режиме ready копия,
+-- как и раньше, получает способность готовой.
+local function InheritCooldown(ability, source)
+    if OSC_CONFIG.NEW_ABILITY_COOLDOWN_MODE ~= "partial" then return end
+    local remaining = source and source:GetCooldownTimeRemaining() or 0
+    if remaining > 0 then
+        ability:StartCooldown(remaining)
+    end
+end
+
 local function CopyEntry(unit, owner, name)
     if not name then return nil end
 
@@ -267,15 +341,11 @@ local function CopyEntry(unit, owner, name)
     local source = owner:FindAbilityByName(name)
     PlaceEntry(unit, FindEntry(name) or { name = name }, ability,
         source and source:GetLevel() or 1)
-    -- Копия не получает готовую способность, пока у владельца она на
-    -- перезарядке (в том числе частичной после смены)
-    local remaining = source and source:GetCooldownTimeRemaining() or 0
-    if remaining > 0 then
-        ability:StartCooldown(remaining)
-    end
+    InheritCooldown(ability, source)
     return name
 end
 
+-- Полное копирование при появлении копии: у неё ещё нет кастов режима
 function OSC_Abilities.CopyFromOwner(unit, owner)
     OSC_Abilities.StripHero(unit)
     local state, ownerState = OSC_HeroState.Get(unit), OSC_HeroState.Get(owner)
@@ -287,26 +357,101 @@ local function HasAbility(unit, name)
     return name == nil or unit:FindAbilityByName(name) ~= nil
 end
 
--- Копия с теми же способностями только догоняет уровни: пересоздание
--- сбросило бы её перезарядки (клоны Meepo живут всю игру)
-local function SyncCopy(unit, owner)
-    local state, ownerState = OSC_HeroState.Get(unit), OSC_HeroState.Get(owner)
-    local mainName, ultimateName = ownerState.ability, ownerState.ultimate
-    local unchanged = state.ability == mainName
-        and state.ultimate == ultimateName
-        and HasAbility(unit, mainName)
-        and HasAbility(unit, ultimateName)
-    if not unchanged then
-        OSC_Abilities.CopyFromOwner(unit, owner)
+-- Ставит копии способность слота владельца так же, как герою: в слот
+-- прежней, прежняя доживает скрытой (RetireAbility)
+local function SwapCopyEntry(unit, owner, slot)
+    local state = OSC_HeroState.Get(unit)
+    local name = OSC_HeroState.Get(owner)[slot]
+    if not name then
+        local oldName = state[slot]
+        local old = oldName and unit:FindAbilityByName(oldName)
+        if old then
+            RetireAbility(unit, old)
+        end
+        RetireLinked(unit, oldName)
+        state[slot] = nil
         return
     end
 
-    for _, name in pairs({ mainName, ultimateName }) do
-        local source = owner:FindAbilityByName(name)
+    local source = owner:FindAbilityByName(name)
+    local ability = SwapEntry(unit, slot, FindEntry(name) or { name = name }, function()
+        return source and source:GetLevel() or 1
+    end)
+    if ability then
+        InheritCooldown(ability, source)
+    end
+end
+
+-- Слот копии догоняет владельца. Та же способность — только уровни
+-- (пересоздание сбросило бы перезарядки: клоны Meepo живут всю игру).
+-- Другая — замена; если способность копии в фазе каста, замена этой копии
+-- откладывается так же, как у героя. force — срок ожидания вышел.
+local function SyncCopySlot(unit, owner, slot, force)
+    local state = OSC_HeroState.Get(unit)
+    local name = OSC_HeroState.Get(owner)[slot]
+    -- Нужная способность уже есть у копии (например, движок скопировал её
+    -- сам) — запоминаем её, а не добавляем вторую
+    local existing = name and unit:FindAbilityByName(name)
+    if existing and not existing.osc_retired and state[slot] ~= name then
+        local oldName = state[slot]
+        local old = oldName and unit:FindAbilityByName(oldName)
+        if old then
+            RetireAbility(unit, old)
+        end
+        RetireLinked(unit, oldName)
+        state[slot] = name
+    end
+    if state[slot] == name and HasAbility(unit, name) then
+        local source = name and owner:FindAbilityByName(name)
         if source then
             OSC_Abilities.SetEntryLevel(unit, name, source:GetLevel())
         end
+        return
     end
+
+    local pending = state.deferred[slot]
+    if pending and not force then
+        -- Ожидающая замена возьмёт актуальную способность владельца сама;
+        -- если её таймер пропал, срок всё равно ограничен
+        if Now() < pending.deadline then
+            return
+        end
+        force = true
+    end
+    state.deferred[slot] = nil
+
+    if not force and CanDefer() and IsInCastPhase(unit, slot) then
+        Defer(unit, slot, { copy = true }, "ProcessCopyDeferred")
+        return
+    end
+    SwapCopyEntry(unit, owner, slot)
+end
+
+-- Шаг таймера отложенной замены у копии
+function OSC_Abilities.ProcessCopyDeferred(unit, slot)
+    if unit:IsNull() then return nil end
+    local state = OSC_HeroState.Get(unit)
+    local pending = state.deferred[slot]
+    if not pending then return nil end
+
+    if IsInCastPhase(unit, slot) and Now() < pending.deadline then
+        return OSC_CONFIG.ROTATION_DEFER_STEP
+    end
+
+    state.deferred[slot] = nil
+    local owner = OSC_Heroes.GetCopyOwner(unit)
+    if owner then
+        local ok, err = pcall(SyncCopySlot, unit, owner, slot, true)
+        if not ok then
+            OSC_Logger.Error("Deferred copy sync failed for " .. unit:GetUnitName() .. ": " .. tostring(err))
+        end
+    end
+    return nil
+end
+
+local function SyncCopy(unit, owner)
+    SyncCopySlot(unit, owner, "ability")
+    SyncCopySlot(unit, owner, "ultimate")
 end
 
 -- Обновляет живые копии владельца (клоны Meepo, иллюзии, Tempest Double).
@@ -320,8 +465,10 @@ function OSC_Abilities.SyncCopies(owner)
     end)
 end
 
+-- ================= Выдача основному герою =================
+
 local function ApplyGive(hero, slot, entry, notify)
-    if not SwapEntry(hero, slot, entry) then
+    if not SwapOwnerEntry(hero, slot, entry) then
         return nil
     end
 
@@ -332,34 +479,6 @@ local function ApplyGive(hero, slot, entry, notify)
     return entry
 end
 
--- Способность слота (или её подспособность) в фазе каста: скрытие или
--- удаление в этот момент может сорвать каст
-local function IsInCastPhase(hero, slot)
-    local name = OSC_HeroState.Get(hero)[slot]
-    if not name then return false end
-
-    local names = { name }
-    local entry = FindEntry(name)
-    for _, link in ipairs(entry and entry.linked or {}) do
-        table.insert(names, link.name)
-    end
-    for _, abilityName in ipairs(names) do
-        local ability = hero:FindAbilityByName(abilityName)
-        if ability and ability.IsInAbilityPhase and ability:IsInAbilityPhase() then
-            return true
-        end
-    end
-    return false
-end
-
-local function CanDefer()
-    return OSC_CONFIG.ROTATION_CAST_PHASE_DEFER == true
-        and type(OSC_CONFIG.ROTATION_MAX_DEFER) == "number"
-        and OSC_CONFIG.ROTATION_MAX_DEFER > 0
-        and type(OSC_CONFIG.ROTATION_DEFER_STEP) == "number"
-        and OSC_CONFIG.ROTATION_DEFER_STEP > 0
-end
-
 -- Шаг таймера отложенной замены (таймер на самом герое). Возвращает задержку
 -- до следующей проверки или nil, когда замена выполнена или отменена.
 function OSC_Abilities.ProcessDeferred(hero, slot)
@@ -368,7 +487,7 @@ function OSC_Abilities.ProcessDeferred(hero, slot)
     local pending = state.deferred[slot]
     if not pending then return nil end
 
-    if IsInCastPhase(hero, slot) and GameRules:GetGameTime() < pending.deadline then
+    if IsInCastPhase(hero, slot) and Now() < pending.deadline then
         return OSC_CONFIG.ROTATION_DEFER_STEP
     end
 
@@ -392,25 +511,21 @@ function OSC_Abilities.Give(hero, slot, entry, notify)
     local state = OSC_HeroState.Get(hero)
 
     -- Пока замена ждёт, новая запрошенная замена встаёт вместо неё;
-    -- срок ожидания остаётся прежним
+    -- срок ожидания остаётся прежним. Срок вышел (например, таймер пропал) —
+    -- применяем сразу, иначе слот завис бы навсегда.
     local pending = state.deferred[slot]
     if pending then
-        pending.entry = entry
         pending.notify = pending.notify or notify
-        return entry
+        if Now() < pending.deadline then
+            pending.entry = entry
+            return entry
+        end
+        state.deferred[slot] = nil
+        return ApplyGive(hero, slot, entry, pending.notify)
     end
 
     if CanDefer() and IsInCastPhase(hero, slot) then
-        state.deferred[slot] = {
-            entry = entry,
-            notify = notify,
-            deadline = GameRules:GetGameTime() + OSC_CONFIG.ROTATION_MAX_DEFER,
-        }
-        OSC_Logger.Log("Deferred " .. slot .. " change for " .. hero:GetUnitName()
-            .. ": " .. tostring(state[slot]) .. " is in cast phase")
-        hero:SetContextThink("osc_deferred_" .. slot, function()
-            return OSC_Abilities.ProcessDeferred(hero, slot)
-        end, OSC_CONFIG.ROTATION_DEFER_STEP)
+        Defer(hero, slot, { entry = entry, notify = notify }, "ProcessDeferred")
         return entry
     end
 

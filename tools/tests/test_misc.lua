@@ -97,6 +97,7 @@ return {
         setupCouriers()
         OSC_CONFIG.COURIERS.COUNT_PER_TEAM = 1
         local hero = H.NewHero({})
+        H.AddPlayer(0, hero)
         H.entities[7] = hero
         local fountain = H.NewHero({ name = "ent_dota_fountain" })
         local courier = H.NewHero({ name = "npc_dota_courier" })

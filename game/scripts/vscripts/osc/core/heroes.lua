@@ -2,7 +2,9 @@
 -- только через эти функции, чтобы правила не расходились.
 --
 -- Виды героев в матче:
---   основной герой — выбранный герой игрока (PlayerResource:GetSelectedHeroEntity).
+--   основной герой — выбранный герой игрока: сам юнит, который возвращает
+--     PlayerResource:GetSelectedHeroEntity(его игрок). Солдаты Monkey King
+--     (Wukong's Command) тоже IsRealHero, но выбранным героем не являются.
 --     Его инициализирует hero_lifecycle, его меняет ротация, ему принадлежат
 --     предметы режима и курьеры команды.
 --   копия — иллюзия, Tempest Double или клон Meepo. Своих способностей режима
@@ -12,6 +14,7 @@
 --
 -- Клоны Meepo и Tempest Double — боевые тела: хаос-эффекты (перезарядки,
 -- бесплатная мана) и погода действуют на них так же, как на основного героя.
+-- Солдаты Monkey King — ни основной герой, ни копия, ни боевое тело.
 
 OSC_Heroes = OSC_Heroes or {}
 
@@ -23,27 +26,55 @@ function OSC_Heroes.IsHeroUnit(unit)
     return OSC_Heroes.IsValid(unit) and unit.IsHero ~= nil and unit:IsHero() == true
 end
 
--- Иллюзия, Tempest Double или клон Meepo
-function OSC_Heroes.IsCopy(unit)
-    if not OSC_Heroes.IsHeroUnit(unit) then return false end
-    return (unit.IsIllusion and unit:IsIllusion())
-        or (unit.IsTempestDouble and unit:IsTempestDouble())
+-- Солдат Wukong's Command: у него модификатор
+-- modifier_monkey_king_fur_army_soldier* (имя зависит от состояния солдата)
+local SOLDIER_MODIFIER = "monkey_king_fur_army_soldier"
+
+function OSC_Heroes.IsFurArmySoldier(unit)
+    if not unit.GetModifierCount or not unit.GetModifierNameByIndex then
+        return false
+    end
+    for index = 0, unit:GetModifierCount() - 1 do
+        local name = unit:GetModifierNameByIndex(index)
+        if name and string.find(name, SOLDIER_MODIFIER, 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+local function IsCloneOrDouble(unit)
+    return (unit.IsTempestDouble and unit:IsTempestDouble())
         or (unit.IsClone and unit:IsClone())
         or false
 end
 
--- Основной герой игрока: не копия
-function OSC_Heroes.IsMainHero(unit)
-    return OSC_Heroes.IsHeroUnit(unit)
-        and unit.IsRealHero ~= nil and unit:IsRealHero() == true
-        and not OSC_Heroes.IsCopy(unit)
+-- Иллюзия, Tempest Double или клон Meepo
+function OSC_Heroes.IsCopy(unit)
+    if not OSC_Heroes.IsHeroUnit(unit) or OSC_Heroes.IsFurArmySoldier(unit) then
+        return false
+    end
+    return (unit.IsIllusion and unit:IsIllusion()) or IsCloneOrDouble(unit)
 end
 
--- Боевое тело: основной герой, клон Meepo или Tempest Double (не иллюзия)
+-- Основной герой игрока: тот самый юнит, который выбран игроком-владельцем
+function OSC_Heroes.IsMainHero(unit)
+    if not OSC_Heroes.IsHeroUnit(unit)
+        or unit.IsRealHero == nil or unit:IsRealHero() ~= true
+        or OSC_Heroes.IsCopy(unit) then
+        return false
+    end
+    local playerID = unit.GetPlayerOwnerID and unit:GetPlayerOwnerID()
+    return playerID ~= nil and OSC_Heroes.GetPlayerHero(playerID) == unit
+end
+
+-- Боевое тело: основной герой, клон Meepo или Tempest Double (не иллюзия,
+-- не солдат Monkey King)
 function OSC_Heroes.IsCombatHero(unit)
-    return OSC_Heroes.IsHeroUnit(unit)
-        and unit.IsRealHero ~= nil and unit:IsRealHero() == true
-        and not (unit.IsIllusion and unit:IsIllusion())
+    if OSC_Heroes.IsMainHero(unit) then
+        return true
+    end
+    return OSC_Heroes.IsCopy(unit) and IsCloneOrDouble(unit)
 end
 
 -- Основной герой игрока или nil
@@ -77,11 +108,13 @@ function OSC_Heroes.ForEachCombatHero(callback)
     end
 end
 
--- Основной герой, способности которого копирует копия
+-- Основной герой, способности которого копирует копия: герой её игрока с
+-- тем же именем юнита (иллюзия чужого героя под контролем игрока — Wall of
+-- Replica — копией его героя не считается), как в ForEachCopy
 function OSC_Heroes.GetCopyOwner(copy)
     if not OSC_Heroes.IsCopy(copy) then return nil end
     local owner = OSC_Heroes.GetPlayerHero(copy:GetPlayerOwnerID())
-    if owner and owner ~= copy then
+    if owner and owner ~= copy and owner:GetUnitName() == copy:GetUnitName() then
         return owner
     end
     return nil

@@ -31,8 +31,8 @@ local FIELDS = {
     -- Копия (иллюзия, Tempest Double, клон Meepo)
     { name = "copy_done", default = false, doc = "способности владельца уже скопированы" },
 
-    -- События движка (game_events)
-    { name = "spawn_seen", default = false, doc = "npc_spawned уже приходил" },
+    -- Казино Огра (casino): автомат, поставленный этим героем
+    { name = "casino_machine", doc = "текущий автомат казино героя" },
 
     -- Ротация с выбором (этап 1)
     { name = "anchored", default = false, doc = "«Якорь»: пропустить следующую ротацию (1.5)" },
@@ -69,6 +69,25 @@ function OSC_HeroState.Get(hero)
     return state
 end
 
+-- Возвращает перечисленные поля к значениям по умолчанию
+function OSC_HeroState.Reset(hero, names)
+    local state = OSC_HeroState.Get(hero)
+    local wanted = {}
+    for _, name in ipairs(names) do
+        wanted[name] = true
+    end
+    for _, field in ipairs(FIELDS) do
+        if wanted[field.name] then
+            local default = field.default
+            if type(default) == "function" then
+                default = default()
+            end
+            state[field.name] = default
+        end
+    end
+    return state
+end
+
 -- Состояние без создания: nil, если герой режиму ещё не встречался
 function OSC_HeroState.Peek(hero)
     return hero and hero.osc_state or nil
@@ -84,6 +103,14 @@ end
 local function Format(value, depth)
     if type(value) ~= "table" then
         return tostring(value)
+    end
+    -- Сущность (автомат казино и т. п.) — имя и индекс, а не все её поля
+    if value.IsNull and value.entindex then
+        if value:IsNull() then
+            return "<removed entity>"
+        end
+        local name = value.GetUnitName and value:GetUnitName() or "entity"
+        return "<" .. tostring(name) .. " #" .. tostring(value:entindex()) .. ">"
     end
     if depth > 2 then
         return "{...}"

@@ -25,6 +25,10 @@ local function InitializeHeroAbilities(hero, source)
         if not OSC_Heroes.IsValid(hero) then return nil end
 
         local ok, err = pcall(function()
+            -- Каждая попытка — первичная выдача: после частичного успеха
+            -- прошлой попытки способность не считается «сменой» (без
+            -- перезарядки partial) и теги не пишутся в историю дважды
+            OSC_HeroState.Reset(hero, { "ability", "ultimate", "recent_tags", "deferred" })
             OSC_Abilities.StripHero(hero)
             -- Порядок выдачи задаёт слоты: способность первой встаёт на Q,
             -- собственные способности героя (казино Огра) — следом на W
@@ -68,12 +72,15 @@ function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
     if OSC_Heroes.IsCopy(unit) then
         local state = OSC_HeroState.Get(unit)
         if state.copy_done then return end
-        state.copy_done = true
 
+        -- Именованный think: повторное событие лишь переназначает его.
+        -- Копия без владельца (Wall of Replica, владелец ещё не выставлен)
+        -- не помечается — следующее событие даст ей второй шанс.
         unit:SetContextThink("osc_copy", function()
             local owner = OSC_Heroes.GetCopyOwner(unit)
-            if owner then
+            if owner and not state.copy_done then
                 OSC_Abilities.CopyFromOwner(unit, owner)
+                state.copy_done = true
             end
             return nil
         end, 0.1)

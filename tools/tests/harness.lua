@@ -282,11 +282,14 @@ function Hero:RemoveItem(item)
     self.removedItems = (self.removedItems or 0) + 1
 end
 function Hero:HasModifier(name) return self.modifiers[name] ~= nil end
-function Hero:GetModifierCount()
-    local count = 0
-    for _ in pairs(self.modifiers) do count = count + 1 end
-    return count
+local function ModifierNames(hero)
+    local names = {}
+    for name in pairs(hero.modifiers) do table.insert(names, name) end
+    table.sort(names)
+    return names
 end
+function Hero:GetModifierCount() return #ModifierNames(self) end
+function Hero:GetModifierNameByIndex(index) return ModifierNames(self)[index + 1] end
 function Hero:AddNewModifier(_, _, name, params) self.modifiers[name] = params or {}; return {} end
 function Hero:RemoveModifierByName(name) self.modifiers[name] = nil end
 function Hero:SetContextThink(name, fn, delay) H.thinks[name] = { fn = fn, delay = delay } end

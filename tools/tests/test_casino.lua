@@ -65,7 +65,7 @@ return {
         H.AddPlayer(0, hero, { gold = 1000 })
         local machine = H.NewHero({ name = "npc_osc_casino_test_object" })
         machine.osc_casino_owner_player_id = 0
-        hero.osc_casino_machine = machine
+        OSC_HeroState.Get(hero).casino_machine = machine
         H.entities[100] = machine
 
         OSC_Casino.OnSpin(1, { PlayerID = 0, machine_entindex = 100, stake = 100 })

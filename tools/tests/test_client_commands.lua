@@ -148,4 +148,15 @@ return {
         OSC_TeamShuffle:OnShuffle({ PlayerID = 1 })
         H.truthy(H.assignments[0] and H.assignments[1], "host shuffle assigns everyone")
     end,
+
+    integer_rejects_nan_and_infinity = function()
+        setup()
+        local integer = OSC_ClientCommands.Integer()
+        H.eq(integer(0 / 0), false, "NaN")
+        H.eq(integer(math.huge), false, "+inf")
+        H.eq(integer(-math.huge), false, "-inf")
+        H.eq(integer("inf"), false, "inf string")
+        H.eq(integer(2 ^ 31), false, "too large")
+        H.eq(integer(2 ^ 31 - 1), true, "largest allowed")
+    end,
 }

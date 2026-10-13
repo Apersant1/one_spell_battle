@@ -68,4 +68,32 @@ return {
 
         H.eq(OSC_HeroState.Get(hero).initialized, true, "hero initialized without the courier system")
     end,
+
+    init_retry_is_a_first_grant_again = function()
+        setup()
+        H.DefineAbility("test_a", { cooldown = 20 })
+        H.DefineAbility("test_b", { cooldown = 20 })
+        OSC_ABILITY_POOL = {
+            { name = "test_a", hero = "npc_dota_hero_axe", label = "A", tags = { "damage" } },
+            { name = "test_b", hero = "npc_dota_hero_axe", label = "B", tags = { "support" } },
+        }
+        OSC_CONFIG.NEW_ABILITY_COOLDOWN_MODE = "partial"
+        OSC_HERO_EXTRA_ABILITIES = { npc_dota_hero_axe = { "test_missing_extra" } }
+        local hero = H.NewHero({ abilities = {} })
+        H.AddPlayer(0, hero)
+
+        OSC_HeroLifecycle.TryInitializeUnit(hero, "test")
+        H.RunThink("osc_init") -- способность выдана, дополнительная — нет: ошибка
+        H.eq(OSC_HeroState.Get(hero).initialized, false, "first attempt failed")
+
+        OSC_HERO_EXTRA_ABILITIES = {}
+        H.RunThink("osc_init_retry")
+        H.RunThink("osc_init")
+
+        local state = OSC_HeroState.Get(hero)
+        H.eq(state.initialized, true, "retry succeeded")
+        H.eq(hero:FindAbilityByName(state.ability):GetCooldownTimeRemaining(), 0,
+            "first ability is ready, not on a partial cooldown")
+        H.eq(#state.recent_tags.ability, 1, "tags recorded once")
+    end,
 }
