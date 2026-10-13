@@ -20,17 +20,20 @@ OSC_CONFIG = {
     -- Не выдавать герою больше MAX_SAME_TAG_STREAK способностей подряд с
     -- одним тегом (отдельно для основной способности и ультимейта). Если
     -- подходящих способностей не остаётся, правило не применяется.
+    ABILITY_TAG_STREAK_ENABLED = true,
+    MAX_SAME_TAG_STREAK = 2,
     -- Выбор из трёх: на предупреждении о ротации игрок получает
-    -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них
+    -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них.
+    -- Отказы на выбор клиента пишутся в лог не чаще раза в
+    -- ROTATION_CHOICE_REFUSAL_LOG_INTERVAL секунд на игрока.
     ROTATION_CHOICE_ENABLED = true,
     ROTATION_CHOICE_COUNT = 3,
+    ROTATION_CHOICE_REFUSAL_LOG_INTERVAL = 5,
     -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшую ротацию.
     -- ANCHOR_COST должен совпадать с ItemCost в npc_items_custom.txt
     -- (это проверяет tools/tests/run_tests.py)
     ANCHOR_ENABLED = true,
     ANCHOR_COST = 400,
-    ABILITY_TAG_STREAK_ENABLED = true,
-    MAX_SAME_TAG_STREAK = 2,
     CHAT_MESSAGES = true,
     DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,

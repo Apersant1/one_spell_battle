@@ -152,15 +152,49 @@ return {
         H.eq(OSC_HeroState.Get(hero).ability == foreign, false, "forged ability not given")
     end,
 
-    pick_after_deadline_refused = function()
+    pick_accepted_until_the_offer_closes = function()
         setup()
         local hero = addHero(0, "test_a")
         warn()
-        H.time = 60.5
+        local options = optionNames(hero)
 
-        pick(0, 1, optionNames(hero)[1])
+        -- Часы клиента отстают на пинг: клик после deadline, но до смены
+        H.time = 60.1
+        pick(0, 1, options[2])
+        H.eq(OSC_HeroState.Get(hero).pending_choices.picked, options[2], "late click accepted")
 
-        H.eq(OSC_HeroState.Get(hero).pending_choices.picked, nil, "late pick refused")
+        OSC_Rotation.Think()
+        H.eq(OSC_HeroState.Get(hero).ability, options[2], "late pick given")
+
+        local before = H.netTables.choice_0
+        pick(0, 1, options[1])
+        H.eq(H.netTables.choice_0, before, "pick after close refused, net table untouched")
+    end,
+
+    refusals_do_not_republish_or_spam_the_log = function()
+        setup()
+        local hero = addHero(0, "test_a")
+        warn()
+        local published = H.netTables.choice_0
+        local foreign = notOffered(hero)
+
+        for _ = 1, 20 do
+            pick(0, 1, foreign)
+            pick(0, 7, optionNames(hero)[1])
+        end
+
+        H.eq(H.netTables.choice_0, published, "net table not rewritten on refusals")
+        local lines = 0
+        for _, line in ipairs(H.logs) do
+            if string.find(line, "Rotation choice of player 0 refused", 1, true) then
+                lines = lines + 1
+            end
+        end
+        H.eq(lines, 1, "refusals logged once per interval")
+
+        H.time = H.time + OSC_CONFIG.ROTATION_CHOICE_REFUSAL_LOG_INTERVAL
+        pick(0, 1, foreign)
+        H.truthy(H.logged("(+39 more refused)"), "suppressed count reported later")
     end,
 
     no_pick_gives_one_of_three = function()

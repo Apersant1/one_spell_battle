@@ -17,7 +17,9 @@ require("osc/core/client_commands")
 require("osc/core/game_events")
 require("osc/systems/ability_selection")
 
-OSC_RotationChoice = OSC_RotationChoice or {}
+OSC_RotationChoice = OSC_RotationChoice or {
+    refusal_log = {}, -- ключ отправителя -> { time, suppressed }
+}
 
 local SLOT = "ability"
 
@@ -112,16 +114,38 @@ local function Contains(list, value)
     return false
 end
 
+-- Отказы пишутся в лог не чаще раза в ROTATION_CHOICE_REFUSAL_LOG_INTERVAL
+-- секунд на отправителя: подделанный клиент в цикле не заспамит лог
+local function LogRefusal(senderKey, message)
+    OSC_RotationChoice.refusal_log = OSC_RotationChoice.refusal_log or {}
+    local record = OSC_RotationChoice.refusal_log[senderKey]
+    local now = GameRules:GetGameTime()
+    local interval = OSC_CONFIG.ROTATION_CHOICE_REFUSAL_LOG_INTERVAL or 0
+    if record and now - record.time < interval then
+        record.suppressed = record.suppressed + 1
+        return
+    end
+
+    local suffix = ""
+    if record and record.suppressed > 0 then
+        suffix = " (+" .. record.suppressed .. " more refused)"
+    end
+    OSC_RotationChoice.refusal_log[senderKey] = { time = now, suppressed = 0 }
+    OSC_Logger.Log("Rotation choice of player " .. senderKey .. " refused: " .. message .. suffix)
+end
+
 -- Выбор игрока: принимается только вариант из выданного ему списка в
--- текущем раунде и до дедлайна. При отказе net table публикуется заново,
--- чтобы HUD вернул подсветку к подтверждённому выбору.
+-- текущем раунде, пока предложение открыто (до смены способностей, а не до
+-- deadline: часы клиента отстают на пинг). При отказе net table не
+-- переписывается — иначе подделанный клиент вызывал бы поток репликаций;
+-- HUD сам вернёт подсветку, сверяясь с picked.
 function OSC_RotationChoice.OnPick(sourceIndex, event)
     local ok, cmd, reason = OSC_ClientCommands.Check(sourceIndex, event, {
         hero = true,
         args = { { name = "round", check = OSC_ClientCommands.Integer({ min = 0 }) } },
     })
     if not ok then
-        OSC_Logger.Log("Rotation choice refused: " .. tostring(reason))
+        LogRefusal(tostring(cmd.player_id or (event and event.PlayerID)), tostring(reason))
         return
     end
 
@@ -132,17 +156,12 @@ function OSC_RotationChoice.OnPick(sourceIndex, event)
         refusal = "no offer"
     elseif pending.round ~= cmd.args.round then
         refusal = "wrong round"
-    elseif GameRules:GetGameTime() > pending.deadline then
-        refusal = "too late"
     elseif type(ability) ~= "string" or not Contains(pending.options, ability) then
         refusal = "not offered: " .. tostring(ability)
     end
 
     if refusal then
-        OSC_Logger.Log("Rotation choice of player " .. cmd.player_id .. " refused: " .. refusal)
-        if pending then
-            Publish(cmd.hero, pending)
-        end
+        LogRefusal(tostring(cmd.player_id), refusal)
         return
     end
 
