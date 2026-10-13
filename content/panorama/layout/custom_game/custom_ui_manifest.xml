@@ -7,6 +7,9 @@
         <!-- Дополняет стандартный экран выбора героев: голосование (osc_vote.xml) -->
         <CustomUIElement type="HeroSelection"
             layoutfile="file://{resources}/layout/custom_game/osc_vote.xml" />
+        <!-- Поверх стандартного экрана конца игры: итоги матча (osc_end_screen.xml) -->
+        <CustomUIElement type="EndScreen"
+            layoutfile="file://{resources}/layout/custom_game/osc_end_screen.xml" />
 
     </Panel>
 </root>

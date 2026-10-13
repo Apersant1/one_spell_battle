@@ -3,8 +3,9 @@
 var OSC = OSC || {};
 
 // Итоги матча на DOTA_GAMERULES_STATE_POST_GAME: шуточные титулы и таблица
-// по игрокам из osc_state/summary. Показывается в нашем Hud поверх
-// стандартного экрана конца игры (его не заменяем), можно закрыть и открыть.
+// по игрокам из osc_state/summary. Живёт в своём экране конца игры
+// (osc_end_screen.xml, EndScreen) поверх стандартного.
+// Можно закрыть и открыть.
 OSC.Summary = (function () {
   // Ключи титулов собираются из id с сервера:
   // osc_hud_title_<id> и osc_hud_title_<id>_desc (с {d:value})

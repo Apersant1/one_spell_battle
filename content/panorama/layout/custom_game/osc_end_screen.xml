@@ -1,0 +1,30 @@
+<root>
+    <styles>
+        <include src="s2r://panorama/styles/dotastyles.vcss_c" />
+        <include src="file://{resources}/styles/custom_game/osc_theme.css" />
+        <include src="file://{resources}/styles/custom_game/osc_end_screen.css" />
+    </styles>
+    <scripts>
+        <include src="file://{resources}/scripts/custom_game/osc_core.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_summary.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_end_screen.js" />
+    </scripts>
+
+    <!-- Слой конца игры (CustomUIElement type="EndScreen"): лежит поверх
+         стандартного экрана, его кнопка «Продолжить» остаётся -->
+    <Panel class="OSCRoot" hittest="false">
+        <Panel id="SummaryPanel" class="OSCSurface OSCChaos" hittest="true">
+            <Panel id="SummaryHeader" hittest="false">
+                <Label id="SummaryTitle" class="OSCTextTitle OSCGold" text="#osc_hud_summary_title" />
+                <Button id="SummaryClose" onactivate="OSC.Summary.Close()">
+                    <Label text="#osc_hud_summary_close" />
+                </Button>
+            </Panel>
+            <Panel id="SummaryTitles" hittest="false" />
+            <Panel id="SummaryTable" hittest="false" />
+        </Panel>
+        <Button id="SummaryReopen" class="OSCSurface OSCChaos" onactivate="OSC.Summary.Open()">
+            <Label class="OSCTextBody OSCBold" text="#osc_hud_summary_show" />
+        </Button>
+    </Panel>
+</root>

@@ -272,8 +272,9 @@ dota_launch_custom_game one_spell dota
   `chaos_damage`). Титул не выдаётся при нуле или если |значение| меньше
   `SUMMARY_TITLE_MIN`. При равенстве лучших — `SUMMARY_TITLE_TIES`:
   `none` (по умолчанию) — титул не выдаётся, `lowest_player_id` — игроку с
-  меньшим playerID. Тексты
-  титулов и экран итогов — в HUD (делается отдельно).
+  меньшим playerID. Экран итогов — `osc_end_screen.xml`
+  (`CustomUIElement type="EndScreen"`, поверх стандартного экрана конца
+  игры).
 
 ### Казино Огра
 
