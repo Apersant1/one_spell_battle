@@ -1,5 +1,8 @@
 OSC_Casino = {}
 
+-- Символы барабанов; исходы CASINO_OUTCOMES могут использовать только их
+local SYMBOLS = { "circle", "diamond", "star", "seven" }
+
 local function GetPlayer(sourceIndex, event)
     -- Движок сам кладёт ID отправителя в event.PlayerID. sourceIndex — индекс
     -- сущности игрока (обычно PlayerID + 1), его нельзя считать ID игрока.
@@ -66,6 +69,9 @@ local function CanUseMachine(hero, playerID, machine)
     if not hero or hero:IsNull() then
         return false, "osc_casino_err_unavailable"
     end
+    if not hero:IsAlive() then
+        return false, "osc_casino_err_dead"
+    end
 
     local isOwner = machine.osc_casino_owner_player_id == playerID
     if isOwner and hero.osc_casino_machine ~= machine then
@@ -120,7 +126,56 @@ local function SendOpen(player, playerID, hero, machine)
     })
 end
 
+-- Проверяет таблицу исходов: целые шансы > 0, множители >= 0, известные
+-- символы без повторов, сумма шансов не больше 100. При успехе вторым
+-- значением возвращает ожидаемую выплату в долях ставки.
+function OSC_Casino.ValidateOutcomes(outcomes)
+    if type(outcomes) ~= "table" or #outcomes == 0 then
+        return false, "no outcomes configured"
+    end
+
+    local known = {}
+    for _, symbol in ipairs(SYMBOLS) do
+        known[symbol] = true
+    end
+
+    local seen, totalChance, expected = {}, 0, 0
+    for index, outcome in ipairs(outcomes) do
+        local where = "outcome #" .. index
+        local chance, multiplier = outcome.chance, outcome.multiplier
+        if type(chance) ~= "number" or chance <= 0 or chance ~= math.floor(chance) then
+            return false, where .. ": chance must be a positive integer"
+        end
+        if type(multiplier) ~= "number" or multiplier < 0 then
+            return false, where .. ": multiplier must be a non-negative number"
+        end
+        if not known[outcome.symbol] then
+            return false, where .. ": unknown symbol " .. tostring(outcome.symbol)
+        end
+        if seen[outcome.symbol] then
+            return false, where .. ": duplicate symbol " .. outcome.symbol
+        end
+        seen[outcome.symbol] = true
+        totalChance = totalChance + chance
+        expected = expected + chance / 100 * multiplier
+    end
+
+    if totalChance > 100 then
+        return false, "chances add up to " .. totalChance .. "%, must be at most 100"
+    end
+    return true, expected
+end
+
 function OSC_Casino.Init()
+    local valid, result = OSC_Casino.ValidateOutcomes(OSC_CONFIG.CASINO_OUTCOMES)
+    if valid then
+        OSC_Logger.Log(string.format(
+            "Casino expected payout %.2f of the stake (house edge %.0f%%)",
+            result, (1 - result) * 100))
+    else
+        OSC_Logger.Error("Casino outcomes are invalid: " .. result)
+    end
+
     -- Клиенту нужен радиус, чтобы рисовать зону действия по Alt
     CustomNetTables:SetTableValue("osc_state", "casino", {
         use_distance = OSC_CONFIG.CASINO_USE_DISTANCE or 450,
@@ -225,7 +280,7 @@ function OSC_Casino.SpawnMachine(hero)
     local oldMachine = hero.osc_casino_machine
     if oldMachine and not oldMachine:IsNull() then
         if oldMachine.osc_casino_is_spinning then
-            ShowHudError(PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
+            ShowHudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
             return false
         end
         RemoveMachine(oldMachine)
@@ -536,12 +591,11 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     end
 
     if not reels then
-        local symbols = { "circle", "diamond", "star", "seven" }
-        local first = symbols[RandomInt(1, #symbols)]
-        local second = symbols[RandomInt(1, #symbols)]
-        local third = symbols[RandomInt(1, #symbols)]
+        local first = SYMBOLS[RandomInt(1, #SYMBOLS)]
+        local second = SYMBOLS[RandomInt(1, #SYMBOLS)]
+        local third = SYMBOLS[RandomInt(1, #SYMBOLS)]
         while first == second and second == third do
-            third = symbols[RandomInt(1, #symbols)]
+            third = SYMBOLS[RandomInt(1, #SYMBOLS)]
         end
         reels = { first, second, third }
     end

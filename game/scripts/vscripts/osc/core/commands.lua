@@ -7,7 +7,10 @@ local function OnPlayerChat(event)
     local isChaosStop = text == "-chaos_stop"
     local chaosId = text == "-chaos" and ""
         or string.match(text, "^%-chaos%s+(%S+)$")
-    if abilityName == nil and not isReroll and not isChaosStop and chaosId == nil then
+    -- -casino <circle|diamond|star|seven>: следующие спины дают тройку символа; -casino off — обычный режим
+    local casinoSymbol = string.match(text, "^%-casino%s+(%S+)$")
+    if abilityName == nil and not isReroll and not isChaosStop and chaosId == nil
+        and casinoSymbol == nil then
         return
     end
 
@@ -19,6 +22,16 @@ local function OnPlayerChat(event)
     local playerID = event.playerid
     if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
         OSC_Logger.Error(text .. " ignored: invalid player")
+        return
+    end
+
+    if casinoSymbol ~= nil then
+        local ok, err = OSC_Casino.DebugForceSymbol(casinoSymbol ~= "off" and casinoSymbol or nil)
+        if ok then
+            OSC_Logger.Log(text .. " executed by player " .. tostring(playerID))
+        else
+            OSC_Logger.Error(text .. " failed: " .. tostring(err))
+        end
         return
     end
 
