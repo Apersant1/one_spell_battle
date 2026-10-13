@@ -123,6 +123,7 @@ function OSC_GameEvents.OnStateChange()
     local previous = OSC_GameEvents.last_state
     if state ~= previous then
         OSC_GameEvents.last_state = state
+        OSC_Logger.Log("Game state " .. tostring(previous) .. " -> " .. tostring(state))
         OSC_GameEvents.Emit("game_state_changed", { state = state, previous = previous })
     end
 
@@ -147,4 +148,11 @@ function OSC_GameEvents.Init()
     ListenToGameEvent("game_rules_state_change", function()
         OSC_GameEvents.OnStateChange()
     end, nil)
+    -- На POST_GAME game_rules_state_change не приходит (видно по логу матча),
+    -- поэтому стадию ещё и опрашиваем; повторы отсекает last_state
+    GameRules:GetGameModeEntity():SetContextThink("osc_state_poll", function()
+        OSC_GameEvents.OnStateChange()
+        if GameRules:State_Get() >= DOTA_GAMERULES_STATE_POST_GAME then return nil end
+        return 1
+    end, 1)
 end

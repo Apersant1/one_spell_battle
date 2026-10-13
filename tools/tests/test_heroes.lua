@@ -192,6 +192,26 @@ return {
         H.eq(OSC_GameEvents.IsGameStarted(), true, "state flag")
     end,
 
+    post_game_reached_by_polling_once = function()
+        setup()
+        OSC_GameEvents.Init()
+        local states = {}
+        OSC_GameEvents.Subscribe("game_state_changed", "test", function(change)
+            table.insert(states, change.state)
+        end)
+
+        H.state = DOTA_GAMERULES_STATE_GAME_IN_PROGRESS
+        H.FireGameEvent("game_rules_state_change", {})
+        H.eq(H.RunThink("osc_state_poll"), 1, "keeps polling during the game")
+
+        H.state = DOTA_GAMERULES_STATE_POST_GAME -- движок не прислал событие
+        H.eq(H.RunThink("osc_state_poll"), nil, "stops after POST_GAME")
+        H.FireGameEvent("game_rules_state_change", {})
+
+        H.eq(#states, 2, "each state emitted once")
+        H.eq(states[2], DOTA_GAMERULES_STATE_POST_GAME, "POST_GAME from polling")
+    end,
+
     subscribe_replaces_and_isolates_errors = function()
         setup()
         local calls = {}

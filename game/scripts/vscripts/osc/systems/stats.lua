@@ -160,6 +160,7 @@ function OSC_Stats.OnStateChanged(change)
     if change.state ~= DOTA_GAMERULES_STATE_POST_GAME or OSC_Stats.published then return end
     if not OSC_Stats.IsEnabled() then return end
     OSC_Stats.published = true
+    OSC_Logger.Log("Match stats published")
     OSC_GameEvents.Emit("match_stats", { players = OSC_Stats.Snapshot() })
 end
 
