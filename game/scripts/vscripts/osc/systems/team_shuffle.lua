@@ -1,19 +1,13 @@
+require("osc/core/client_commands")
+
 OSC_TeamShuffle = OSC_TeamShuffle or {}
 local TeamShuffle = OSC_TeamShuffle
 
 -- Команды, между которыми мешаем
 local TEAMS = { DOTA_TEAM_GOODGUYS, DOTA_TEAM_BADGUYS }
 
-local function IsHost(playerID)
-  local player = PlayerResource:GetPlayer(playerID)
-  return player ~= nil and GameRules:PlayerHasCustomGameHostPrivileges(player)
-end
-
-local function IsPlayableTeam(team)
-  for _, playable in ipairs(TEAMS) do
-    if playable == team then return true end
-  end
-  return false
+local function IsHost(cmd)
+  return GameRules:PlayerHasCustomGameHostPrivileges(cmd.player)
 end
 
 local function IsSetup()
@@ -21,7 +15,9 @@ local function IsSetup()
 end
 
 function TeamShuffle:OnShuffle(event)
-  if not IsSetup() or not IsHost(event.PlayerID) then return end
+  if not IsSetup() then return end
+  local ok, cmd = OSC_ClientCommands.Check(nil, event)
+  if not ok or not IsHost(cmd) then return end
 
   local ids = {}
   for id = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
@@ -53,13 +49,17 @@ end
 function TeamShuffle:OnMove(event)
   if not IsSetup() then return end
 
-  local target = tonumber(event.player_id)
-  local team = tonumber(event.team)
-  if target == nil or not IsPlayableTeam(team) then return end
+  local ok, cmd = OSC_ClientCommands.Check(nil, event, {
+    args = {
+      { name = "player_id", check = OSC_ClientCommands.PlayerID() },
+      { name = "team", check = OSC_ClientCommands.Integer({ one_of = TEAMS }) },
+    },
+  })
+  if not ok then return end
+  local target, team = cmd.args.player_id, cmd.args.team
 
   -- Себя может двигать любой, других — только хост
-  if target ~= event.PlayerID and not IsHost(event.PlayerID) then return end
-  if not PlayerResource:IsValidPlayerID(target) then return end
+  if target ~= cmd.player_id and not IsHost(cmd) then return end
   if PlayerResource:GetCustomTeamAssignment(target) == team then return end
   if PlayerResource:GetPlayerCountForTeam(team) >= GameRules:GetCustomGameTeamMaxPlayers(team) then return end
 

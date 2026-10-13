@@ -1,25 +1,9 @@
+require("osc/core/client_commands")
+
 OSC_Casino = OSC_Casino or {}
 
 -- Символы барабанов; исходы CASINO_OUTCOMES могут использовать только их
 local SYMBOLS = { "circle", "diamond", "star", "seven" }
-
-local function GetPlayer(sourceIndex, event)
-    -- Движок сам кладёт ID отправителя в event.PlayerID. sourceIndex — индекс
-    -- сущности игрока (обычно PlayerID + 1), его нельзя считать ID игрока.
-    local playerID = event and tonumber(event.PlayerID)
-    if playerID == nil then
-        local source = sourceIndex and EntIndexToHScript(sourceIndex)
-        if source and not source:IsNull() and source.GetPlayerID then
-            playerID = source:GetPlayerID()
-        end
-    end
-
-    if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
-        return nil
-    end
-
-    return PlayerResource:GetPlayer(playerID), playerID
-end
 
 local function GetHeroPlayer(hero)
     local playerID = hero:GetPlayerOwnerID()
@@ -185,16 +169,14 @@ function OSC_Casino.Init()
 end
 
 function OSC_Casino.OnReopen(sourceIndex, event)
-    local _, playerID = GetPlayer(sourceIndex, event)
-    if not playerID then return end
+    local ok, cmd = OSC_ClientCommands.Check(sourceIndex, event, {
+        hero = true,
+        args = { { name = "machine_entindex", check = OSC_ClientCommands.Integer() } },
+    })
+    if not ok then return end
 
-    local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-    local machineIndex = event and tonumber(event.machine_entindex)
-    if not hero or not machineIndex or machineIndex ~= math.floor(machineIndex) then
-        return
-    end
-
-    local machine = EntIndexToHScript(machineIndex)
+    local playerID, hero = cmd.player_id, cmd.hero
+    local machine = EntIndexToHScript(cmd.args.machine_entindex)
     local canUse, reason = CanUseMachine(hero, playerID, machine)
     if not canUse then
         -- Клиент повторяет запрос, пока герой идёт к автомату; такие повторы
@@ -202,7 +184,7 @@ function OSC_Casino.OnReopen(sourceIndex, event)
         if tonumber(event.quiet) ~= 1 then
             OSC_Logger.Log("Casino reopen refused for player " .. tostring(playerID)
                 .. ": " .. tostring(reason))
-            ShowHudError(PlayerResource:GetPlayer(playerID), reason)
+            ShowHudError(cmd.player, reason)
         end
         return
     end
@@ -386,26 +368,26 @@ local function ParseItemIndices(event)
 end
 
 function OSC_Casino.OnSpin(sourceIndex, event)
-    local player, playerID = GetPlayer(sourceIndex, event)
+    local ok, cmd, refusal = OSC_ClientCommands.Check(sourceIndex, event, {
+        hero = true,
+        args = { { name = "machine_entindex", check = OSC_ClientCommands.Integer({ min = 0 }) } },
+    })
+    local player, playerID, hero = cmd.player, cmd.player_id, cmd.hero
     if not player then return end
 
-    local hero = PlayerResource:GetSelectedHeroEntity(playerID)
     local function SendResult(data)
         OSC_Notifications.PlayerEvent(player, "osc_casino_result", data)
     end
 
-    if not hero or hero:IsNull() then
-        SendResult({ error = "osc_casino_err_unavailable" })
+    if not ok then
+        SendResult({
+            error = refusal == "no_hero" and "osc_casino_err_unavailable"
+                or "osc_casino_err_bad_machine",
+        })
         return
     end
 
-    local machineIndex = event and tonumber(event.machine_entindex)
-    if not machineIndex or machineIndex < 0 or machineIndex ~= math.floor(machineIndex) then
-        SendResult({ error = "osc_casino_err_bad_machine" })
-        return
-    end
-
-    local machine = EntIndexToHScript(machineIndex)
+    local machine = EntIndexToHScript(cmd.args.machine_entindex)
     local canUse, reason = CanUseMachine(hero, playerID, machine)
     if not canUse then
         SendResult({ error = reason })
