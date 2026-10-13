@@ -22,12 +22,6 @@ require("osc/systems/chaos_events/weather_drones")
 require("osc/systems/chaos_rounds")
 require("osc/core/game_mode")
 
--- Generated from template
-
-if CAddonTemplateGameMode == nil then
-	CAddonTemplateGameMode = class({})
-end
-
 function Precache(context)
     -- Прекэшим героев-владельцев способностей из whitelist,
     -- иначе у чужих способностей не будет партиклов и звуков
@@ -69,19 +63,4 @@ end
 function Activate()
     GameRules.OSC = OneSpellChaos()
     GameRules.OSC:Init()
-end
-
-function CAddonTemplateGameMode:InitGameMode()
-    OSC_Logger.Log("Template addon is loaded")
-	GameRules:GetGameModeEntity():SetThink( "OnThink", self, "GlobalThink", 2 )
-end
-
--- Evaluate the state of the game
-function CAddonTemplateGameMode:OnThink()
-	if GameRules:State_Get() == DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
-		--print( "Template addon script is running." )
-	elseif GameRules:State_Get() >= DOTA_GAMERULES_STATE_POST_GAME then
-		return nil
-	end
-	return 1
 end
