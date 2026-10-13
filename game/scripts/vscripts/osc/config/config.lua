@@ -40,6 +40,20 @@ OSC_CONFIG = {
     -- большинство; при ничьей или без голосов — default.
     -- Статистика матча по игрокам (osc/systems/stats.lua)
     STATS_ENABLED = true,
+    -- Итоги матча на POST_GAME (нужна и статистика). Список способностей
+    -- игрока в net table обрезается до последних SUMMARY_MAX_ABILITIES.
+    -- Титулы выдаются по порядку SUMMARY_TITLES, если |значение| не меньше
+    -- SUMMARY_TITLE_MIN (casino_net — в золоте, storm_chaser — в уроне).
+    SUMMARY_ENABLED = true,
+    SUMMARY_MAX_ABILITIES = 30,
+    SUMMARY_TITLES = { "gambler", "lucky", "chaos_master", "collector", "storm_chaser" },
+    SUMMARY_TITLE_MIN = {
+        gambler = 1,
+        lucky = 1,
+        chaos_master = 1,
+        collector = 1,
+        storm_chaser = 1,
+    },
     VOTE_ENABLED = true,
     VOTE_QUESTIONS = {
         {

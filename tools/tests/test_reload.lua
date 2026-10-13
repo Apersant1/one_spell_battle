@@ -23,6 +23,7 @@ local MODULES = {
     { file = "osc/systems/chaos_events/registry", global = "OSC_ChaosEvents" },
     { file = "osc/systems/chaos_rounds", global = "OSC_ChaosRounds" },
     { file = "osc/systems/stats", global = "OSC_Stats" },
+    { file = "osc/systems/summary", global = "OSC_Summary" },
 }
 
 return {

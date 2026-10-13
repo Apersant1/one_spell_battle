@@ -242,6 +242,22 @@ dota_launch_custom_game one_spell dota
 - На `POST_GAME` публикует в шину `match_stats` { players } — копию данных
   для экрана итогов.
 
+### Итоги матча
+
+- `osc/systems/summary.lua`, флаг `SUMMARY_ENABLED` (нужна и статистика):
+  по `match_stats` пишет net table `osc_state/summary` { players =
+  { ["<playerID>"] = { hero, rotations, abilities, distinct_kill_abilities,
+  kills, casino_net, chaos_damage } }, titles = { { id, player_id, value } } }.
+  В итогах все игроки, в том числе без событий (с нулями); список
+  способностей — последние `SUMMARY_MAX_ABILITIES` (30).
+- Титулы по порядку `SUMMARY_TITLES`: `gambler` (худший `casino_net`, если
+  он отрицательный), `lucky` (лучший, если положительный), `chaos_master`
+  (больше всего убийств разными способностями), `collector` (больше всего
+  разных полученных способностей), `storm_chaser` (больше всего
+  `chaos_damage`). Титул не выдаётся при нуле или если |значение| меньше
+  `SUMMARY_TITLE_MIN`; при равенстве — игроку с меньшим playerID. Тексты
+  титулов и экран итогов — в HUD (делается отдельно).
+
 ### Казино Огра
 
 - Огр получает отдельную способность `ogre_magi_casino` (слот W, перезарядка
@@ -391,7 +407,7 @@ Panorama отправляет серверу действия пользоват
 - В ней сейчас используются ключи `version`, `timer`, `chaos_round`,
   `casino` (радиус автомата для подсветки по Alt), `choice_<playerID>`
   (выбор из трёх), `anchor_<playerID>` («Якорь»), `vote` и
-  `vote_<playerID>` (голосование в лобби).
+  `vote_<playerID>` (голосование в лобби), `summary` (итоги матча).
 - Серверные игровые определения и параметры находятся в
   `game/scripts/npc/`; тексты — в `game/resource/`.
 - Исходники ресурсов лежат в `content/`. Собранные файлы Dota (`.vxml_c`,
@@ -477,6 +493,9 @@ Panorama отправляет серверу действия пользоват
 | `CASINO_ENABLED`                       |           `true` | Казино Огра включено                      |
 | `CASINO_ACCESS`                        |          `"all"` | Кто играет: `all` / `team` / `owner`      |
 | `STATS_ENABLED`                        |           `true` | Статистика матча                          |
+| `SUMMARY_ENABLED`                      |           `true` | Итоги матча на POST_GAME                  |
+| `SUMMARY_MAX_ABILITIES`                |             `30` | Длина списка способностей в итогах        |
+| `SUMMARY_TITLES` / `SUMMARY_TITLE_MIN` |  задан в конфиге | Порядок титулов и пороги                  |
 | `VOTE_ENABLED`                         |           `true` | Голосование в лобби                       |
 | `VOTE_QUESTIONS`                       |  задан в конфиге | Вопросы, варианты, переопределения, default |
 | `CASINO_DEFAULT_STAKE`                 |            `250` | Начальная ставка                          |
