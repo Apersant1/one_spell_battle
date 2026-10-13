@@ -830,7 +830,7 @@
 }
 
 .SummaryHeaderRow .SummaryCellPlayer {
-  height: auto;
+  height: fit-children;
 }
 
 .SummaryRowHero {
