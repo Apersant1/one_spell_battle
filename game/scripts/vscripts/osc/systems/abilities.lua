@@ -1,3 +1,5 @@
+require("osc/core/heroes")
+
 OSC_Abilities = OSC_Abilities or {}
 
 -- Слот способности на панели задают AddAbility (первый свободный слот) и
@@ -34,14 +36,6 @@ local function ShouldKeep(hero, ability)
         return true
     end
     return IsInnateAbility(ability)
-end
-
--- Иллюзия, Tempest Double или клон (Meepo): копирует способности владельца
-function OSC_Abilities.IsCopy(unit)
-    return (unit.IsIllusion and unit:IsIllusion())
-        or (unit.IsTempestDouble and unit:IsTempestDouble())
-        or (unit.IsClone and unit:IsClone())
-        or false
 end
 
 function OSC_Abilities.StripHero(hero)
@@ -201,15 +195,12 @@ local function GetAlliedUltimateCount(hero, abilityName)
     local count = 0
     local team = hero:GetTeamNumber()
 
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            local teammate = PlayerResource:GetSelectedHeroEntity(playerID)
-            if teammate and teammate ~= hero and teammate:GetTeamNumber() == team
-                and teammate.osc_current_ultimate == abilityName then
-                count = count + 1
-            end
+    OSC_Heroes.ForEachPlayerHero(function(teammate)
+        if teammate ~= hero and teammate:GetTeamNumber() == team
+            and teammate.osc_current_ultimate == abilityName then
+            count = count + 1
         end
-    end
+    end)
 
     return count
 end
@@ -414,21 +405,12 @@ end
 -- Обновляет живые копии владельца (клоны Meepo, иллюзии, Tempest Double).
 -- Иллюзии чужих героев под контролем игрока (Wall of Replica) не трогаем.
 function OSC_Abilities.SyncCopies(owner)
-    if not owner or owner:IsNull() or OSC_Abilities.IsCopy(owner) then return end
-
-    local playerID = owner:GetPlayerOwnerID()
-    local unitName = owner:GetUnitName()
-    for _, unit in pairs(HeroList:GetAllHeroes() or {}) do
-        if unit ~= owner and not unit:IsNull()
-            and OSC_Abilities.IsCopy(unit)
-            and unit:GetPlayerOwnerID() == playerID
-            and unit:GetUnitName() == unitName then
-            local ok, err = pcall(SyncCopy, unit, owner)
-            if not ok then
-                OSC_Logger.Error("Copy sync failed for " .. unitName .. ": " .. tostring(err))
-            end
+    OSC_Heroes.ForEachCopy(owner, function(unit)
+        local ok, err = pcall(SyncCopy, unit, owner)
+        if not ok then
+            OSC_Logger.Error("Copy sync failed for " .. owner:GetUnitName() .. ": " .. tostring(err))
         end
-    end
+    end)
 end
 
 function OSC_Abilities.GiveRandomUltimate(hero, notify)

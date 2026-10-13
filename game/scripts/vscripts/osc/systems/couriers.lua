@@ -1,3 +1,6 @@
+require("osc/core/heroes")
+require("osc/core/game_events")
+
 local COURIER_CONFIG = OSC_CONFIG.COURIERS
 
 OSC_Couriers = OSC_Couriers or {}
@@ -9,14 +12,11 @@ end
 
 local function GetTeamHeroes(team)
     local heroes = {}
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-            if IsValidEntity(hero) and hero:GetTeamNumber() == team then
-                table.insert(heroes, hero)
-            end
+    OSC_Heroes.ForEachPlayerHero(function(hero)
+        if hero:GetTeamNumber() == team then
+            table.insert(heroes, hero)
         end
-    end
+    end)
     return heroes
 end
 
@@ -350,9 +350,8 @@ end
 
 -- Курьеры команды запускаются, когда у неё появляется первый настоящий герой.
 -- Если не вышло (нет фонтана), пробуем снова при следующем появлении.
-local function OnNPCSpawned(event)
-    local unit = EntIndexToHScript(event.entindex)
-    if not IsValidEntity(unit) or not unit.IsRealHero or not unit:IsRealHero() then
+local function OnHeroSpawned(unit)
+    if not OSC_Heroes.IsMainHero(unit) then
         return
     end
 
@@ -367,7 +366,7 @@ end
 
 function OSC_Couriers.Init()
     OSC_Couriers.ready_teams = {}
-    ListenToGameEvent("npc_spawned", OnNPCSpawned, nil)
+    OSC_GameEvents.Subscribe("hero_spawned", "couriers", OnHeroSpawned)
 end
 
 function OSC_Couriers.DebugAbility(team, abilityName)

@@ -1,3 +1,6 @@
+require("osc/core/heroes")
+require("osc/core/game_events")
+
 OSC_Rotation = OSC_Rotation or {
     timer_started = false,
     warned = false,
@@ -16,17 +19,14 @@ local function RotateAll()
     local ok, err = pcall(OSC_Notifications.RotationStarted)
     if not ok then OSC_Logger.Error("RotationStarted: " .. tostring(err)) end
 
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-            if hero and not hero:IsNull() and hero.osc_initialized then
-                local ok, err = pcall(OSC_Abilities.GiveRandom, hero, true)
-                if not ok then
-                    OSC_Logger.Error("GiveRandom for player " .. playerID .. ": " .. tostring(err))
-                end
+    OSC_Heroes.ForEachPlayerHero(function(hero, playerID)
+        if hero.osc_initialized then
+            local ok, err = pcall(OSC_Abilities.GiveRandom, hero, true)
+            if not ok then
+                OSC_Logger.Error("GiveRandom for player " .. playerID .. ": " .. tostring(err))
             end
         end
-    end
+    end)
 end
 
 function OSC_Rotation.Think()
@@ -60,13 +60,9 @@ local function StartTimer()
     GameRules:GetGameModeEntity():SetThink("Think", OSC_Rotation, "osc_rotation", 0.5)
 end
 
-local function OnStateChange()
-    if GameRules:State_Get() == DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
-        StartTimer()
-    end
-end
-
 function OSC_Rotation.Init()
     PublishTimer()
-    ListenToGameEvent("game_rules_state_change", OnStateChange, nil)
+    OSC_GameEvents.Subscribe("game_started", "rotation", function()
+        StartTimer()
+    end)
 end

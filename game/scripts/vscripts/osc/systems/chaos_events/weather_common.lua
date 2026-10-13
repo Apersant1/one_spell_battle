@@ -1,13 +1,16 @@
 -- Общие функции для «погодных» хаос-событий (гроза, потоки, дроны).
 -- Урон считается от максимального здоровья и никогда не добивает героя.
 
+require("osc/core/heroes")
+
 OSC_Weather = OSC_Weather or {}
 
 
 
+-- Бьём боевые тела (основные герои, клоны Meepo, Tempest Double) — те же,
+-- на кого действуют остальные хаос-эффекты; иллюзии не трогаем
 local function IsValidTarget(hero)
-    return hero and not hero:IsNull()
-        and hero:IsRealHero()
+    return OSC_Heroes.IsCombatHero(hero)
         and hero:IsAlive()
         and not hero:IsInvulnerable()
         and not hero:IsMagicImmune()

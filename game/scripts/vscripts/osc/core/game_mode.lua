@@ -25,6 +25,8 @@ function OneSpellChaos:Init()
     local ok, err = pcall(OSC_Abilities.ValidatePools)
     if not ok then OSC_Logger.Error("Ability pool validation failed: " .. tostring(err)) end
 
+    -- Единая точка событий движка; системы ниже подписываются на неё в Init
+    SafeInit("GameEvents", OSC_GameEvents)
     SafeInit("TeamShuffle", OSC_TeamShuffle)
     SafeInit("Casino", OSC_Casino)
     SafeInit("Commands", OSC_Commands)

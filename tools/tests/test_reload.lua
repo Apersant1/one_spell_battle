@@ -5,6 +5,8 @@ local MODULES = {
     { file = "osc/core/logger", global = "OSC_Logger" },
     { file = "osc/core/notifications", global = "OSC_Notifications" },
     { file = "osc/core/commands", global = "OSC_Commands" },
+    { file = "osc/core/heroes", global = "OSC_Heroes" },
+    { file = "osc/core/game_events", global = "OSC_GameEvents" },
     { file = "osc/systems/abilities", global = "OSC_Abilities" },
     { file = "osc/systems/casino", global = "OSC_Casino" },
     { file = "osc/systems/couriers", global = "OSC_Couriers" },

@@ -1,14 +1,13 @@
+require("osc/core/heroes")
+require("osc/core/game_events")
+
 OSC_HeroLifecycle = OSC_HeroLifecycle or {}
 
 local MAX_INIT_ATTEMPTS = 3
 local RETRY_DELAY = 1
 
-local function IsValidEntity(entity)
-    return entity and not entity:IsNull()
-end
-
 local function InitializeHeroAbilities(hero, source)
-    if not IsValidEntity(hero) or hero.osc_initialized then return end
+    if not OSC_Heroes.IsValid(hero) or hero.osc_initialized then return end
     if hero.osc_init_attempts and hero.osc_init_attempts >= MAX_INIT_ATTEMPTS then
         hero.osc_init_state = "failed"
         return
@@ -20,7 +19,7 @@ local function InitializeHeroAbilities(hero, source)
         .. " (attempt " .. hero.osc_init_attempts .. ")")
 
     hero:SetContextThink("osc_init", function()
-        if not IsValidEntity(hero) then return nil end
+        if not OSC_Heroes.IsValid(hero) then return nil end
 
         local ok, err = pcall(function()
             OSC_Abilities.StripHero(hero)
@@ -36,6 +35,7 @@ local function InitializeHeroAbilities(hero, source)
         if ok then
             hero.osc_initialized = true
             hero.osc_init_state = nil
+            OSC_GameEvents.Emit("hero_initialized", hero)
             return nil
         end
 
@@ -45,7 +45,7 @@ local function InitializeHeroAbilities(hero, source)
         if hero.osc_init_attempts < MAX_INIT_ATTEMPTS then
             hero.osc_init_state = "retry_pending"
             hero:SetContextThink("osc_init_retry", function()
-                if IsValidEntity(hero) and not hero.osc_initialized then
+                if OSC_Heroes.IsValid(hero) and not hero.osc_initialized then
                     InitializeHeroAbilities(hero, source)
                 end
                 return nil
@@ -59,17 +59,16 @@ local function InitializeHeroAbilities(hero, source)
     end, 0.5)
 end
 
+-- Основной герой получает способности режима, копия (иллюзия, Tempest
+-- Double, клон Meepo) — способности основного героя своего игрока
 function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
-    if not IsValidEntity(unit) or not unit.IsHero or not unit:IsHero() then return end
-
-    if OSC_Abilities.IsCopy(unit) then
+    if OSC_Heroes.IsCopy(unit) then
         if unit.osc_copy_done then return end
         unit.osc_copy_done = true
 
         unit:SetContextThink("osc_copy", function()
-            if not IsValidEntity(unit) then return nil end
-            local owner = PlayerResource:GetSelectedHeroEntity(unit:GetPlayerOwnerID())
-            if IsValidEntity(owner) and owner ~= unit then
+            local owner = OSC_Heroes.GetCopyOwner(unit)
+            if owner then
                 OSC_Abilities.CopyFromOwner(unit, owner)
             end
             return nil
@@ -77,23 +76,9 @@ function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
         return
     end
 
-    if not unit:IsRealHero() then return end
+    if not OSC_Heroes.IsMainHero(unit) then return end
     if unit.osc_initialized or unit.osc_init_state then return end
     InitializeHeroAbilities(unit, source)
-end
-
-local function OnNPCSpawned(event)
-    OSC_HeroLifecycle.TryInitializeUnit(
-        EntIndexToHScript(event.entindex),
-        "npc_spawned"
-    )
-end
-
-local function OnHeroFinishSpawn(event)
-    OSC_HeroLifecycle.TryInitializeUnit(
-        EntIndexToHScript(event.heroindex),
-        "dota_on_hero_finish_spawn"
-    )
 end
 
 local function OnPlayerLevelUp(event)
@@ -104,7 +89,7 @@ local function OnPlayerLevelUp(event)
         hero = PlayerResource:GetSelectedHeroEntity(event.player_id)
     end
     -- До инициализации уровни не трогаем: она сама выдаст ультимейт с 6-го уровня
-    if not IsValidEntity(hero) or not hero.osc_initialized then return end
+    if not OSC_Heroes.IsValid(hero) or not hero.osc_initialized then return end
 
     local ok, err = pcall(function()
         local level = event.level or hero:GetLevel()
@@ -127,7 +112,8 @@ local function OnPlayerLevelUp(event)
 end
 
 function OSC_HeroLifecycle.Init()
-    ListenToGameEvent("npc_spawned", OnNPCSpawned, nil)
-    ListenToGameEvent("dota_on_hero_finish_spawn", OnHeroFinishSpawn, nil)
+    OSC_GameEvents.Subscribe("hero_spawned", "hero_lifecycle", function(unit, source)
+        OSC_HeroLifecycle.TryInitializeUnit(unit, source)
+    end)
     ListenToGameEvent("dota_player_gained_level", OnPlayerLevelUp, nil)
 end

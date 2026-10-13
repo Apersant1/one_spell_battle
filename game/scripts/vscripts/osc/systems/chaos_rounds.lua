@@ -1,3 +1,6 @@
+require("osc/core/heroes")
+require("osc/core/game_events")
+
 OSC_ChaosRounds = OSC_ChaosRounds or {}
 
 local THINK_INTERVAL = 0.25
@@ -16,25 +19,10 @@ local function logError(message)
     OSC_Logger.Error("[ChaosRounds] " .. message)
 end
 
-local function isValidEntity(entity)
-    return entity and not entity:IsNull()
-end
-
-local function isRealHero(hero)
-    return isValidEntity(hero)
-        and hero.IsRealHero
-        and hero:IsRealHero()
-        and not (hero.IsIllusion and hero:IsIllusion())
-        and not (hero.IsTempestDouble and hero:IsTempestDouble())
-        and not (hero.IsClone and hero:IsClone())
-end
-
+-- Эффекты действуют на все боевые тела: основных героев, клонов Meepo и
+-- Tempest Double (у них свои перезарядки и мана), но не на иллюзии
 local function forEachHero(callback)
-    for _, hero in pairs(HeroList:GetAllHeroes() or {}) do
-        if isRealHero(hero) then
-            callback(hero)
-        end
-    end
+    OSC_Heroes.ForEachCombatHero(callback)
 end
 
 local function callHook(ev, hookName, ...)
@@ -72,23 +60,18 @@ function OSC_ChaosRounds:Init()
     self.nextTick = 0
     self.running = false
 
-    ListenToGameEvent(
-        "game_rules_state_change",
-        Dynamic_Wrap(OSC_ChaosRounds, "OnGameStateChange"),
-        self
-    )
-    ListenToGameEvent(
-        "npc_spawned",
-        Dynamic_Wrap(OSC_ChaosRounds, "OnNPCSpawned"),
-        self
-    )
+    OSC_GameEvents.Subscribe("game_started", "chaos_rounds", function()
+        OSC_ChaosRounds:OnGameStarted()
+    end)
+    OSC_GameEvents.Subscribe("hero_spawned", "chaos_rounds", function(hero)
+        OSC_ChaosRounds:OnHeroSpawned(hero)
+    end)
 
     self:Publish()
 end
 
-function OSC_ChaosRounds:OnGameStateChange()
-    if self.running
-        or GameRules:State_Get() ~= DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
+function OSC_ChaosRounds:OnGameStarted()
+    if self.running then
         return
     end
 
@@ -208,20 +191,15 @@ function OSC_ChaosRounds:EndEvent(debugStop)
     return true
 end
 
-function OSC_ChaosRounds:OnNPCSpawned(keys)
-    if self.state ~= STATE.ACTIVE then
-        return
-    end
-
-    local hero = EntIndexToHScript(keys.entindex)
-    if not isRealHero(hero) then
+function OSC_ChaosRounds:OnHeroSpawned(hero)
+    if self.state ~= STATE.ACTIVE or not OSC_Heroes.IsCombatHero(hero) then
         return
     end
 
     local event = self.event
     local eventEndTime = self.endTime
     hero:SetContextThink("osc_chaos_apply_on_spawn", function()
-        if not isRealHero(hero)
+        if not OSC_Heroes.IsCombatHero(hero)
             or self.state ~= STATE.ACTIVE
             or self.event ~= event
             or self.endTime ~= eventEndTime then

@@ -223,7 +223,9 @@ Hero.__index = Hero
 
 function Hero:IsNull() return self._null == true end
 function Hero:IsHero() return true end
-function Hero:IsRealHero() return self.copy == nil end
+-- Как в Dota: IsRealHero ложно только у иллюзий, клоны Meepo и Tempest
+-- Double — «настоящие» герои
+function Hero:IsRealHero() return self.copy ~= "illusion" end
 function Hero:IsIllusion() return self.copy == "illusion" end
 function Hero:IsTempestDouble() return self.copy == "tempest" end
 function Hero:IsClone() return self.copy == "clone" end

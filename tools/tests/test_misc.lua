@@ -103,6 +103,7 @@ return {
         H.byClass.ent_dota_fountain = { fountain }
         H.byClass.npc_dota_courier = { courier }
 
+        OSC_GameEvents.Init()
         OSC_Couriers.Init()
         H.FireGameEvent("npc_spawned", { entindex = 7 })
 
