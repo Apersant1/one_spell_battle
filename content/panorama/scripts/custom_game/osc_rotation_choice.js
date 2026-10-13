@@ -14,13 +14,18 @@ OSC.RotationChoice = (function () {
   // (с запасом на отсрочку смены во время каста — ROTATION_MAX_DEFER)
   var STALE_AFTER = 6;
   var URGENT_AT = 3; // секунд до дедлайна, когда отсчёт краснеет
+  // Сколько ждать, пока сервер подтвердит клик (picked в net table);
+  // потом верим net table — сервер отклоняет выбор молча
+  var PICK_CONFIRM_TIMEOUT = 1.0;
 
   var round = -1;
   var deadline = 0;
-  var duration = 0; // для полосы времени: от момента показа до дедлайна
+  var duration = 0; // для полосы времени: от предложения до дедлайна
   var options = []; // [{ name, label }] в порядке ключей "1", "2", "3"
   var serverPick = ""; // picked из net table
   var localPick = ""; // последний клик в этом раунде, пока сервер не подтвердил
+  var pendingPicks = []; // все неподтверждённые клики (подтверждения приходят по порядку)
+  var confirmHandle = null;
   var visible = false;
   var closing = false;
   var hideHandle = null;
@@ -77,8 +82,22 @@ OSC.RotationChoice = (function () {
     }
   }
 
+  function CancelConfirm() {
+    if (confirmHandle !== null) {
+      $.CancelScheduled(confirmHandle);
+      confirmHandle = null;
+    }
+  }
+
+  function ResetLocalPick() {
+    CancelConfirm();
+    localPick = "";
+    pendingPicks = [];
+  }
+
   function Hide() {
     CancelHide();
+    ResetLocalPick();
     closing = false;
     SetVisible(false);
     $("#ChoicePanel").RemoveClass("Closing");
@@ -110,12 +129,40 @@ OSC.RotationChoice = (function () {
     if (!visible || closing || round < 0) return;
     if (Game.GetGameTime() > deadline) return;
     localPick = abilityName;
+    pendingPicks.push(abilityName);
     UpdateHighlight();
+    CancelConfirm();
+    confirmHandle = $.Schedule(PICK_CONFIRM_TIMEOUT, OnConfirmTimeout);
     // Шлём каждый клик: прежний выбор мог ещё не дойти до сервера
     GameEvents.SendCustomGameEventToServer("osc_rotation_choice_pick", {
       round: round,
       ability: abilityName,
     });
+  }
+
+  // Подтверждения не было: сверяем оптимистичный выбор с net table
+  function OnConfirmTimeout() {
+    confirmHandle = null;
+    if (!localPick || closing) return;
+    var data = CustomNetTables.GetTableValue("osc_state", NetTableKey());
+    if (data && Number(data.round) === round) {
+      serverPick = String(data.picked || "");
+    }
+    ResetLocalPick();
+    UpdateHighlight();
+  }
+
+  // Обновление picked из net table для текущего раунда
+  function OnServerPick(picked) {
+    serverPick = String(picked || "");
+    if (!localPick) return;
+    if (serverPick === localPick) {
+      ResetLocalPick(); // сервер принял последний клик
+    } else if (serverPick !== "" && pendingPicks.indexOf(serverPick) < 0) {
+      ResetLocalPick(); // сервер отклонил выбор — откатываем к его picked
+    }
+    // picked совпал с более ранним кликом (подтверждение ещё в пути) или
+    // пуст (запись не о выборе) — ждём дальше, решит таймаут
   }
 
   function CreateCard(container, option) {
@@ -184,18 +231,21 @@ OSC.RotationChoice = (function () {
     var isNewOptions = OptionsSignature(list) !== OptionsSignature(options);
 
     if (isNewRound) {
-      localPick = "";
+      ResetLocalPick();
       serverPick = "";
+    }
+    // duration от сервера верна и после переподключения; без неё считаем
+    // от момента, когда увидели предложение
+    var serverDuration = Number(data.duration) || 0;
+    if (serverDuration > 0) {
+      duration = serverDuration;
+    } else if (isNewRound) {
       duration = Math.max(0, newDeadline - now);
     }
     round = newRound;
     deadline = newDeadline;
     options = list;
-    if (picked !== undefined) {
-      serverPick = String(picked || "");
-      // Сервер догнал последний клик — дальше верим ему
-      if (serverPick === localPick) localPick = "";
-    }
+    if (picked !== undefined) OnServerPick(picked);
 
     if (isNewRound || isNewOptions || !visible) {
       BuildCards();
@@ -232,7 +282,7 @@ OSC.RotationChoice = (function () {
     if (!event || Number(event.round) !== round) return;
     if (!visible) return;
     closing = true;
-    localPick = "";
+    ResetLocalPick();
     serverPick = String(event.chosen || "");
     $("#ChoicePanel").AddClass("Closing");
     UpdateHighlight(serverPick);
