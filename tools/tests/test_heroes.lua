@@ -199,13 +199,13 @@ return {
 
         spawn(1, f.main)
         H.RunThink("osc_init")
-        H.eq(f.main.osc_initialized, true, "main hero initialized")
+        H.eq(OSC_HeroState.Get(f.main).initialized, true, "main hero initialized")
         H.eq(initialized[1], f.main, "hero_initialized emitted")
 
         spawn(2, f.clone)
         H.RunThink("osc_copy")
         H.truthy(f.clone:FindAbilityByName("test_a"), "clone copied ability of the owner")
-        H.eq(f.clone.osc_initialized, nil, "clone is not initialized as a main hero")
+        H.eq(OSC_HeroState.Get(f.clone).initialized, false, "clone is not initialized as a main hero")
     end,
 
     ultimate_reroll_only_for_main_hero = function()
@@ -220,6 +220,6 @@ return {
         item:OnSpellStart()
 
         H.truthy(H.logged("requires a main hero"), "copy cannot reroll")
-        H.eq(f.clone.osc_current_ultimate, nil, "clone ultimate untouched")
+        H.eq(OSC_HeroState.Get(f.clone).ultimate, nil, "clone ultimate untouched")
     end,
 }

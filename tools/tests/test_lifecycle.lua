@@ -29,14 +29,14 @@ return {
 
         levelUp(hero, 6)
 
-        H.eq(hero.osc_current_ultimate, nil, "no ultimate before initialization")
+        H.eq(OSC_HeroState.Get(hero).ultimate, nil, "no ultimate before initialization")
     end,
 
     level_up_raises_copy_levels = function()
         setup()
         local hero = H.NewHero({ abilities = { "test_a" } })
-        hero.osc_current_ability = "test_a"
-        hero.osc_initialized = true
+        OSC_HeroState.Get(hero).ability = "test_a"
+        OSC_HeroState.Get(hero).initialized = true
         H.AddPlayer(0, hero)
         local clone = H.NewHero({ abilities = { "test_a" }, copy = "clone" })
 
@@ -66,6 +66,6 @@ return {
         OSC_HeroLifecycle.TryInitializeUnit(hero, "test")
         H.RunThink("osc_init")
 
-        H.eq(hero.osc_initialized, true, "hero initialized without the courier system")
+        H.eq(OSC_HeroState.Get(hero).initialized, true, "hero initialized without the courier system")
     end,
 }

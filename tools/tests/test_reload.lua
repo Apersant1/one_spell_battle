@@ -8,6 +8,8 @@ local MODULES = {
     { file = "osc/core/heroes", global = "OSC_Heroes" },
     { file = "osc/core/game_events", global = "OSC_GameEvents" },
     { file = "osc/core/client_commands", global = "OSC_ClientCommands" },
+    { file = "osc/core/hero_state", global = "OSC_HeroState" },
+    { file = "osc/systems/ability_selection", global = "OSC_AbilitySelection" },
     { file = "osc/systems/abilities", global = "OSC_Abilities" },
     { file = "osc/systems/casino", global = "OSC_Casino" },
     { file = "osc/systems/couriers", global = "OSC_Couriers" },
@@ -38,6 +40,21 @@ return {
         end
 
         H.eq(table.concat(replaced, ", "), "", "modules recreated on reload")
+    end,
+
+    hero_state_gets_new_fields_after_reload = function()
+        require("osc/core/hero_state")
+        local hero = H.NewHero({})
+        local state = OSC_HeroState.Get(hero)
+        state.ability = "test_a"
+        state.anchored = nil -- как будто поле добавили после создания состояния
+
+        package.loaded["osc/core/hero_state"] = nil
+        require("osc/core/hero_state")
+
+        H.eq(OSC_HeroState.Get(hero), state, "same state table")
+        H.eq(state.ability, "test_a", "values kept")
+        H.eq(state.anchored, false, "new field filled with its default")
     end,
 
     rotation_state_survives_reload = function()

@@ -1,5 +1,6 @@
 require("osc/core/heroes")
 require("osc/core/game_events")
+require("osc/core/hero_state")
 
 OSC_Rotation = OSC_Rotation or {
     timer_started = false,
@@ -20,7 +21,7 @@ local function RotateAll()
     if not ok then OSC_Logger.Error("RotationStarted: " .. tostring(err)) end
 
     OSC_Heroes.ForEachPlayerHero(function(hero, playerID)
-        if hero.osc_initialized then
+        if OSC_HeroState.Get(hero).initialized then
             local ok, err = pcall(OSC_Abilities.GiveRandom, hero, true)
             if not ok then
                 OSC_Logger.Error("GiveRandom for player " .. playerID .. ": " .. tostring(err))

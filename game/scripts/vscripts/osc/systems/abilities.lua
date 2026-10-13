@@ -1,9 +1,19 @@
+-- Выдача способностей: замена способности в слоте героя, отложенное
+-- удаление старой, связанные подспособности, синхронизация копий героя.
+-- Что выдавать, решает OSC_AbilitySelection.
+
 require("osc/core/heroes")
+require("osc/core/hero_state")
+require("osc/systems/ability_selection")
 
 OSC_Abilities = OSC_Abilities or {}
 
 -- Слот способности на панели задают AddAbility (первый свободный слот) и
 -- SwapAbilities; SetAbilityIndex в игре способности не переставляет.
+
+local function FindEntry(name)
+    return OSC_AbilitySelection.FindEntry(name)
+end
 
 local function IsInnateAbility(ability)
     local abilityData = GetAbilityKeyValuesByName(ability:GetAbilityName())
@@ -65,155 +75,6 @@ function OSC_Abilities.GrantHeroExtras(hero)
         end
         ability:SetHidden(false)
     end
-end
-
--- ================= Пулы =================
-
-local function IsValidWeight(weight)
-    return weight == nil
-        or (type(weight) == "number" and weight > 0 and weight == math.floor(weight))
-end
-
-local function FindEntry(name)
-    if not name then return nil end
-    for _, pool in ipairs({ OSC_ABILITY_POOL or {}, OSC_ULTIMATE_POOL or {} }) do
-        for _, entry in ipairs(pool) do
-            if entry.name == name then
-                return entry
-            end
-        end
-    end
-end
-
--- Убирает из пулов способности, которых нет в KV (например, после патча Dota)
--- или с неверным весом, а из linked — отсутствующие подспособности.
--- Возвращает, сколько записей и подспособностей убрано.
-function OSC_Abilities.ValidatePools()
-    local removed = 0
-    local pools = {
-        { name = "OSC_ABILITY_POOL", list = OSC_ABILITY_POOL },
-        { name = "OSC_ULTIMATE_POOL", list = OSC_ULTIMATE_POOL },
-    }
-
-    for _, pool in ipairs(pools) do
-        local reasons, invalidCount = {}, 0
-        for index, entry in ipairs(pool.list) do
-            if not GetAbilityKeyValuesByName(entry.name) then
-                reasons[index] = "ability not found"
-            elseif not IsValidWeight(entry.weight) then
-                reasons[index] = "invalid weight " .. tostring(entry.weight)
-            end
-            if reasons[index] then
-                invalidCount = invalidCount + 1
-            end
-        end
-
-        -- Если не прошла ни одна запись, скорее сломана сама проверка, чем пул:
-        -- пустой пул остановил бы режим, поэтому оставляем его как есть
-        local skip = #pool.list > 0 and invalidCount == #pool.list
-        if skip then
-            OSC_Logger.Error(pool.name .. ": validation skipped, no entry passed the KV check")
-        end
-
-        for index = #pool.list, 1, -1 do
-            local entry = pool.list[index]
-            local reason = not skip and reasons[index]
-            if reason then
-                OSC_Logger.Error(pool.name .. ": removed " .. tostring(entry.name)
-                    .. " (" .. reason .. ")")
-                table.remove(pool.list, index)
-                removed = removed + 1
-            elseif not skip then
-                local linked = entry.linked or {}
-                for linkIndex = #linked, 1, -1 do
-                    local link = linked[linkIndex]
-                    if not GetAbilityKeyValuesByName(link.name) then
-                        OSC_Logger.Error(pool.name .. ": removed linked " .. tostring(link.name)
-                            .. " of " .. entry.name .. " (ability not found)")
-                        table.remove(linked, linkIndex)
-                        removed = removed + 1
-                    end
-                end
-            end
-        end
-
-        if #pool.list == 0 then
-            OSC_Logger.Error(pool.name .. " is empty")
-        end
-    end
-
-    return removed
-end
-
-local function PickRandomFromPool(pool, excludeName, isAllowed)
-    local candidates = {}
-    local totalWeight = 0
-
-    local function GetWeight(entry)
-        local weight = entry.weight == nil and 4 or entry.weight
-        if not IsValidWeight(weight) then
-            error("[OSC] Invalid weight for ability: " .. tostring(entry.name))
-        end
-        return weight
-    end
-
-    for _, entry in ipairs(pool) do
-        if entry.name ~= excludeName and (not isAllowed or isAllowed(entry)) then
-            table.insert(candidates, entry)
-            totalWeight = totalWeight + GetWeight(entry)
-        end
-    end
-
-    if #candidates == 0 then
-        if isAllowed then
-            error("[OSC] No eligible abilities in pool")
-        end
-        candidates = pool
-        for _, entry in ipairs(candidates) do
-            totalWeight = totalWeight + GetWeight(entry)
-        end
-    end
-
-    if totalWeight == 0 then
-        error("[OSC] Ability pool is empty")
-    end
-
-    local roll = RandomInt(1, totalWeight)
-    for _, entry in ipairs(candidates) do
-        roll = roll - GetWeight(entry)
-        if roll <= 0 then
-            return entry
-        end
-    end
-end
-
-function OSC_Abilities.PickRandom(excludeName)
-    return PickRandomFromPool(OSC_ABILITY_POOL, excludeName)
-end
-
-local function GetAlliedUltimateCount(hero, abilityName)
-    local count = 0
-    local team = hero:GetTeamNumber()
-
-    OSC_Heroes.ForEachPlayerHero(function(teammate)
-        if teammate ~= hero and teammate:GetTeamNumber() == team
-            and teammate.osc_current_ultimate == abilityName then
-            count = count + 1
-        end
-    end)
-
-    return count
-end
-
-function OSC_Abilities.PickRandomUltimate(excludeName, hero)
-    local maxDuplicates = OSC_CONFIG.MAX_DUPLICATE_ULTIMATES_PER_TEAM
-    if type(maxDuplicates) ~= "number" or maxDuplicates < 1 then
-        error("[OSC] MAX_DUPLICATE_ULTIMATES_PER_TEAM must be at least 1")
-    end
-
-    return PickRandomFromPool(OSC_ULTIMATE_POOL, excludeName, function(entry)
-        return GetAlliedUltimateCount(hero, entry.name) < maxDuplicates
-    end)
 end
 
 function OSC_Abilities.CalcLevel(heroLevel, ability)
@@ -312,8 +173,9 @@ local function PlaceEntry(unit, entry, ability, level)
 end
 
 -- Новая способность добавляется до снятия старой (если движок её не выдал,
--- у героя остаётся прежняя) и через SwapAbilities встаёт в слот старой
-local function SwapEntry(hero, field, entry)
+-- у героя остаётся прежняя) и через SwapAbilities встаёт в слот старой.
+-- slot — "ability" или "ultimate" (поле состояния героя).
+local function SwapEntry(hero, slot, entry)
     ClearRetired(hero, entry.name)
     for _, link in ipairs(entry.linked or {}) do
         ClearRetired(hero, link.name)
@@ -325,7 +187,8 @@ local function SwapEntry(hero, field, entry)
         return false
     end
 
-    local oldName = hero[field]
+    local state = OSC_HeroState.Get(hero)
+    local oldName = state[slot]
     local old = oldName and hero:FindAbilityByName(oldName)
     if old then
         hero:SwapAbilities(oldName, entry.name, false, true)
@@ -335,7 +198,7 @@ local function SwapEntry(hero, field, entry)
 
     PlaceEntry(hero, entry, ability, OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
     ability:EndCooldown()
-    hero[field] = entry.name
+    state[slot] = entry.name
     return true
 end
 
@@ -373,8 +236,9 @@ end
 
 function OSC_Abilities.CopyFromOwner(unit, owner)
     OSC_Abilities.StripHero(unit)
-    unit.osc_current_ability = CopyEntry(unit, owner, owner.osc_current_ability)
-    unit.osc_current_ultimate = CopyEntry(unit, owner, owner.osc_current_ultimate)
+    local state, ownerState = OSC_HeroState.Get(unit), OSC_HeroState.Get(owner)
+    state.ability = CopyEntry(unit, owner, ownerState.ability)
+    state.ultimate = CopyEntry(unit, owner, ownerState.ultimate)
 end
 
 local function HasAbility(unit, name)
@@ -384,9 +248,10 @@ end
 -- Копия с теми же способностями только догоняет уровни: пересоздание
 -- сбросило бы её перезарядки (клоны Meepo живут всю игру)
 local function SyncCopy(unit, owner)
-    local mainName, ultimateName = owner.osc_current_ability, owner.osc_current_ultimate
-    local unchanged = unit.osc_current_ability == mainName
-        and unit.osc_current_ultimate == ultimateName
+    local state, ownerState = OSC_HeroState.Get(unit), OSC_HeroState.Get(owner)
+    local mainName, ultimateName = ownerState.ability, ownerState.ultimate
+    local unchanged = state.ability == mainName
+        and state.ultimate == ultimateName
         and HasAbility(unit, mainName)
         and HasAbility(unit, ultimateName)
     if not unchanged then
@@ -413,9 +278,12 @@ function OSC_Abilities.SyncCopies(owner)
     end)
 end
 
-function OSC_Abilities.GiveRandomUltimate(hero, notify)
-    local entry = OSC_Abilities.PickRandomUltimate(hero.osc_current_ultimate, hero)
-    if not SwapEntry(hero, "osc_current_ultimate", entry) then
+-- Выдаёт основному герою запись пула в слот ("ability" или "ultimate"):
+-- заменяет прежнюю способность слота, уведомляет и обновляет копии.
+-- Возвращает запись или nil, если движок не выдал способность.
+function OSC_Abilities.Give(hero, slot, entry, notify)
+    OSC_AbilitySelection.GetPool(slot) -- неизвестный слот — ошибка
+    if not SwapEntry(hero, slot, entry) then
         return nil
     end
 
@@ -426,15 +294,10 @@ function OSC_Abilities.GiveRandomUltimate(hero, notify)
     return entry
 end
 
-function OSC_Abilities.GiveRandom(hero, notify)
-    local entry = OSC_Abilities.PickRandom(hero.osc_current_ability)
-    if not SwapEntry(hero, "osc_current_ability", entry) then
-        return nil
-    end
+function OSC_Abilities.GiveRandomUltimate(hero, notify)
+    return OSC_Abilities.Give(hero, "ultimate", OSC_AbilitySelection.Pick(hero, "ultimate"), notify)
+end
 
-    if notify then
-        OSC_Notifications.AbilityChanged(hero, entry)
-    end
-    OSC_Abilities.SyncCopies(hero)
-    return entry
+function OSC_Abilities.GiveRandom(hero, notify)
+    return OSC_Abilities.Give(hero, "ability", OSC_AbilitySelection.Pick(hero, "ability"), notify)
 end

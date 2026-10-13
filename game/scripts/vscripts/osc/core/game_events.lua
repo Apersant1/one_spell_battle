@@ -17,6 +17,7 @@
 
 require("osc/core/logger")
 require("osc/core/heroes")
+require("osc/core/hero_state")
 
 OSC_GameEvents = OSC_GameEvents or {
     handlers = {},
@@ -71,15 +72,17 @@ end
 function OSC_GameEvents.OnNPCSpawned(event)
     local unit = EntIndexToHScript(event.entindex)
     if not OSC_Heroes.IsHeroUnit(unit) then return end
-    unit.osc_spawn_seen = true
+    OSC_HeroState.Get(unit).spawn_seen = true
     OSC_GameEvents.Emit("hero_spawned", unit, "npc_spawned")
 end
 
 -- Запасной путь: у героя, чей npc_spawned уже пришёл, повтор не нужен
 function OSC_GameEvents.OnHeroFinishSpawn(event)
     local unit = EntIndexToHScript(event.heroindex)
-    if not OSC_Heroes.IsHeroUnit(unit) or unit.osc_spawn_seen then return end
-    unit.osc_spawn_seen = true
+    if not OSC_Heroes.IsHeroUnit(unit) then return end
+    local state = OSC_HeroState.Get(unit)
+    if state.spawn_seen then return end
+    state.spawn_seen = true
     OSC_GameEvents.Emit("hero_spawned", unit, "dota_on_hero_finish_spawn")
 end
 

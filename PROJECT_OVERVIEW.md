@@ -47,7 +47,7 @@ dota_launch_custom_game one_spell dota
 - Запись пула может содержать `linked` — подспособности, которые выдаются и
   удаляются вместе с основной: Ethereal Jaunt к Illusory Orb, Nightmare End к
   Nightmare, остановка Freezing Field (`hidden = true` — скрыта до активации).
-- При старте `OSC_Abilities.ValidatePools()` сверяет пулы с KV Dota:
+- При старте `OSC_AbilitySelection.ValidatePools()` сверяет пулы с KV Dota:
   отсутствующие способности, подспособности и неверные веса убираются с
   записью в лог.
 - Призванные существа (варды и т. п.) после смены способности остаются до
@@ -187,7 +187,9 @@ dota_launch_custom_game one_spell dota
 - Чат-команды разработки ограничены настройкой `DEVELOPMENT_MODE`.
   Доступны `-reroll`, `-courier_ability [имя]`, `-chaos [id]`, `-chaos_stop`,
   `-casino <circle|diamond|star|seven|off>` (следующие спины дают тройку
-  символа) и cheat-команда `osc_strip`.
+  символа), `-hero_state` (в лог — всё состояние героя режима, число
+  способностей героя, включая скрытые снятые, и число модификаторов: рост со
+  временем — утечка) и cheat-команда `osc_strip`.
 - В проекте есть карта `dota`, шаблонная карта, конфигурация NPC,
   пользовательские способности/предметы, материалы и частицы.
 
@@ -213,10 +215,19 @@ dota_launch_custom_game one_spell dota
 
 - `osc/config/` — игровые параметры, пулы способностей и конфиг уведомлений.
 - `osc/core/` — запуск режима, команды, логирование, уведомления, общие
-  сервисы героев (`heroes.lua`), событий матча (`game_events.lua`) и
-  проверки команд клиента (`client_commands.lua`).
+  сервисы героев (`heroes.lua`), состояния героя (`hero_state.lua`),
+  событий матча (`game_events.lua`) и проверки команд клиента
+  (`client_commands.lua`).
 - `osc/systems/` — игровая логика способностей, героев, ротации,
-  хаос-раундов, курьеров и казино.
+  хаос-раундов, курьеров и казино. Способности разделены на выбор
+  (`ability_selection.lua`: пулы, их проверка, случайный выбор) и выдачу
+  (`abilities.lua`: замена в слоте, отложенное удаление, копии).
+
+Всё, что режим помнит о герое (текущие способности, инициализация, задел
+под «Якорь» и выбор из трёх), описано в `FIELDS` модуля
+`osc/core/hero_state.lua` и создаётся только `OSC_HeroState.Get(hero)`;
+состояние лежит на сущности героя (`hero.osc_state`), после
+`script_reload` недостающие поля дополняются значениями по умолчанию.
 - `osc/modifiers/` — игровые модификаторы.
 - `osc/items/` — поведение пользовательских предметов.
 - `osc/heroes/` — поведение пользовательских способностей героев.
@@ -284,7 +295,7 @@ Panorama отправляет серверу действия пользоват
     │       ├── addon_init.lua        # Регистрация Lua-модификаторов
     │       └── osc/
     │           ├── config/          # config.lua, ability_pools.lua, notifications.lua
-    │           ├── core/            # game_mode, commands, logger, notifications, heroes, game_events, client_commands
+    │           ├── core/            # game_mode, commands, logger, notifications, heroes, hero_state, game_events, client_commands
     │           ├── heroes/          # Пользовательские способности героев
     │           ├── items/           # Пользовательские предметы
     │           ├── modifiers/       # Серверные модификаторы
@@ -343,7 +354,9 @@ Panorama отправляет серверу действия пользоват
 - Игровые числа: `osc/config/config.lua`.
 - Состав способностей и веса: `osc/config/ability_pools.lua`.
 - Типы и каналы уведомлений: `osc/config/notifications.lua`.
+- Выбор способностей и проверка пулов: `osc/systems/ability_selection.lua`.
 - Замена и выдача способностей: `osc/systems/abilities.lua`.
+- Состояние героя: `osc/core/hero_state.lua`.
 - Инициализация/уровни/копии героев: `osc/systems/hero_lifecycle.lua`.
 - Ротация: `osc/systems/rotation.lua`.
 - Хаос-раунды: `osc/systems/chaos_rounds.lua`.

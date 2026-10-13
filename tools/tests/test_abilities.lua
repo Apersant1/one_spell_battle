@@ -18,7 +18,7 @@ end
 local function heroWith(name, opts)
     opts = opts or {}
     local hero = H.NewHero({ abilities = { name }, level = opts.level or 3, copy = opts.copy })
-    hero.osc_current_ability = name
+    OSC_HeroState.Get(hero).ability = name
     return hero
 end
 
@@ -35,7 +35,7 @@ return {
         OSC_ABILITY_POOL = { entry("test_a"), entry("test_missing") }
         OSC_ULTIMATE_POOL = { entry("test_ult") }
 
-        local removed = OSC_Abilities.ValidatePools()
+        local removed = OSC_AbilitySelection.ValidatePools()
 
         H.eq(removed, 1, "removed count")
         H.eq(#OSC_ABILITY_POOL, 1, "pool size")
@@ -51,7 +51,7 @@ return {
         OSC_ABILITY_POOL = { entry("test_a"), entry("test_b", { weight = 0 }) }
         OSC_ULTIMATE_POOL = {}
 
-        OSC_Abilities.ValidatePools()
+        OSC_AbilitySelection.ValidatePools()
 
         H.eq(#OSC_ABILITY_POOL, 1, "pool size")
         H.eq(OSC_ABILITY_POOL[1].name, "test_a", "kept entry")
@@ -66,7 +66,7 @@ return {
         }
         OSC_ULTIMATE_POOL = {}
 
-        local removed = OSC_Abilities.ValidatePools()
+        local removed = OSC_AbilitySelection.ValidatePools()
 
         H.eq(removed, 1, "removed count")
         H.eq(#OSC_ABILITY_POOL[1].linked, 1, "linked size")
@@ -86,7 +86,7 @@ return {
 
         H.eq(result, nil, "no entry returned")
         H.truthy(hero:FindAbilityByName("test_a"), "old ability kept")
-        H.eq(hero.osc_current_ability, "test_a", "current ability unchanged")
+        H.eq(OSC_HeroState.Get(hero).ability, "test_a", "current ability unchanged")
     end,
 
     give_random_adds_linked = function()
@@ -123,7 +123,7 @@ return {
 
         OSC_Abilities.GiveRandom(hero, false)
 
-        H.eq(hero.osc_current_ability, "test_a", "new ability")
+        H.eq(OSC_HeroState.Get(hero).ability, "test_a", "new ability")
         H.eq(hero:FindAbilityByName("test_b"):IsHidden(), true, "old ability hidden")
         H.eq(hero:FindAbilityByName("test_b_sub"):IsHidden(), true, "old linked ability hidden")
 
@@ -165,7 +165,7 @@ return {
 
         H.truthy(replica:FindAbilityByName("test_a"), "illusion of another hero untouched")
 
-        H.eq(owner.osc_current_ability, "test_b", "owner ability")
+        H.eq(OSC_HeroState.Get(owner).ability, "test_b", "owner ability")
         H.truthy(clone:FindAbilityByName("test_b"), "clone got new ability")
         H.eq(clone:FindAbilityByName("test_a"), nil, "clone lost old ability")
         H.truthy(enemyClone:FindAbilityByName("test_a"), "other player's copy untouched")
@@ -210,7 +210,7 @@ return {
         OSC_ABILITY_POOL = { entry("test_x"), entry("test_y") }
         OSC_ULTIMATE_POOL = {}
 
-        OSC_Abilities.ValidatePools()
+        OSC_AbilitySelection.ValidatePools()
 
         H.eq(#OSC_ABILITY_POOL, 2, "pool left intact")
         H.truthy(H.logged("validation skipped"), "skip is logged")
@@ -222,7 +222,7 @@ return {
         H.DefineAbility("test_casino")
         OSC_ABILITY_POOL = { entry("test_a"), entry("test_b") }
         local hero = H.NewHero({ abilities = { "test_a", "test_casino" }, level = 3 })
-        hero.osc_current_ability = "test_a"
+        OSC_HeroState.Get(hero).ability = "test_a"
 
         OSC_Abilities.GiveRandom(hero, false)
 
@@ -276,7 +276,7 @@ return {
         OSC_Abilities.GiveRandom(hero, false)
         OSC_Abilities.GiveRandom(hero, false)
 
-        H.eq(hero.osc_current_ability, "test_a", "current ability")
+        H.eq(OSC_HeroState.Get(hero).ability, "test_a", "current ability")
         local count = 0
         for index = 0, hero:GetAbilityCount() - 1 do
             local ability = hero:GetAbilityByIndex(index)

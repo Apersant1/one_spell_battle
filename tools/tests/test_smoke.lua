@@ -12,11 +12,11 @@ return {
             { name = "test_b", hero = "npc_dota_hero_axe", label = "B" },
         }
         local hero = H.NewHero({ abilities = { "test_a" }, level = 3 })
-        hero.osc_current_ability = "test_a"
+        OSC_HeroState.Get(hero).ability = "test_a"
 
         OSC_Abilities.GiveRandom(hero, false)
 
-        H.eq(hero.osc_current_ability, "test_b", "current ability")
+        H.eq(OSC_HeroState.Get(hero).ability, "test_b", "current ability")
         H.eq(hero:GetAbilityByIndex(0).name, "test_b", "slot 0")
         H.eq(hero:FindAbilityByName("test_a"):IsHidden(), true, "old ability hidden")
         H.eq(hero:GetAbilityByIndex(0).level, 2, "level for hero level 3")

@@ -22,7 +22,7 @@ function OneSpellChaos:Init()
         version = OSC_CONFIG.VERSION,
     })
 
-    local ok, err = pcall(OSC_Abilities.ValidatePools)
+    local ok, err = pcall(OSC_AbilitySelection.ValidatePools)
     if not ok then OSC_Logger.Error("Ability pool validation failed: " .. tostring(err)) end
 
     -- Единая точка событий движка; системы ниже подписываются на неё в Init

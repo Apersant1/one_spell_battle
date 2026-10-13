@@ -264,6 +264,11 @@ function Hero:AddItem(item)
     end
 end
 function Hero:HasModifier(name) return self.modifiers[name] ~= nil end
+function Hero:GetModifierCount()
+    local count = 0
+    for _ in pairs(self.modifiers) do count = count + 1 end
+    return count
+end
 function Hero:AddNewModifier(_, _, name, params) self.modifiers[name] = params or {}; return {} end
 function Hero:RemoveModifierByName(name) self.modifiers[name] = nil end
 function Hero:SetContextThink(name, fn, delay) H.thinks[name] = { fn = fn, delay = delay } end

@@ -1,16 +1,20 @@
+require("osc/core/hero_state")
+
 OSC_Commands = OSC_Commands or {}
 
 local function OnPlayerChat(event)
     local text = string.lower(string.match(event.text or "", "^%s*(.-)%s*$"))
     local abilityName = string.match(text, "^%-courier_ability%s*(%S*)$")
     local isReroll = text == "-reroll"
+    -- -hero_state: всё состояние героя режима, число способностей и модификаторов
+    local isHeroState = text == "-hero_state"
     local isChaosStop = text == "-chaos_stop"
     local chaosId = text == "-chaos" and ""
         or string.match(text, "^%-chaos%s+(%S+)$")
     -- -casino <circle|diamond|star|seven>: следующие спины дают тройку символа; -casino off — обычный режим
     local casinoSymbol = string.match(text, "^%-casino%s+(%S+)$")
     if abilityName == nil and not isReroll and not isChaosStop and chaosId == nil
-        and casinoSymbol == nil then
+        and casinoSymbol == nil and not isHeroState then
         return
     end
 
@@ -60,6 +64,13 @@ local function OnPlayerChat(event)
         return
     end
 
+    if isHeroState then
+        for _, line in ipairs(OSC_HeroState.Describe(hero)) do
+            OSC_Logger.Log(line)
+        end
+        return
+    end
+
     if abilityName ~= nil then
         abilityName = abilityName ~= "" and abilityName or "drunk"
         local ok, result = OSC_Couriers.DebugAbility(hero:GetTeamNumber(), abilityName)
@@ -73,7 +84,7 @@ local function OnPlayerChat(event)
         return
     end
 
-    if not hero.osc_initialized then
+    if not OSC_HeroState.Get(hero).initialized then
         OSC_Logger.Error("-reroll ignored: player has no initialized hero")
         return
     end

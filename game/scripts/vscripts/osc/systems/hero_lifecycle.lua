@@ -1,5 +1,6 @@
 require("osc/core/heroes")
 require("osc/core/game_events")
+require("osc/core/hero_state")
 
 OSC_HeroLifecycle = OSC_HeroLifecycle or {}
 
@@ -7,16 +8,18 @@ local MAX_INIT_ATTEMPTS = 3
 local RETRY_DELAY = 1
 
 local function InitializeHeroAbilities(hero, source)
-    if not OSC_Heroes.IsValid(hero) or hero.osc_initialized then return end
-    if hero.osc_init_attempts and hero.osc_init_attempts >= MAX_INIT_ATTEMPTS then
-        hero.osc_init_state = "failed"
+    if not OSC_Heroes.IsValid(hero) then return end
+    local state = OSC_HeroState.Get(hero)
+    if state.initialized then return end
+    if state.init_attempts >= MAX_INIT_ATTEMPTS then
+        state.init_state = "failed"
         return
     end
 
-    hero.osc_init_attempts = (hero.osc_init_attempts or 0) + 1
-    hero.osc_init_state = "initializing"
+    state.init_attempts = state.init_attempts + 1
+    state.init_state = "initializing"
     OSC_Logger.Log("Init hero " .. hero:GetUnitName() .. " from " .. source
-        .. " (attempt " .. hero.osc_init_attempts .. ")")
+        .. " (attempt " .. state.init_attempts .. ")")
 
     hero:SetContextThink("osc_init", function()
         if not OSC_Heroes.IsValid(hero) then return nil end
@@ -33,25 +36,25 @@ local function InitializeHeroAbilities(hero, source)
         end)
 
         if ok then
-            hero.osc_initialized = true
-            hero.osc_init_state = nil
+            state.initialized = true
+            state.init_state = nil
             OSC_GameEvents.Emit("hero_initialized", hero)
             return nil
         end
 
         OSC_Logger.Error("Hero initialization failed for " .. hero:GetUnitName()
-            .. " on attempt " .. hero.osc_init_attempts .. ": " .. tostring(err))
+            .. " on attempt " .. state.init_attempts .. ": " .. tostring(err))
 
-        if hero.osc_init_attempts < MAX_INIT_ATTEMPTS then
-            hero.osc_init_state = "retry_pending"
+        if state.init_attempts < MAX_INIT_ATTEMPTS then
+            state.init_state = "retry_pending"
             hero:SetContextThink("osc_init_retry", function()
-                if OSC_Heroes.IsValid(hero) and not hero.osc_initialized then
+                if OSC_Heroes.IsValid(hero) and not state.initialized then
                     InitializeHeroAbilities(hero, source)
                 end
                 return nil
             end, RETRY_DELAY)
         else
-            hero.osc_init_state = "failed"
+            state.init_state = "failed"
             OSC_Logger.Error("Hero initialization exhausted retries for "
                 .. hero:GetUnitName())
         end
@@ -63,8 +66,9 @@ end
 -- Double, клон Meepo) — способности основного героя своего игрока
 function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
     if OSC_Heroes.IsCopy(unit) then
-        if unit.osc_copy_done then return end
-        unit.osc_copy_done = true
+        local state = OSC_HeroState.Get(unit)
+        if state.copy_done then return end
+        state.copy_done = true
 
         unit:SetContextThink("osc_copy", function()
             local owner = OSC_Heroes.GetCopyOwner(unit)
@@ -77,7 +81,8 @@ function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
     end
 
     if not OSC_Heroes.IsMainHero(unit) then return end
-    if unit.osc_initialized or unit.osc_init_state then return end
+    local state = OSC_HeroState.Get(unit)
+    if state.initialized or state.init_state then return end
     InitializeHeroAbilities(unit, source)
 end
 
@@ -89,15 +94,16 @@ local function OnPlayerLevelUp(event)
         hero = PlayerResource:GetSelectedHeroEntity(event.player_id)
     end
     -- До инициализации уровни не трогаем: она сама выдаст ультимейт с 6-го уровня
-    if not OSC_Heroes.IsValid(hero) or not hero.osc_initialized then return end
+    local state = OSC_HeroState.Peek(hero)
+    if not OSC_Heroes.IsValid(hero) or not state or not state.initialized then return end
 
     local ok, err = pcall(function()
         local level = event.level or hero:GetLevel()
-        if level >= 6 and not hero.osc_current_ultimate then
+        if level >= 6 and not state.ultimate then
             OSC_Abilities.GiveRandomUltimate(hero, true)
         end
 
-        for _, name in pairs({ hero.osc_current_ability, hero.osc_current_ultimate }) do
+        for _, name in pairs({ state.ability, state.ultimate }) do
             local ability = hero:FindAbilityByName(name)
             if ability then
                 OSC_Abilities.SetEntryLevel(hero, name, OSC_Abilities.CalcLevel(level, ability))
