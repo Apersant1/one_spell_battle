@@ -14,18 +14,6 @@
   }
 }
 
-@keyframes 'OSCVoteWinner' {
-  0% {
-    transform: scale3d(1, 1, 1);
-  }
-  50% {
-    transform: scale3d(1.1, 1.1, 1);
-  }
-  100% {
-    transform: scale3d(1, 1, 1);
-  }
-}
-
 #VotePanel {
   width: 250px;
   horizontal-align: right;
@@ -44,9 +32,28 @@
   animation-timing-function: ease-out;
 }
 
-#VoteTitle {
+#VoteHeader {
   width: 100%;
+  flow-children: right;
+}
+
+#VoteTitle {
+  width: fill-parent-flow(1);
   font-size: 15px;
+}
+
+#VoteCollapse {
+  margin-left: 8px;
+  font-size: 18px;
+}
+
+#VoteHeader:hover #VoteCollapse {
+  color: #ffffff;
+}
+
+#VotePanel.Collapsed #VoteQuestions,
+#VotePanel.Collapsed #VoteHint {
+  visibility: collapse;
 }
 
 #VoteQuestions {
@@ -88,23 +95,9 @@
   background-color: #24152dcc;
 }
 
-#VotePanel.Closed .VoteOption {
-  opacity: 0.45;
-}
-
 .VoteOption.Picked {
   border: 2px solid #efc96c;
   background-color: #3a2c0acc;
-}
-
-#VotePanel.Closed .VoteOption.Winner {
-  opacity: 1;
-  border: 2px solid #efc96c;
-  background-color: #3a2c0acc;
-  box-shadow: #efc96c88 0px 0px 10px 0px;
-  animation-name: OSCVoteWinner;
-  animation-duration: 0.5s;
-  animation-timing-function: ease-in-out;
 }
 
 .VoteOptionName {
@@ -140,8 +133,4 @@
   width: 100%;
   margin-top: 8px;
   font-size: 12px;
-}
-
-#VoteHint.Hidden {
-  visibility: collapse;
 }
