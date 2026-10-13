@@ -11,7 +11,6 @@ OSC.Vote = (function () {
   // osc_hud_vote_q_<question>, osc_hud_vote_opt_<question>_<option>
   var HUD_KEY = "osc_hud";
   var CONFIRM_TIMEOUT = 1.0; // ждём подтверждения голоса в vote_<playerID>
-  var RESULT_SHOW_TIME = 6; // сколько показывать итог после закрытия
   var STATE_POLL = 0.25;
 
   var vote = null; // osc_state/vote
@@ -19,9 +18,7 @@ OSC.Vote = (function () {
   var localVotes = {}; // question -> { option, pending: [] } до подтверждения
   var confirmHandles = {};
   var builtSignature = "";
-  var wasOpen = false;
-  var resultHandle = null;
-  var resultDone = false;
+  var collapsed = false; // игрок свернул окно, чтобы не мешало экрану выбора
 
   function GameState() {
     return Game.GetState();
@@ -67,10 +64,6 @@ OSC.Vote = (function () {
     return !!vote && Number(vote.open) === 1;
   }
 
-  function HasResult() {
-    return !!vote && !!vote.result && Object.keys(vote.result).length > 0;
-  }
-
   function CurrentVote(question) {
     var local = localVotes[question];
     if (local) return local.option;
@@ -88,10 +81,6 @@ OSC.Vote = (function () {
   function DropLocal(question) {
     CancelConfirm(question);
     delete localVotes[question];
-  }
-
-  function DropAllLocal() {
-    for (var question in localVotes) DropLocal(question);
   }
 
   // Подтверждения не было: верим vote_<playerID>
@@ -118,7 +107,7 @@ OSC.Vote = (function () {
   }
 
   function Cast(question, option) {
-    if (!IsOpen() || GameState() !== DOTA_GameState.DOTA_GAMERULES_STATE_HERO_SELECTION) return;
+    if (!IsVisible()) return;
     var local = localVotes[question] || { option: "", pending: [] };
     local.option = option;
     local.pending.push(option);
@@ -204,7 +193,6 @@ OSC.Vote = (function () {
     }
 
     var counts = (vote && vote.counts) || {};
-    var result = (vote && vote.result) || {};
     var blocks = $("#VoteQuestions").Children();
     for (var b = 0; b < blocks.length; b++) {
       var row = blocks[b].GetChild(1);
@@ -218,59 +206,31 @@ OSC.Vote = (function () {
         var count = Number(questionCounts[option]) || 0;
         button.GetChild(button.GetChildCount() - 1).text = String(count);
         button.SetHasClass("Picked", CurrentVote(question) === option);
-        button.SetHasClass("Winner", result[question] !== undefined && String(result[question]) === option);
       }
     }
   }
 
   // ================= Видимость =================
-  function SetMode(visible, closed) {
-    var panel = $("#VotePanel");
-    panel.SetHasClass("Visible", visible);
-    panel.SetHasClass("Closed", closed);
-    $("#VoteTitle").text = $.Localize(closed ? "#osc_hud_vote_result_title" : "#osc_hud_vote_title");
-    $("#VoteHint").text = closed ? "" : $.Localize("#osc_hud_vote_hint");
-    $("#VoteHint").SetHasClass("Hidden", closed);
-  }
-
-  function ShowResult() {
-    if (resultHandle !== null || resultDone) return;
-    DropAllLocal();
-    Refresh();
-    SetMode(true, true);
-    resultHandle = $.Schedule(RESULT_SHOW_TIME, function () {
-      resultHandle = null;
-      resultDone = true;
-      SetMode(false, true);
-    });
+  // Сервер держит голосование открытым от выбора героев до PRE_GAME (включая
+  // стадию стратегии). Итог после закрытия уходит в ленту уведомлений HUD:
+  // на PRE_GAME экран выбора героев вместе с этим окном уже скрыт.
+  function IsVisible() {
+    return IsOpen() && GameState() < DOTA_GameState.DOTA_GAMERULES_STATE_PRE_GAME;
   }
 
   function Update() {
-    var state = GameState();
-    if (state >= DOTA_GameState.DOTA_GAMERULES_STATE_PRE_GAME) {
-      if (resultHandle !== null) {
-        $.CancelScheduled(resultHandle);
-        resultHandle = null;
-      }
-      SetMode(false, false);
-      return false; // экран выбора героев закрыт — голосование больше не нужно
-    }
+    var visible = IsVisible();
+    var panel = $("#VotePanel");
+    panel.SetHasClass("Visible", visible);
+    panel.SetHasClass("Collapsed", collapsed);
+    $("#VoteCollapse").text = collapsed ? "+" : "-";
+    // Экран выбора героев закрыт — голосование больше не нужно
+    if (GameState() >= DOTA_GameState.DOTA_GAMERULES_STATE_PRE_GAME) return false;
+  }
 
-    var inPick = state === DOTA_GameState.DOTA_GAMERULES_STATE_HERO_SELECTION;
-    if (IsOpen() && inPick) {
-      wasOpen = true;
-      resultDone = false;
-      SetMode(true, false);
-    } else if (wasOpen && !IsOpen() && HasResult()) {
-      ShowResult();
-    } else if (wasOpen && IsOpen()) {
-      // Выбор героев кончился, а сервер ещё не закрыл голосование —
-      // окно не прячем, чтобы итог не мигал
-    } else if (resultHandle === null) {
-      // Голосование не открыто (или выбор героев уже кончился, а сервер ещё
-      // не прислал итог) — держим окно скрытым
-      SetMode(false, false);
-    }
+  function ToggleCollapsed() {
+    collapsed = !collapsed;
+    Update();
   }
 
   function OnNetTableChanged(tableName, key, data) {
@@ -288,11 +248,16 @@ OSC.Vote = (function () {
     // Переподключение / поздняя загрузка: читаем текущее состояние
     vote = CustomNetTables.GetTableValue("osc_state", "vote");
     serverVotes = CustomNetTables.GetTableValue("osc_state", MyVotesKey()) || {};
+    $("#VoteTitle").text = $.Localize("#osc_hud_vote_title");
+    $("#VoteHint").text = $.Localize("#osc_hud_vote_hint");
     Refresh();
     OSC.Util.Loop(STATE_POLL, Update);
   }
 
-  return { Init: Init };
+  return {
+    Init: Init,
+    ToggleCollapsed: ToggleCollapsed, // вызывается из XML
+  };
 })();
 
 OSC.Vote.Init();
