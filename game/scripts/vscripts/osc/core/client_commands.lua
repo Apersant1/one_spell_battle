@@ -16,8 +16,33 @@
 -- или "invalid_<имя аргумента>".
 
 require("osc/core/heroes")
+require("osc/core/runtime_config")
 
-OSC_ClientCommands = OSC_ClientCommands or {}
+OSC_ClientCommands = OSC_ClientCommands or { refusal_log = {} }
+
+-- Отказ на команду клиента в лог, но не чаще раза в
+-- CLIENT_REFUSAL_LOG_INTERVAL секунд на пару канал + отправитель:
+-- подделанный клиент в цикле не заспамит лог. Следующая запись сообщает,
+-- сколько отказов пропущено.
+function OSC_ClientCommands.LogRefusal(channel, senderKey, message)
+    OSC_ClientCommands.refusal_log = OSC_ClientCommands.refusal_log or {}
+    local key = channel .. ":" .. tostring(senderKey)
+    local record = OSC_ClientCommands.refusal_log[key]
+    local now = GameRules:GetGameTime()
+    local interval = OSC_Config.Get("CLIENT_REFUSAL_LOG_INTERVAL") or 0
+    if record and now - record.time < interval then
+        record.suppressed = record.suppressed + 1
+        return
+    end
+
+    local suffix = ""
+    if record and record.suppressed > 0 then
+        suffix = " (+" .. record.suppressed .. " more refused)"
+    end
+    OSC_ClientCommands.refusal_log[key] = { time = now, suppressed = 0 }
+    OSC_Logger.Log(channel .. " of player " .. tostring(senderKey) .. " refused: "
+        .. tostring(message) .. suffix)
+end
 
 -- ID отправителя движок кладёт в event.PlayerID. sourceIndex — индекс
 -- сущности игрока (обычно PlayerID + 1), его нельзя считать ID игрока:

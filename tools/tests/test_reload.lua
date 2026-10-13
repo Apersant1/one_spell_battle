@@ -19,6 +19,7 @@ local MODULES = {
     { file = "osc/systems/rotation_choice", global = "OSC_RotationChoice" },
     { file = "osc/systems/rotation", global = "OSC_Rotation" },
     { file = "osc/systems/team_shuffle", global = "OSC_TeamShuffle" },
+    { file = "osc/systems/vote", global = "OSC_Vote" },
     { file = "osc/systems/chaos_events/registry", global = "OSC_ChaosEvents" },
     { file = "osc/systems/chaos_rounds", global = "OSC_ChaosRounds" },
 }

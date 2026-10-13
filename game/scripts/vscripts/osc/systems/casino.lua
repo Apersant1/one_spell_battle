@@ -262,6 +262,12 @@ end
 function OSC_Casino.SpawnMachine(hero)
     local _, playerID = GetHeroPlayer(hero)
 
+    -- Казино выключено конфигом или голосованием в лобби
+    if OSC_Config.Get("CASINO_ENABLED") ~= true then
+        ShowHudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_disabled")
+        return false
+    end
+
     local oldMachine = OSC_HeroState.Get(hero).casino_machine
     if oldMachine and not oldMachine:IsNull() then
         if oldMachine.osc_casino_is_spinning then

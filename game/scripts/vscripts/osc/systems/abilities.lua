@@ -30,9 +30,19 @@ local function HeroExtras(hero)
     return (OSC_HERO_EXTRA_ABILITIES or {})[hero:GetUnitName()] or {}
 end
 
+-- Запись OSC_HERO_EXTRA_ABILITIES: имя или { name, enabled_by }
+local function ExtraName(extra)
+    return type(extra) == "table" and extra.name or extra
+end
+
+local function IsExtraEnabled(extra)
+    return type(extra) ~= "table" or extra.enabled_by == nil
+        or OSC_Config.Get(extra.enabled_by) == true
+end
+
 local function IsHeroExtra(hero, name)
     for _, extra in ipairs(HeroExtras(hero)) do
-        if extra == name then
+        if ExtraName(extra) == name then
             return true
         end
     end
@@ -67,15 +77,18 @@ end
 
 -- Выдаёт герою его способности из OSC_HERO_EXTRA_ABILITIES (казино Огра)
 function OSC_Abilities.GrantHeroExtras(hero)
-    for _, name in ipairs(HeroExtras(hero)) do
-        local ability = hero:FindAbilityByName(name) or hero:AddAbility(name)
-        if not ability then
-            error("[OSC] Failed to add hero ability " .. name)
+    for _, extra in ipairs(HeroExtras(hero)) do
+        if IsExtraEnabled(extra) then
+            local name = ExtraName(extra)
+            local ability = hero:FindAbilityByName(name) or hero:AddAbility(name)
+            if not ability then
+                error("[OSC] Failed to add hero ability " .. name)
+            end
+            if ability:GetLevel() < 1 then
+                ability:SetLevel(1)
+            end
+            ability:SetHidden(false)
         end
-        if ability:GetLevel() < 1 then
-            ability:SetLevel(1)
-        end
-        ability:SetHidden(false)
     end
 end
 

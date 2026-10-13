@@ -18,9 +18,7 @@ require("osc/core/client_commands")
 require("osc/core/game_events")
 require("osc/systems/ability_selection")
 
-OSC_RotationChoice = OSC_RotationChoice or {
-    refusal_log = {}, -- ключ отправителя -> { time, suppressed }
-}
+OSC_RotationChoice = OSC_RotationChoice or {}
 
 local SLOT = "ability"
 
@@ -115,24 +113,8 @@ local function Contains(list, value)
     return false
 end
 
--- Отказы пишутся в лог не чаще раза в ROTATION_CHOICE_REFUSAL_LOG_INTERVAL
--- секунд на отправителя: подделанный клиент в цикле не заспамит лог
 local function LogRefusal(senderKey, message)
-    OSC_RotationChoice.refusal_log = OSC_RotationChoice.refusal_log or {}
-    local record = OSC_RotationChoice.refusal_log[senderKey]
-    local now = GameRules:GetGameTime()
-    local interval = OSC_Config.Get("ROTATION_CHOICE_REFUSAL_LOG_INTERVAL") or 0
-    if record and now - record.time < interval then
-        record.suppressed = record.suppressed + 1
-        return
-    end
-
-    local suffix = ""
-    if record and record.suppressed > 0 then
-        suffix = " (+" .. record.suppressed .. " more refused)"
-    end
-    OSC_RotationChoice.refusal_log[senderKey] = { time = now, suppressed = 0 }
-    OSC_Logger.Log("Rotation choice of player " .. senderKey .. " refused: " .. message .. suffix)
+    OSC_ClientCommands.LogRefusal("Rotation choice", senderKey, message)
 end
 
 -- Выбор игрока: принимается только вариант из выданного ему списка в

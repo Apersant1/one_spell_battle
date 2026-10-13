@@ -172,6 +172,20 @@ function OSC_Notifications.ChaosRoundEnded(eventName)
     OSC_Notifications.Notify("chaos_round_ended", { name = eventName })
 end
 
+-- Итог голосования в лобби. Числа подставляются как есть, остальные
+-- значения — ключами osc_notify_vote_<вопрос>_<вариант>
+function OSC_Notifications.VoteResult(result)
+    local params = {}
+    for questionId, value in pairs(result or {}) do
+        if tonumber(value) then
+            params[questionId] = value
+        else
+            params[questionId] = "#osc_notify_vote_" .. questionId .. "_" .. value
+        end
+    end
+    OSC_Notifications.Notify("vote_result", params)
+end
+
 function OSC_Notifications.CourierAbilityGained(team, ability, duration)
     OSC_Notifications.Notify("courier_ability_gained", {
         team = team,

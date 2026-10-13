@@ -28,6 +28,7 @@ function OneSpellChaos:Init()
 
     -- Единая точка событий движка; системы ниже подписываются на неё в Init
     SafeInit("GameEvents", OSC_GameEvents)
+    SafeInit("Vote", OSC_Vote)
     SafeInit("TeamShuffle", OSC_TeamShuffle)
     SafeInit("Casino", OSC_Casino)
     SafeInit("Commands", OSC_Commands)

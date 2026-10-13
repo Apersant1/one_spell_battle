@@ -116,7 +116,8 @@ def check_localization():
     used = set()
     for path in sources:
         for key in re.findall(r'["#](osc_[a-z0-9_]+)', read_text(path)):
-            if key.startswith(LOC_PREFIXES) and key not in NOT_LOC_KEYS:
+            # "osc_notify_vote_" и т. п. — префикс ключа, собираемого в коде
+            if key.startswith(LOC_PREFIXES) and key not in NOT_LOC_KEYS and not key.endswith("_"):
                 used.add(key)
     for key in sorted(used):
         for name, keys in (("addon_russian.txt", ru), ("addon_english.txt", en)):

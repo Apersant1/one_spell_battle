@@ -23,17 +23,51 @@ OSC_CONFIG = {
     ABILITY_TAG_STREAK_ENABLED = true,
     MAX_SAME_TAG_STREAK = 2,
     -- Выбор из трёх: на предупреждении о ротации игрок получает
-    -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них.
-    -- Отказы на выбор клиента пишутся в лог не чаще раза в
-    -- ROTATION_CHOICE_REFUSAL_LOG_INTERVAL секунд на игрока.
+    -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них
     ROTATION_CHOICE_ENABLED = true,
     ROTATION_CHOICE_COUNT = 3,
-    ROTATION_CHOICE_REFUSAL_LOG_INTERVAL = 5,
+    -- Отказы на команды клиента (выбор из трёх, голосование) пишутся в лог
+    -- не чаще раза в столько секунд на игрока и канал
+    CLIENT_REFUSAL_LOG_INTERVAL = 5,
     -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшую ротацию.
     -- ANCHOR_COST должен совпадать с ItemCost в npc_items_custom.txt
     -- (это проверяет tools/tests/run_tests.py)
     ANCHOR_ENABLED = true,
     ANCHOR_COST = 400,
+    -- Голосование в лобби (стадия выбора героев). Вопросы и варианты по
+    -- порядку; у варианта value (строка для клиента) и overrides — какие
+    -- значения конфига он задаёт через OSC_Config.SetOverride. Побеждает
+    -- большинство; при ничьей или без голосов — default.
+    VOTE_ENABLED = true,
+    VOTE_QUESTIONS = {
+        {
+            id = "rotation_interval",
+            default = "60",
+            options = {
+                { value = "30", overrides = { ROTATION_INTERVAL = 30 } },
+                { value = "60", overrides = { ROTATION_INTERVAL = 60 } },
+                { value = "90", overrides = { ROTATION_INTERVAL = 90 } },
+            },
+        },
+        {
+            -- Частота хаос-раундов задаётся интервалом между их стартами
+            id = "chaos_frequency",
+            default = "normal",
+            options = {
+                { value = "rare", overrides = { ["CHAOS_ROUNDS.INTERVAL"] = 300 } },
+                { value = "normal", overrides = { ["CHAOS_ROUNDS.INTERVAL"] = 200 } },
+                { value = "often", overrides = { ["CHAOS_ROUNDS.INTERVAL"] = 120 } },
+            },
+        },
+        {
+            id = "casino",
+            default = "on",
+            options = {
+                { value = "on", overrides = { CASINO_ENABLED = true } },
+                { value = "off", overrides = { CASINO_ENABLED = false } },
+            },
+        },
+    },
     CHAT_MESSAGES = true,
     DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
@@ -106,6 +140,9 @@ OSC_CONFIG = {
         INITIAL_ABILITY_INTERVAL_MIN = 60,
         INITIAL_ABILITY_INTERVAL_MAX = 180,
     },
+    -- Казино Огра: false — способность казино не выдаётся, автомат не
+    -- ставится (может выключить голосование в лобби)
+    CASINO_ENABLED = true,
     CASINO_ACCESS = "all",  -- all/team/owner
     CASINO_USE_DISTANCE = 450,       -- как близко нужно стоять к автомату
     CASINO_HULL_RADIUS = 80,

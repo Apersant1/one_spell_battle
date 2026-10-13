@@ -15,6 +15,8 @@
 --     Кто нужен — фильтруют через OSC_Heroes.
 --   hero_initialized(hero) — основной герой получил способности режима
 --     (присылает hero_lifecycle).
+--   game_state_changed { state, previous } — сменилась стадия игры
+--     (DOTA_GAMERULES_STATE_*); приходит до game_started.
 --   game_started() — игра перешла в GAME_IN_PROGRESS; приходит один раз.
 --   hero_anchored(hero) — основному герою поставлен «Якорь» (присылает
 --     OSC_Anchor).
@@ -48,6 +50,7 @@ OSC_GameEvents = OSC_GameEvents or {
 local KNOWN_EVENTS = {
     hero_spawned = true,
     hero_initialized = true,
+    game_state_changed = true,
     game_started = true,
     hero_anchored = true,
     ability_changed = true,
@@ -108,8 +111,14 @@ function OSC_GameEvents.OnHeroFinishSpawn(event)
 end
 
 function OSC_GameEvents.OnStateChange()
-    if OSC_GameEvents.game_started
-        or GameRules:State_Get() ~= DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
+    local state = GameRules:State_Get()
+    local previous = OSC_GameEvents.last_state
+    if state ~= previous then
+        OSC_GameEvents.last_state = state
+        OSC_GameEvents.Emit("game_state_changed", { state = state, previous = previous })
+    end
+
+    if OSC_GameEvents.game_started or state ~= DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
         return
     end
     OSC_GameEvents.game_started = true

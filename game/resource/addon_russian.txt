@@ -78,6 +78,13 @@
 		"DOTA_Tooltip_modifier_osc_courier_lost"				"Заблудший"
 		"DOTA_Tooltip_modifier_osc_courier_lost_Description"	"Курьер перепутал адреса: предметы из тайника достаются случайному союзнику."
 		"osc_notify_courier_wrong_delivery"	"Курьер перепутал адрес: {s:item} для {s:owner} достался {s:recipient}!"
+		"osc_notify_vote_result"	"Итоги голосования: смена способностей каждые {s:rotation_interval} сек., хаос-раунды — {s:chaos_frequency}, казино — {s:casino}."
+		"osc_notify_vote_chaos_frequency_rare"	"редко"
+		"osc_notify_vote_chaos_frequency_normal"	"как обычно"
+		"osc_notify_vote_chaos_frequency_often"	"часто"
+		"osc_notify_vote_casino_on"	"открыто"
+		"osc_notify_vote_casino_off"	"закрыто"
+		"osc_casino_err_disabled"	"Казино в этом матче закрыто"
 		"DOTA_Tooltip_modifier_osc_courier_drunk"				"Пьяная скотина"
 		"DOTA_Tooltip_modifier_osc_courier_drunk_Description"	"Курьер еле держится на ногах: скорость передвижения снижена на %dMODIFIER_PROPERTY_TOOLTIP%%%."
 		// ---------- Team select: строки из JS ----------

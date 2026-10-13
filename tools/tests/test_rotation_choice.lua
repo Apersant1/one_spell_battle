@@ -192,7 +192,7 @@ return {
         end
         H.eq(lines, 1, "refusals logged once per interval")
 
-        H.time = H.time + OSC_CONFIG.ROTATION_CHOICE_REFUSAL_LOG_INTERVAL
+        H.time = H.time + OSC_CONFIG.CLIENT_REFUSAL_LOG_INTERVAL
         pick(0, 1, foreign)
         H.truthy(H.logged("(+39 more refused)"), "suppressed count reported later")
     end,

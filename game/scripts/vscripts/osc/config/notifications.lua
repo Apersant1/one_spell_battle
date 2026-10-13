@@ -22,6 +22,7 @@ OSC_NOTIFICATIONS_CONFIG = {
         rotation = { enabled = true },
         chaos_round = { enabled = true },
         player = { enabled = true },
+        vote = { enabled = true },
     },
 
     types = {
@@ -68,6 +69,12 @@ OSC_NOTIFICATIONS_CONFIG = {
         courier_wrong_delivery = {
             category = "player",
             feed = { token = "#osc_notify_courier_wrong_delivery", color = "#FFB347", scope = "team" },
+        },
+
+        -- ===== Голосование в лобби =====
+        vote_result = {
+            category = "vote",
+            feed = { token = "#osc_notify_vote_result", color = "#7FD4FF" },
         },
     },
 }
