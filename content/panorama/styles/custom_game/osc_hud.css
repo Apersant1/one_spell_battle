@@ -675,3 +675,198 @@
   horizontal-align: center;
   vertical-align: center;
 }
+
+/* ---------- Итоги матча ---------- */
+#SummaryPanel {
+  width: 820px;
+  horizontal-align: center;
+  vertical-align: top;
+  margin-top: 70px;
+  padding: 14px 18px 16px 18px;
+  flow-children: down;
+  visibility: collapse;
+}
+
+#SummaryPanel.Visible {
+  visibility: visible;
+  animation-name: OSCChoiceIn;
+  animation-duration: 0.3s;
+  animation-timing-function: ease-out;
+}
+
+#SummaryHeader {
+  width: 100%;
+  flow-children: right;
+}
+
+#SummaryTitle {
+  width: fill-parent-flow(1);
+  vertical-align: center;
+}
+
+#SummaryClose {
+  padding: 4px 12px;
+  vertical-align: center;
+  background-color: #382443;
+  border: 1px solid #bd72e8;
+  border-radius: 3px;
+}
+
+#SummaryClose:hover,
+#SummaryReopen:hover {
+  background-color: #4a2f59;
+}
+
+#SummaryClose Label {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#SummaryReopen {
+  horizontal-align: center;
+  vertical-align: top;
+  margin-top: 70px;
+  padding: 6px 16px;
+  visibility: collapse;
+}
+
+#SummaryReopen.Visible {
+  visibility: visible;
+}
+
+#SummaryTitles {
+  width: 100%;
+  margin-top: 10px;
+  flow-children: right-wrap;
+}
+
+#SummaryTitles.Hidden {
+  visibility: collapse;
+}
+
+.SummaryTitleCard {
+  width: 254px;
+  margin: 0px 6px 8px 0px;
+  padding: 6px;
+  flow-children: right;
+  background-color: #08070bcc;
+  border: 1px solid #efc96c60;
+  border-radius: 4px;
+}
+
+.SummaryTitleCard.Local {
+  border: 2px solid #efc96c;
+  box-shadow: #efc96c66 0px 0px 10px 0px;
+}
+
+.SummaryTitleHero {
+  width: 72px;
+  height: 40px;
+  vertical-align: top;
+  border: 1px solid #00000080;
+}
+
+.SummaryTitleText {
+  width: fill-parent-flow(1);
+  margin-left: 8px;
+  flow-children: down;
+}
+
+.SummaryTitleName {
+  width: 100%;
+  color: #efc96c;
+  font-size: 17px;
+  font-weight: bold;
+  text-shadow: #000000 1px 1px 3px 0px;
+}
+
+.SummaryTitlePlayer {
+  width: 100%;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.SummaryTitleDesc {
+  width: 100%;
+  color: #b9aebe;
+  font-size: 12px;
+}
+
+#SummaryTable {
+  width: 100%;
+  margin-top: 6px;
+  flow-children: down;
+}
+
+.SummaryRow {
+  width: 100%;
+  height: 30px;
+  flow-children: right;
+  border-bottom: 1px solid #ffffff14;
+}
+
+.SummaryRow.Local {
+  background-color: #efc96c1f;
+}
+
+.SummaryHeaderRow {
+  height: 24px;
+  border-bottom: 1px solid #bd72e880;
+}
+
+.SummaryHeaderRow Label {
+  color: #d9a4ff;
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.SummaryCellPlayer {
+  width: fill-parent-flow(1);
+  height: 100%;
+  flow-children: right;
+  vertical-align: center;
+}
+
+.SummaryHeaderRow .SummaryCellPlayer {
+  height: auto;
+}
+
+.SummaryRowHero {
+  width: 26px;
+  height: 26px;
+  margin: 2px 8px 2px 2px;
+  vertical-align: center;
+}
+
+.SummaryPlayerName {
+  vertical-align: center;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.SummaryPlayerName.Radiant {
+  color: #8fe388;
+}
+
+.SummaryPlayerName.Dire {
+  color: #ff7b6b;
+}
+
+.SummaryCell {
+  width: 120px;
+  vertical-align: center;
+  text-align: right;
+  padding-right: 8px;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.SummaryCell.Positive {
+  color: #8fe388;
+}
+
+.SummaryCell.Negative {
+  color: #ff7b6b;
+}

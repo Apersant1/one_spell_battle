@@ -14,6 +14,7 @@
         <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/osc_notification_feed.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_summary.js" />
         <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
     </scripts>
 
@@ -113,5 +114,20 @@
                 <Panel id="ChoiceProgressFill" hittest="false" />
             </Panel>
         </Panel>
+
+        <!-- Итоги матча (POST_GAME, osc_summary.js): поверх всего HUD -->
+        <Panel id="SummaryPanel" class="OSCSurface OSCChaos" hittest="true">
+            <Panel id="SummaryHeader" hittest="false">
+                <Label id="SummaryTitle" class="OSCTextTitle OSCGold" text="#osc_hud_summary_title" />
+                <Button id="SummaryClose" onactivate="OSC.Summary.Close()">
+                    <Label text="#osc_hud_summary_close" />
+                </Button>
+            </Panel>
+            <Panel id="SummaryTitles" hittest="false" />
+            <Panel id="SummaryTable" hittest="false" />
+        </Panel>
+        <Button id="SummaryReopen" class="OSCSurface OSCChaos" onactivate="OSC.Summary.Open()">
+            <Label class="OSCTextBody OSCBold" text="#osc_hud_summary_show" />
+        </Button>
     </Panel>
 </root>

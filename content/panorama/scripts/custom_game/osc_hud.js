@@ -10,4 +10,5 @@
   OSC.Anchor.Init();
   OSC.Casino.Init();
   OSC.NotificationFeed.Init();
+  OSC.Summary.Init();
 })();
