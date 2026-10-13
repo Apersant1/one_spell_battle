@@ -75,21 +75,10 @@ function OSC_Abilities.StripHero(hero)
     end
 end
 
--- Выдаёт герою его способности из OSC_HERO_EXTRA_ABILITIES (казино Огра)
+-- Выдаёт герою его способности из OSC_HERO_EXTRA_ABILITIES (казино Огра);
+-- см. SyncHeroExtras ниже
 function OSC_Abilities.GrantHeroExtras(hero)
-    for _, extra in ipairs(HeroExtras(hero)) do
-        if IsExtraEnabled(extra) then
-            local name = ExtraName(extra)
-            local ability = hero:FindAbilityByName(name) or hero:AddAbility(name)
-            if not ability then
-                error("[OSC] Failed to add hero ability " .. name)
-            end
-            if ability:GetLevel() < 1 then
-                ability:SetLevel(1)
-            end
-            ability:SetHidden(false)
-        end
-    end
+    return OSC_Abilities.SyncHeroExtras(hero)
 end
 
 function OSC_Abilities.CalcLevel(heroLevel, ability)
@@ -163,6 +152,43 @@ local function ClearRetired(unit, name)
     local ability = unit:FindAbilityByName(name)
     if ability and ability.osc_retired then
         RemoveNow(unit, ability)
+    end
+end
+
+-- Приводит собственные способности героя (OSC_HERO_EXTRA_ABILITIES) к
+-- флагам конфига с учётом переопределений: недостающие включённые выдаёт,
+-- выключенные снимает через RetireAbility. Выданная позже встаёт сразу за
+-- основной способностью (казино — на W), как при инициализации: слот
+-- задаёт SwapAbilities, SetAbilityIndex в игре не работает.
+function OSC_Abilities.SyncHeroExtras(hero)
+    local state = OSC_HeroState.Get(hero)
+    local main = state.ability and hero:FindAbilityByName(state.ability)
+    local mainIndex = main and main:GetAbilityIndex() or nil
+    local position = 0
+
+    for _, extra in ipairs(HeroExtras(hero)) do
+        local name = ExtraName(extra)
+        local ability = hero:FindAbilityByName(name)
+        if IsExtraEnabled(extra) then
+            position = position + 1
+            if not ability or ability.osc_retired then
+                ClearRetired(hero, name)
+                ability = hero:AddAbility(name)
+                if not ability then
+                    error("[OSC] Failed to add hero ability " .. name)
+                end
+                local wanted = mainIndex and hero:GetAbilityByIndex(mainIndex + position)
+                if wanted and wanted ~= ability then
+                    hero:SwapAbilities(wanted:GetAbilityName(), name, not wanted:IsHidden(), true)
+                end
+            end
+            if ability:GetLevel() < 1 then
+                ability:SetLevel(1)
+            end
+            ability:SetHidden(false)
+        elseif ability and not ability.osc_retired then
+            RetireAbility(hero, ability)
+        end
     end
 end
 

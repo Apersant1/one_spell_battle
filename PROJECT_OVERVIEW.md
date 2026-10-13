@@ -208,19 +208,32 @@ dota_launch_custom_game one_spell dota
   хаос-раундов (`rare`/`normal`/`often` → `CHAOS_ROUNDS.INTERVAL`
   300/200/120) и казино (`on`/`off` → `CASINO_ENABLED`). У варианта —
   строковое значение и `overrides`, которые он задаёт.
-- Открывается при входе в `DOTA_GAMERULES_STATE_HERO_SELECTION`
-  (событие шины `game_state_changed`), закрывается при выходе из неё.
-  Побеждает большинство; при ничьей или без голосов — `default` вопроса.
-  Итог записывается через `OSC_Config.SetOverride` (исходный конфиг не
-  меняется) и объявляется в ленте (`osc_notify_vote_result`). Ротация и
-  хаос-раунды стартуют на `game_started` и уже читают итог.
+- Открывается при входе в `DOTA_GAMERULES_STATE_HERO_SELECTION` (событие
+  шины `game_state_changed`) и остаётся открытым всё время стратегии
+  (`STRATEGY_TIME`, `TEAM_SHOWCASE`, `WAIT_FOR_MAP_TO_LOAD`); закрывается на
+  первой стадии `>= PRE_GAME`, даже если стадии перескочили, — до
+  `game_started`. Побеждает большинство; при ничьей или без голосов —
+  `default` вопроса. Итог записывается через `OSC_Config.SetOverride`
+  (исходный конфиг не меняется), публикуется в шину
+  `config_overrides_applied` { overrides } и объявляется в ленте
+  (`osc_notify_vote_result`). Ротация и хаос-раунды стартуют на
+  `game_started` и уже читают итог.
+- По `config_overrides_applied` hero_lifecycle пересинхронизирует
+  собственные способности уже инициализированных героев
+  (`OSC_Abilities.SyncHeroExtras`): герой создаётся при пике, поэтому казино
+  могло быть выдано до итога. Выключенные снимаются через `RetireAbility`,
+  включённые выдаются и встают сразу за основной способностью (казино — на
+  W). Казино по тому же событию убирает поставленные автоматы, если оно
+  выключено.
 - Net table `osc_state/vote` { open, questions, counts, result } и
   `osc_state/vote_<playerID>` (голос игрока, "" — не голосовал). Клиент
   шлёт `osc_vote_cast` { question, option }: проверка через
   `OSC_ClientCommands` (игрок существует, вопрос и вариант из списка,
-  голосование открыто), голос можно менять, отказ молчаливый — net table
-  не меняется, лог ограничен `CLIENT_REFUSAL_LOG_INTERVAL`. HUD голосования
-  делается отдельно.
+  голосование открыто), голос можно менять, отказ и повтор того же голоса
+  молчаливые — net table не меняется, лог ограничен
+  `CLIENT_REFUSAL_LOG_INTERVAL`. `vote_<playerID>` публикуется сразу,
+  счётчики в `vote` — пачкой не чаще раза в `VOTE_PUBLISH_INTERVAL`
+  (0,25 с, разовый think), итог при закрытии — сразу.
 
 ### Статистика матча
 
@@ -233,8 +246,9 @@ dota_launch_custom_game one_spell dota
     (`ability_changed`);
   - `kills` и `kill_abilities` — убийства вражеских основных героев игроком
     и его юнитами, всего и по способностям (`entindex_inflictor`, предметы
-    не считаются). Крипы, иллюзии, клоны и добивание своих не учитываются,
-    чтобы фарм не перевешивал;
+    не считаются). Крипы, иллюзии, клоны, добивание своих и смерть с
+    перерождением (`IsReincarnating`) не учитываются, чтобы фарм не
+    перевешивал;
   - `casino_net` — выигрыши минус ставки (`casino_spin_resolved`);
   - `chaos_damage` — урон по вражеским героям (не иллюзиям) во время
     активного хаос-раунда (`chaos_started` / `chaos_ended` + `entity_hurt`;
@@ -246,16 +260,19 @@ dota_launch_custom_game one_spell dota
 
 - `osc/systems/summary.lua`, флаг `SUMMARY_ENABLED` (нужна и статистика):
   по `match_stats` пишет net table `osc_state/summary` { players =
-  { ["<playerID>"] = { hero, rotations, abilities, distinct_kill_abilities,
-  kills, casino_net, chaos_damage } }, titles = { { id, player_id, value } } }.
-  В итогах все игроки, в том числе без событий (с нулями); список
-  способностей — последние `SUMMARY_MAX_ABILITIES` (30).
+  { ["<playerID>"] = { hero, rotations, distinct_kill_abilities, kills,
+  casino_net, chaos_damage } }, titles = { { id, player_id, value } } }.
+  В итогах все игроки, в том числе без событий (с нулями). Список
+  полученных способностей в net table не передаётся (он нужен только для
+  `collector` и считается по полным данным статистики).
 - Титулы по порядку `SUMMARY_TITLES`: `gambler` (худший `casino_net`, если
   он отрицательный), `lucky` (лучший, если положительный), `chaos_master`
   (больше всего убийств разными способностями), `collector` (больше всего
   разных полученных способностей), `storm_chaser` (больше всего
   `chaos_damage`). Титул не выдаётся при нуле или если |значение| меньше
-  `SUMMARY_TITLE_MIN`; при равенстве — игроку с меньшим playerID. Тексты
+  `SUMMARY_TITLE_MIN`. При равенстве лучших — `SUMMARY_TITLE_TIES`:
+  `none` (по умолчанию) — титул не выдаётся, `lowest_player_id` — игроку с
+  меньшим playerID. Тексты
   титулов и экран итогов — в HUD (делается отдельно).
 
 ### Казино Огра
@@ -349,7 +366,8 @@ dota_launch_custom_game one_spell dota
 player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
 { event_id, start_time, end_time, stopped } и `casino_spin_resolved`
 { player_id, hero, stake, payout, net, multiplier, item_stake },
-`game_state_changed` { state, previous } и `match_stats` { players }. Системы
+`game_state_changed` { state, previous }, `config_overrides_applied`
+{ overrides } и `match_stats` { players }. Системы
 запускают собственные `SetThink`-циклы на `game_started`.
 
 Код разделён по ответственности:
@@ -494,9 +512,10 @@ Panorama отправляет серверу действия пользоват
 | `CASINO_ACCESS`                        |          `"all"` | Кто играет: `all` / `team` / `owner`      |
 | `STATS_ENABLED`                        |           `true` | Статистика матча                          |
 | `SUMMARY_ENABLED`                      |           `true` | Итоги матча на POST_GAME                  |
-| `SUMMARY_MAX_ABILITIES`                |             `30` | Длина списка способностей в итогах        |
+| `SUMMARY_TITLE_TIES`                   |         `"none"` | Ничья за титул: `none` / `lowest_player_id` |
 | `SUMMARY_TITLES` / `SUMMARY_TITLE_MIN` |  задан в конфиге | Порядок титулов и пороги                  |
 | `VOTE_ENABLED`                         |           `true` | Голосование в лобби                       |
+| `VOTE_PUBLISH_INTERVAL`                |           `0.25` | Счётчики голосов в net table не чаще, с   |
 | `VOTE_QUESTIONS`                       |  задан в конфиге | Вопросы, варианты, переопределения, default |
 | `CASINO_DEFAULT_STAKE`                 |            `250` | Начальная ставка                          |
 | `CASINO_MIN_SPIN_COST`                 |             `50` | Минимальная ставка                        |

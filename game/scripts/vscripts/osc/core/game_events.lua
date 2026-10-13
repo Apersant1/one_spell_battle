@@ -33,6 +33,9 @@
 --   casino_spin_resolved { player_id, hero, stake, payout, net, multiplier,
 --     item_stake } — спин казино рассчитан и выплачен; net = payout - stake.
 --     Спин, отменённый с возвратом ставки, не публикуется. Присылает casino.
+--   config_overrides_applied { overrides = { [путь] = значение } } — итоги
+--     голосования записаны в OSC_Config; кто уже применил прежние значения,
+--     пересинхронизируется. Присылает vote.
 --   match_stats { players = { [playerID] = { hero, rotations, abilities,
 --     kills, kill_abilities, casino_net, chaos_damage } } } — итоговая
 --     статистика матча на POST_GAME. Присылает stats.
@@ -61,6 +64,7 @@ local KNOWN_EVENTS = {
     chaos_ended = true,
     casino_spin_resolved = true,
     match_stats = true,
+    config_overrides_applied = true,
 }
 
 function OSC_GameEvents.Subscribe(eventName, id, handler)

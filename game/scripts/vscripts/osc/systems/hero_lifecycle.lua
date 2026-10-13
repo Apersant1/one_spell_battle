@@ -124,9 +124,25 @@ local function OnPlayerLevelUp(event)
     end
 end
 
+function OSC_HeroLifecycle.SyncExtras()
+    OSC_Heroes.ForEachPlayerHero(function(hero, playerID)
+        if OSC_HeroState.Get(hero).initialized then
+            local ok, err = pcall(OSC_Abilities.SyncHeroExtras, hero)
+            if not ok then
+                OSC_Logger.Error("Extras sync for player " .. playerID .. ": " .. tostring(err))
+            end
+        end
+    end)
+end
+
 function OSC_HeroLifecycle.Init()
     OSC_GameEvents.Subscribe("hero_spawned", "hero_lifecycle", function(unit, source)
         OSC_HeroLifecycle.TryInitializeUnit(unit, source)
+    end)
+    -- Итоги голосования могли включить или выключить собственные
+    -- способности героев (казино), которые уже выданы при пике
+    OSC_GameEvents.Subscribe("config_overrides_applied", "hero_lifecycle", function()
+        OSC_HeroLifecycle.SyncExtras()
     end)
     ListenToGameEvent("dota_player_gained_level", OnPlayerLevelUp, nil)
 end

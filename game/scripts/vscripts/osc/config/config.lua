@@ -34,18 +34,15 @@ OSC_CONFIG = {
     -- (это проверяет tools/tests/run_tests.py)
     ANCHOR_ENABLED = true,
     ANCHOR_COST = 400,
-    -- Голосование в лобби (стадия выбора героев). Вопросы и варианты по
-    -- порядку; у варианта value (строка для клиента) и overrides — какие
-    -- значения конфига он задаёт через OSC_Config.SetOverride. Побеждает
-    -- большинство; при ничьей или без голосов — default.
     -- Статистика матча по игрокам (osc/systems/stats.lua)
     STATS_ENABLED = true,
-    -- Итоги матча на POST_GAME (нужна и статистика). Список способностей
-    -- игрока в net table обрезается до последних SUMMARY_MAX_ABILITIES.
-    -- Титулы выдаются по порядку SUMMARY_TITLES, если |значение| не меньше
-    -- SUMMARY_TITLE_MIN (casino_net — в золоте, storm_chaser — в уроне).
+    -- Итоги матча на POST_GAME (нужна и статистика). Титулы выдаются по
+    -- порядку SUMMARY_TITLES, если |значение| не меньше SUMMARY_TITLE_MIN
+    -- (casino_net — в золоте, storm_chaser — в уроне). При равенстве
+    -- лучших: SUMMARY_TITLE_TIES = "none" — титул не выдаётся,
+    -- "lowest_player_id" — игроку с меньшим playerID.
     SUMMARY_ENABLED = true,
-    SUMMARY_MAX_ABILITIES = 30,
+    SUMMARY_TITLE_TIES = "none",
     SUMMARY_TITLES = { "gambler", "lucky", "chaos_master", "collector", "storm_chaser" },
     SUMMARY_TITLE_MIN = {
         gambler = 1,
@@ -54,7 +51,13 @@ OSC_CONFIG = {
         collector = 1,
         storm_chaser = 1,
     },
+    -- Голосование в лобби (выбор героев и стратегия). Вопросы и варианты по
+    -- порядку; у варианта value (строка для клиента) и overrides — какие
+    -- значения конфига он задаёт через OSC_Config.SetOverride. Побеждает
+    -- большинство; при ничьей или без голосов — default. Счётчики голосов
+    -- в net table публикуются не чаще раза в VOTE_PUBLISH_INTERVAL секунд.
     VOTE_ENABLED = true,
+    VOTE_PUBLISH_INTERVAL = 0.25,
     VOTE_QUESTIONS = {
         {
             id = "rotation_interval",

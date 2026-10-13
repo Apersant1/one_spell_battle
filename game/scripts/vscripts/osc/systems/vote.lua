@@ -1,17 +1,22 @@
 -- Голосование в лобби (флаг VOTE_ENABLED, вопросы — VOTE_QUESTIONS).
--- Открывается при входе в DOTA_GAMERULES_STATE_HERO_SELECTION, закрывается
--- при выходе из неё. Итог пишется в рантайм-переопределения OSC_Config:
--- исходный конфиг не меняется, системы читают значения уже после
--- закрытия (ротация и хаос-раунды стартуют на game_started).
+-- Открыто с входа в DOTA_GAMERULES_STATE_HERO_SELECTION и всё время
+-- стратегии (STRATEGY_TIME, TEAM_SHOWCASE, WAIT_FOR_MAP_TO_LOAD);
+-- закрывается на первой стадии >= PRE_GAME (в том числе если стадии
+-- перескочили) — до game_started. Итог пишется в рантайм-переопределения
+-- OSC_Config (исходный конфиг не меняется) и публикуется в шину событием
+-- config_overrides_applied { overrides }: системы, которые уже применили
+-- значения (например, выданное казино), пересинхронизируются по нему.
+-- Ротация и хаос-раунды стартуют на game_started и читают итог сразу.
 --
 -- Протокол с HUD:
 --   net table osc_state/vote = { open = 1|0,
 --     questions = { [i] = { id, options = { [j] = "<value>" }, default } },
 --     counts = { <id> = { ["<value>"] = n } }, result = { <id> = "<value>" } }
---     result пуст, пока голосование открыто.
+--     result пуст, пока голосование открыто. Счётчики публикуются не чаще
+--     раза в VOTE_PUBLISH_INTERVAL секунд, итог при закрытии — сразу.
 --   net table osc_state/vote_<playerID> = { <id> = "<value>" | "" }
 --   клиент -> сервер osc_vote_cast { question, option } — голос можно
---     менять; отказ молчаливый, net table не меняется.
+--     менять; отказ и повтор того же голоса молчаливые, net table не меняется.
 
 require("osc/core/runtime_config")
 require("osc/core/client_commands")
@@ -125,6 +130,31 @@ local function PublishBallot(playerID)
     CustomNetTables:SetTableValue("osc_state", "vote_" .. playerID, data)
 end
 
+-- Счётчики меняются с каждым голосом: публикуем их пачкой не чаще раза в
+-- VOTE_PUBLISH_INTERVAL. Think разовый — после публикации завершается сам.
+function OSC_Vote.FlushPublish()
+    OSC_Vote.publish_scheduled = false
+    if OSC_Vote.dirty then
+        OSC_Vote.dirty = false
+        PublishVote()
+    end
+    return nil
+end
+
+local function MarkDirty()
+    OSC_Vote.dirty = true
+    local interval = OSC_Config.Get("VOTE_PUBLISH_INTERVAL") or 0
+    if interval <= 0 then
+        OSC_Vote.FlushPublish()
+        return
+    end
+    if OSC_Vote.publish_scheduled then return end
+    OSC_Vote.publish_scheduled = true
+    GameRules:GetGameModeEntity():SetContextThink("osc_vote_publish", function()
+        return OSC_Vote.FlushPublish()
+    end, interval)
+end
+
 function OSC_Vote.Open()
     if not OSC_Vote.IsEnabled() or OSC_Vote.open or OSC_Vote.closed then
         return false
@@ -164,7 +194,19 @@ function OSC_Vote.Close()
         OSC_Logger.Log("Lobby vote: " .. question.id .. " = " .. tostring(value))
     end
 
+    -- Финальная публикация обязательна и сразу, отложенная больше не нужна
+    OSC_Vote.dirty = false
     PublishVote()
+
+    local overrides = {}
+    for _, question in ipairs(Questions()) do
+        local option = FindOption(question, OSC_Vote.result[question.id])
+        for path, overrideValue in pairs(option and option.overrides or {}) do
+            overrides[path] = overrideValue
+        end
+    end
+    OSC_GameEvents.Emit("config_overrides_applied", { overrides = overrides })
+
     local ok, err = pcall(OSC_Notifications.VoteResult, OSC_Vote.result)
     if not ok then
         OSC_Logger.Error("Vote result notification failed: " .. tostring(err))
@@ -199,17 +241,24 @@ function OSC_Vote.OnCast(sourceIndex, event)
         return
     end
 
-    OSC_Vote.votes[cmd.player_id] = OSC_Vote.votes[cmd.player_id] or {}
-    OSC_Vote.votes[cmd.player_id][question.id] = option
+    local ballot = OSC_Vote.votes[cmd.player_id] or {}
+    OSC_Vote.votes[cmd.player_id] = ballot
+    if ballot[question.id] == option then
+        return -- тот же голос: ничего не изменилось
+    end
+    ballot[question.id] = option
     PublishBallot(cmd.player_id)
-    PublishVote()
+    MarkDirty()
 end
 
 function OSC_Vote.OnStateChanged(change)
-    if change.state == DOTA_GAMERULES_STATE_HERO_SELECTION then
+    local state = change.state
+    if state >= DOTA_GAMERULES_STATE_PRE_GAME then
+        if OSC_Vote.open then
+            OSC_Vote.Close()
+        end
+    elseif state >= DOTA_GAMERULES_STATE_HERO_SELECTION then
         OSC_Vote.Open()
-    elseif OSC_Vote.open then
-        OSC_Vote.Close()
     end
 end
 

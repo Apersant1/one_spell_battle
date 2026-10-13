@@ -1,8 +1,8 @@
 -- Итоги матча (флаг SUMMARY_ENABLED): по событию шины match_stats (его
 -- присылает stats на POST_GAME, поэтому нужен и STATS_ENABLED) собирает
 -- net table osc_state/summary для экрана итогов:
---   { players = { ["<playerID>"] = { hero, rotations, abilities = { [i] = имя },
---       distinct_kill_abilities, kills, casino_net, chaos_damage } },
+--   { players = { ["<playerID>"] = { hero, rotations, distinct_kill_abilities,
+--       kills, casino_net, chaos_damage } },
 --     titles = { [i] = { id, player_id, value } } }
 --
 -- Титулы (порядок — SUMMARY_TITLES в конфиге):
@@ -12,7 +12,8 @@
 --   collector — больше всего разных полученных способностей;
 --   storm_chaser — больше всего урона во время хаос-раундов.
 -- Титул выдаётся, только если |value| >= SUMMARY_TITLE_MIN[id] (0 и нет
--- данных — никогда); при равенстве — игроку с меньшим playerID.
+-- данных — никогда). При равенстве лучших — SUMMARY_TITLE_TIES: "none" —
+-- титул не выдаётся, "lowest_player_id" — игроку с меньшим playerID.
 
 require("osc/core/runtime_config")
 require("osc/core/heroes")
@@ -40,16 +41,6 @@ local function CountDistinct(list)
     return CountKeys(seen)
 end
 
--- Последние limit способностей: список ограничен, чтобы net table не росла
-local function LastAbilities(list, limit)
-    local result = {}
-    local first = math.max(1, #list - limit + 1)
-    for index = first, #list do
-        table.insert(result, list[index])
-    end
-    return result
-end
-
 -- Строка игрока для net table и значения для титулов
 local function BuildPlayer(playerID, stats)
     stats = stats or {}
@@ -58,7 +49,6 @@ local function BuildPlayer(playerID, stats)
     return {
         hero = (hero and hero:GetUnitName()) or stats.hero or "",
         rotations = stats.rotations or 0,
-        abilities = LastAbilities(abilities, OSC_Config.Get("SUMMARY_MAX_ABILITIES") or 0),
         distinct_kill_abilities = CountKeys(stats.kill_abilities),
         kills = stats.kills or 0,
         casino_net = math.floor(stats.casino_net or 0),
@@ -101,24 +91,28 @@ function OSC_Summary.Titles(rows, extras)
     for playerID in pairs(rows) do
         table.insert(ids, playerID)
     end
-    table.sort(ids) -- ничья — меньший playerID: он встретится первым
+    table.sort(ids) -- при lowest_player_id из равных побеждает первый
 
     local titles = {}
     local minimums = OSC_Config.Get("SUMMARY_TITLE_MIN") or {}
+    local ties = OSC_Config.Get("SUMMARY_TITLE_TIES") or "none"
     for _, titleId in ipairs(OSC_Config.Get("SUMMARY_TITLES") or {}) do
         local rule = TITLE_RULES[titleId]
         if not rule then
             OSC_Logger.Error("Unknown summary title: " .. tostring(titleId))
         else
-            local bestID, bestValue
+            local bestID, bestValue, tied
             for _, playerID in ipairs(ids) do
                 local value = rule.value(rows[playerID], extras[playerID] or {})
                 if bestValue == nil or rule.better(value, bestValue) then
-                    bestID, bestValue = playerID, value
+                    bestID, bestValue, tied = playerID, value, false
+                elseif value == bestValue then
+                    tied = true
                 end
             end
             local min = minimums[titleId] or 1
-            if bestID ~= nil and rule.qualifies(bestValue, min) then
+            local tieAllowed = not tied or ties == "lowest_player_id"
+            if bestID ~= nil and tieAllowed and rule.qualifies(bestValue, min) then
                 table.insert(titles, { id = titleId, player_id = bestID, value = bestValue })
             end
         end

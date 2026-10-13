@@ -167,6 +167,10 @@ function OSC_Casino.Init()
     CustomNetTables:SetTableValue("osc_state", "casino", {
         use_distance = OSC_Config.Get("CASINO_USE_DISTANCE") or 450,
     })
+    -- Казино выключили голосованием — убираем уже поставленные автоматы
+    OSC_GameEvents.Subscribe("config_overrides_applied", "casino", function()
+        OSC_Casino.OnConfigChanged()
+    end)
     CustomGameEventManager:RegisterListener("osc_casino_spin", OSC_Casino.OnSpin)
     CustomGameEventManager:RegisterListener("osc_casino_reopen", OSC_Casino.OnReopen)
 end
@@ -254,6 +258,16 @@ local function RemoveMachine(machine)
         OSC_HeroState.Get(owner).casino_machine = nil
     end
     UTIL_Remove(machine)
+end
+
+function OSC_Casino.OnConfigChanged()
+    if OSC_Config.Get("CASINO_ENABLED") == true then return end
+    OSC_Heroes.ForEachPlayerHero(function(hero)
+        local machine = OSC_HeroState.Get(hero).casino_machine
+        if machine and not machine:IsNull() then
+            RemoveMachine(machine)
+        end
+    end)
 end
 
 -- Способность Огра только ставит автомат. Окно открывается кликом по автомату

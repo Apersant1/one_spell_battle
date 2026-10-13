@@ -54,7 +54,7 @@ return {
         local row = H.netTables.summary.players["0"]
         H.eq(row.hero, "npc_dota_hero_lina", "hero")
         H.eq(row.rotations, 1, "rotations")
-        H.eq(table.concat(row.abilities, ","), "test_a,test_b", "abilities")
+        H.eq(row.abilities, nil, "ability list is not sent to the HUD")
         H.eq(row.distinct_kill_abilities, 2, "distinct kill abilities")
         H.eq(row.kills, 3, "kills")
         H.eq(row.casino_net, -150, "casino net")
@@ -99,14 +99,31 @@ return {
         H.eq(titles.storm_chaser, nil, "no chaos damage — no storm chaser")
     end,
 
-    ties_go_to_the_smaller_player_id = function()
+    ties_give_no_title_by_default = function()
         setup()
+        for playerID = 0, 4 do player(playerID) end
+        H.eq(OSC_CONFIG.SUMMARY_TITLE_TIES, "none", "default rule")
+
+        OSC_Summary.Publish({
+            [4] = stats({ chaos_damage = 500, casino_net = -100 }),
+            [2] = stats({ chaos_damage = 500, casino_net = -100 }),
+            [3] = stats({ chaos_damage = 100, casino_net = 300 }),
+        })
+
+        local titles = titlesById()
+        H.eq(titles.storm_chaser, nil, "tie for the most chaos damage: no title")
+        H.eq(titles.gambler, nil, "tie for the worst casino result: no title")
+        H.eq(titles.lucky.player_id, 3, "unique best still gets a title")
+    end,
+
+    ties_go_to_the_smaller_player_id_when_configured = function()
+        setup()
+        OSC_CONFIG.SUMMARY_TITLE_TIES = "lowest_player_id"
         for playerID = 0, 4 do player(playerID) end
 
         OSC_Summary.Publish({
             [4] = stats({ chaos_damage = 500, casino_net = -100 }),
             [2] = stats({ chaos_damage = 500, casino_net = -100 }),
-            [3] = stats({ chaos_damage = 100 }),
         })
 
         local titles = titlesById()
@@ -114,18 +131,16 @@ return {
         H.eq(titles.gambler.player_id, 2, "tie for the worst result: smaller player id")
     end,
 
-    thresholds_and_ability_limit_from_config = function()
+    thresholds_from_config = function()
         setup()
         player(0)
         OSC_CONFIG.SUMMARY_TITLE_MIN = { storm_chaser = 1000, gambler = 1, lucky = 1,
             chaos_master = 1, collector = 1 }
-        OSC_CONFIG.SUMMARY_MAX_ABILITIES = 2
 
         OSC_Summary.Publish({ [0] = stats({ chaos_damage = 999, abilities = { "a", "b", "c", "d" } }) })
 
         H.eq(titlesById().storm_chaser, nil, "below the threshold")
-        H.eq(table.concat(H.netTables.summary.players["0"].abilities, ","), "c,d", "last abilities kept")
-        H.eq(titlesById().collector.value, 4, "collector counts the full list")
+        H.eq(titlesById().collector.value, 4, "collector counts the full list from stats")
     end,
 
     disabled_flag_publishes_nothing = function()

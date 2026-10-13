@@ -155,4 +155,15 @@ return {
 
         H.eq(OSC_Stats.Player(0).kills, 2, "data kept, listener not duplicated")
     end,
+
+    reincarnation_is_not_a_kill = function()
+        setup()
+        local _, dire = duel()
+        H.entities[20] = ability("lina_laguna_blade")
+        dire.IsReincarnating = function() return true end
+
+        kill(11, 10, 20)
+
+        H.eq(OSC_Stats.players[0], nil, "death with reincarnation not counted")
+    end,
 }

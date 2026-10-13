@@ -15,7 +15,7 @@ H = {
     entities = {},
     assignments = {},
     time = 0,
-    state = 8,
+    state = 10, -- DOTA_GAMERULES_STATE_GAME_IN_PROGRESS
 }
 
 math.randomseed(1)
@@ -36,12 +36,17 @@ DOTA_MAX_TEAM_PLAYERS = 24
 DOTA_MAX_PLAYERS = 64
 ABILITY_TYPE_BASIC = 0
 ABILITY_TYPE_ULTIMATE = 1
+-- Значения стадий как в Dota: порядок важен (голосование закрывается на >= PRE_GAME)
 DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP = 2
+DOTA_GAMERULES_STATE_PLAYER_DRAFT = 3
 DOTA_GAMERULES_STATE_HERO_SELECTION = 4
 DOTA_GAMERULES_STATE_STRATEGY_TIME = 5
-DOTA_GAMERULES_STATE_PRE_GAME = 7
-DOTA_GAMERULES_STATE_GAME_IN_PROGRESS = 8
-DOTA_GAMERULES_STATE_POST_GAME = 9
+DOTA_GAMERULES_STATE_TEAM_SHOWCASE = 6
+DOTA_GAMERULES_STATE_WAIT_FOR_MAP_TO_LOAD = 7
+DOTA_GAMERULES_STATE_PRE_GAME = 8
+DOTA_GAMERULES_STATE_SCENARIO_SETUP = 9
+DOTA_GAMERULES_STATE_GAME_IN_PROGRESS = 10
+DOTA_GAMERULES_STATE_POST_GAME = 11
 DOTA_ModifyGold_Unspecified = 0
 PATTACH_ABSORIGIN_FOLLOW = 1
 PATTACH_WORLDORIGIN = 2
@@ -226,6 +231,7 @@ function Ability:IsChanneling() return self.channeling == true end
 function Ability:GetToggleState() return self.toggled == true end
 function Ability:ToggleAbility() self.toggled = not self.toggled end
 function Ability:IsPassive() return H.kv[self.name]._passive end
+function Ability:GetAbilityIndex() return self.owner:IndexOf(self) end
 function Ability:IsInAbilityPhase() return self.in_phase == true end
 
 -- В игре SetAbilityIndex не переставляет способность на панели: слот

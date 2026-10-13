@@ -8,8 +8,9 @@
 --     ультимейты, включая первую выдачу);
 --   kills / kill_abilities — убийства вражеских основных героев: всего и по
 --     способностям (entindex_inflictor — способность, не предмет). Крипы,
---     иллюзии, клоны и добивание своих не считаются: иначе фарм перевесил
---     бы «убийства способностями»;
+--     иллюзии, клоны, добивание своих и смерть с перерождением (Aegis,
+--     Reincarnation) не считаются: иначе фарм перевесил бы «убийства
+--     способностями»;
 --   casino_net — сумма выигрышей минус ставки (casino_spin_resolved);
 --   chaos_damage — урон по вражеским героям (не иллюзиям) во время
 --     активного хаос-раунда. Источник — событие движка entity_hurt; пока
@@ -94,6 +95,7 @@ function OSC_Stats.OnEntityKilled(event)
     if not OSC_Stats.IsEnabled() then return end
     local killed = Entity(event.entindex_killed)
     if not OSC_Heroes.IsMainHero(killed) then return end
+    if killed.IsReincarnating and killed:IsReincarnating() then return end
 
     local attackerID = OwnerID(Entity(event.entindex_attacker))
     if not attackerID or PlayerResource:GetTeam(attackerID) == killed:GetTeamNumber() then
