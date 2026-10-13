@@ -1,8 +1,12 @@
--- Единая точка событий жизненного цикла матча. Только этот модуль слушает
--- npc_spawned, dota_on_hero_finish_spawn и game_rules_state_change; системы
--- подписываются здесь, а не у движка.
+-- Шина событий матча. Это единственная точка, через которую системы узнают
+-- друг о друге: одна система публикует (Emit), другие подписываются
+-- (Subscribe), напрямую никто никого не вызывает. Отдельной шины нет —
+-- события движка и события режима идут через один модуль.
 --
--- События:
+-- Только этот модуль слушает npc_spawned, dota_on_hero_finish_spawn и
+-- game_rules_state_change; системы подписываются здесь, а не у движка.
+--
+-- События движка и жизненного цикла:
 --   hero_spawned(unit, source) — герой (основной или копия) появился или
 --     возродился. source — имя события движка. Первое появление приходит
 --     дважды (npc_spawned и dota_on_hero_finish_spawn) — это второй шанс,
@@ -14,6 +18,19 @@
 --   game_started() — игра перешла в GAME_IN_PROGRESS; приходит один раз.
 --   hero_anchored(hero) — основному герою поставлен «Якорь» (присылает
 --     OSC_Anchor).
+--
+-- События режима (один аргумент — таблица, её можно расширять полями):
+--   ability_changed { hero, player_id, slot, ability, previous } —
+--     основному герою фактически выдана способность режима (после отсрочки
+--     фазы каста). slot — "ability" | "ultimate"; previous — имя прежней
+--     или nil при первой выдаче. Присылает OSC_Abilities.
+--   chaos_started { event_id, start_time, end_time } и
+--   chaos_ended { event_id, start_time, end_time, stopped } — хаос-раунд
+--     начался / закончился (stopped = true — досрочно, -chaos_stop или
+--     смена события). Присылает chaos_rounds.
+--   casino_spin_resolved { player_id, hero, stake, payout, net, multiplier,
+--     item_stake } — спин казино рассчитан и выплачен; net = payout - stake.
+--     Спин, отменённый с возвратом ставки, не публикуется. Присылает casino.
 --
 -- Подписка именованная: повторный Subscribe с тем же id заменяет обработчик,
 -- поэтому повторная инициализация и script_reload не дублируют подписки.
@@ -33,6 +50,10 @@ local KNOWN_EVENTS = {
     hero_initialized = true,
     game_started = true,
     hero_anchored = true,
+    ability_changed = true,
+    chaos_started = true,
+    chaos_ended = true,
+    casino_spin_resolved = true,
 }
 
 function OSC_GameEvents.Subscribe(eventName, id, handler)

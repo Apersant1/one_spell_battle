@@ -278,10 +278,17 @@ dota_launch_custom_game one_spell dota
 
 `osc/core/game_mode.lua` задаёт размеры команд, публикует версию и
 инициализирует системы. События появления героя и начала игры слушает только
-`osc/core/game_events.lua` (`OSC_GameEvents`): системы подписываются на
-`hero_spawned`, `hero_initialized` и `game_started` по имени (повторная
-подписка заменяет прежнюю) и запускают собственные `SetThink`-циклы на
-`game_started`.
+`osc/core/game_events.lua` (`OSC_GameEvents`) — это и шина событий режима:
+системы публикуют события (`Emit`) и подписываются на них по имени
+(`Subscribe(событие, id, обработчик)`; повторная подписка с тем же id
+заменяет прежнюю, поэтому `script_reload` не дублирует подписки; ошибка
+обработчика пишется в лог и не мешает остальным). Напрямую соседние
+системы друг друга не вызывают. События: `hero_spawned`, `hero_initialized`,
+`game_started`, `hero_anchored`, а также `ability_changed` { hero,
+player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
+{ event_id, start_time, end_time, stopped } и `casino_spin_resolved`
+{ player_id, hero, stake, payout, net, multiplier, item_stake }. Системы
+запускают собственные `SetThink`-циклы на `game_started`.
 
 Код разделён по ответственности:
 

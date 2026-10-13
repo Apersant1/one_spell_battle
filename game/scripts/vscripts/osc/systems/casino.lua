@@ -1,6 +1,7 @@
 require("osc/core/runtime_config")
 require("osc/core/client_commands")
 require("osc/core/hero_state")
+require("osc/core/game_events")
 
 OSC_Casino = OSC_Casino or {}
 
@@ -623,6 +624,15 @@ function OSC_Casino.OnSpin(sourceIndex, event)
             if payout > 0 then
                 PlayWinEffects(machine, reels[1] == "seven")
             end
+            OSC_GameEvents.Emit("casino_spin_resolved", {
+                player_id = playerID,
+                hero = OSC_Heroes.GetPlayerHero(playerID),
+                stake = stake,
+                payout = payout,
+                net = payout - stake,
+                multiplier = multiplier,
+                item_stake = isItemStake,
+            })
 
             SendResult({
                 stake = stake,

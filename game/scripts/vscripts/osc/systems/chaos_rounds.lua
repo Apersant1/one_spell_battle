@@ -163,6 +163,11 @@ function OSC_ChaosRounds:StartEvent(ev)
     self:Publish()
     notifyStarted(ev)
     OSC_Logger.Log("Chaos round started: " .. ev.id)
+    OSC_GameEvents.Emit("chaos_started", {
+        event_id = ev.id,
+        start_time = self.startTime,
+        end_time = self.endTime,
+    })
     return true
 end
 
@@ -180,6 +185,12 @@ function OSC_ChaosRounds:EndEvent(debugStop)
 
     notifyEnded(ev)
     OSC_Logger.Log("Chaos round ended: " .. ev.id)
+    OSC_GameEvents.Emit("chaos_ended", {
+        event_id = ev.id,
+        start_time = ctx.start_time,
+        end_time = ctx.end_time,
+        stopped = debugStop == true,
+    })
     self.lastId = ev.id
 
     local nextDelay

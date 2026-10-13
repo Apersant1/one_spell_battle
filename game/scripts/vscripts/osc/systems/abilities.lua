@@ -4,6 +4,7 @@
 
 require("osc/core/runtime_config")
 require("osc/core/heroes")
+require("osc/core/game_events")
 require("osc/core/hero_state")
 require("osc/systems/ability_selection")
 
@@ -297,7 +298,7 @@ local function SwapOwnerEntry(hero, slot, entry)
         ApplyNewAbilityCooldown(ability)
     end
     OSC_AbilitySelection.Remember(hero, slot, entry)
-    return true
+    return true, oldName
 end
 
 -- Повышает уровень способности и её связанных подспособностей (не понижает)
@@ -469,7 +470,8 @@ end
 -- ================= Выдача основному герою =================
 
 local function ApplyGive(hero, slot, entry, notify)
-    if not SwapOwnerEntry(hero, slot, entry) then
+    local ok, previous = SwapOwnerEntry(hero, slot, entry)
+    if not ok then
         return nil
     end
 
@@ -477,6 +479,13 @@ local function ApplyGive(hero, slot, entry, notify)
         OSC_Notifications.AbilityChanged(hero, entry)
     end
     OSC_Abilities.SyncCopies(hero)
+    OSC_GameEvents.Emit("ability_changed", {
+        hero = hero,
+        player_id = hero:GetPlayerOwnerID(),
+        slot = slot,
+        ability = entry.name,
+        previous = previous,
+    })
     return entry
 end
 
