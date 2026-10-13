@@ -368,12 +368,6 @@
   color: #efc96c;
 }
 
-.ChoiceLabel {
-  width: 100%;
-  font-size: 11px;
-  text-align: center;
-}
-
 #ChoiceProgress {
   width: 100%;
   height: 3px;

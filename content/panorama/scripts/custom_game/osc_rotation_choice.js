@@ -10,9 +10,10 @@ OSC.RotationChoice = (function () {
   var UPDATE_INTERVAL = 0.1;
   var CHOSEN_FLASH = 1.2; // сколько держать подсвеченную выбранную карточку после смены
   var CLOSE_GRACE = 0.2; // ждём osc_rotation_choice_closed после опустевшей net table
-  // Прячем окно, если смена не пришла столько секунд после дедлайна
-  // (с запасом на отсрочку смены во время каста — ROTATION_MAX_DEFER)
-  var STALE_AFTER = 6;
+  // Страховка от потерянного osc_rotation_choice_closed: оно уходит сразу на
+  // ротации (ближайший тик сервера, <= 0,5 с после дедлайна, ещё до отложенной
+  // замены способности), поэтому дольше ждать нет смысла
+  var STALE_AFTER = 2;
   var URGENT_AT = 3; // секунд до дедлайна, когда отсчёт краснеет
   // Сколько ждать, пока сервер подтвердит клик (picked в net table);
   // потом верим net table — сервер отклоняет выбор молча
@@ -182,14 +183,6 @@ OSC.RotationChoice = (function () {
     nameLabel.AddClass("OSCBold");
     nameLabel.text = displayName;
     nameLabel.hittest = false;
-
-    if (option.label && option.label !== displayName) {
-      var extra = $.CreatePanel("Label", card, "");
-      extra.AddClass("ChoiceLabel");
-      extra.AddClass("OSCMuted");
-      extra.text = option.label;
-      extra.hittest = false;
-    }
 
     card.SetPanelEvent("onactivate", function () {
       Pick(option.name);

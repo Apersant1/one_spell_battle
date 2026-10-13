@@ -679,24 +679,11 @@ OSC.Casino = (function () {
     }
   }
 
-  // ================= Подсказки об отказе =================
-  // Сервер присылает ключ локализации, а показываем его штатной красной
-  // строкой Dota над панелью способностей (со звуком ошибки)
-  function OnHudError(event) {
-    if (!event || !event.message) return;
-    GameEvents.SendEventClientSide("dota_hud_error_message", {
-      splitscreenplayer: 0,
-      reason: 80,
-      message: "#" + event.message,
-    });
-  }
-
   // ================= Инициализация =================
   function Init() {
     GameEvents.Subscribe("osc_casino_open", OnOpen);
     GameEvents.Subscribe("osc_casino_result", OnResult);
     GameEvents.Subscribe("osc_casino_closed", OnClosed);
-    GameEvents.Subscribe("osc_hud_error", OnHudError);
     $("#CasinoStake").SetPanelEvent("ontextentrychange", UpdateSpinButton);
     OSC.Util.Loop(SELECTION_POLL, PollSelection);
     OSC.Util.Loop(RANGE_POLL, UpdateRangeDisplay);

@@ -42,3 +42,23 @@ OSC.Util = {
     })();
   },
 };
+
+// Подсказки об отказе (казино, «Якорь» и др.): сервер шлёт osc_hud_error с
+// ключом локализации, показываем его штатной красной строкой Dota над панелью
+// способностей (со звуком ошибки)
+OSC.HudError = (function () {
+  function OnHudError(event) {
+    if (!event || !event.message) return;
+    GameEvents.SendEventClientSide("dota_hud_error_message", {
+      splitscreenplayer: 0,
+      reason: 80,
+      message: "#" + event.message,
+    });
+  }
+
+  function Init() {
+    GameEvents.Subscribe("osc_hud_error", OnHudError);
+  }
+
+  return { Init: Init };
+})();
