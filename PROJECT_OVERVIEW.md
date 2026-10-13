@@ -222,6 +222,26 @@ dota_launch_custom_game one_spell dota
   не меняется, лог ограничен `CLIENT_REFUSAL_LOG_INTERVAL`. HUD голосования
   делается отдельно.
 
+### Статистика матча
+
+- `osc/systems/stats.lua`, флаг `STATS_ENABLED`. Слушает только шину
+  событий и события движка `entity_killed` / `entity_hurt`, другие системы
+  не вызывает. По каждому игроку:
+  - `rotations` — сколько раз основная способность сменилась на другую
+    (ротация, `-reroll`; первая выдача и ультимейты не считаются) и
+    `abilities` — все полученные способности режима по порядку
+    (`ability_changed`);
+  - `kills` и `kill_abilities` — убийства вражеских основных героев игроком
+    и его юнитами, всего и по способностям (`entindex_inflictor`, предметы
+    не считаются). Крипы, иллюзии, клоны и добивание своих не учитываются,
+    чтобы фарм не перевешивал;
+  - `casino_net` — выигрыши минус ставки (`casino_spin_resolved`);
+  - `chaos_damage` — урон по вражеским героям (не иллюзиям) во время
+    активного хаос-раунда (`chaos_started` / `chaos_ended` + `entity_hurt`;
+    вне раунда обработчик сразу выходит, урон не фильтруется).
+- На `POST_GAME` публикует в шину `match_stats` { players } — копию данных
+  для экрана итогов.
+
 ### Казино Огра
 
 - Огр получает отдельную способность `ogre_magi_casino` (слот W, перезарядка
@@ -312,7 +332,8 @@ dota_launch_custom_game one_spell dota
 `game_started`, `hero_anchored`, а также `ability_changed` { hero,
 player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
 { event_id, start_time, end_time, stopped } и `casino_spin_resolved`
-{ player_id, hero, stake, payout, net, multiplier, item_stake }. Системы
+{ player_id, hero, stake, payout, net, multiplier, item_stake },
+`game_state_changed` { state, previous } и `match_stats` { players }. Системы
 запускают собственные `SetThink`-циклы на `game_started`.
 
 Код разделён по ответственности:
@@ -455,6 +476,7 @@ Panorama отправляет серверу действия пользоват
 | `COURIERS`                             |  задан в конфиге | Число курьеров, места у фонтана, тайминги |
 | `CASINO_ENABLED`                       |           `true` | Казино Огра включено                      |
 | `CASINO_ACCESS`                        |          `"all"` | Кто играет: `all` / `team` / `owner`      |
+| `STATS_ENABLED`                        |           `true` | Статистика матча                          |
 | `VOTE_ENABLED`                         |           `true` | Голосование в лобби                       |
 | `VOTE_QUESTIONS`                       |  задан в конфиге | Вопросы, варианты, переопределения, default |
 | `CASINO_DEFAULT_STAKE`                 |            `250` | Начальная ставка                          |
@@ -471,7 +493,7 @@ Panorama отправляет серверу действия пользоват
 - Дополнительные идеи из старого плана: `drunk_brawl`, `eclipse` и
   `ultimate_storm`.
 - Глобальный джекпот казино и динамический лимит ставки.
-- HUD голосования в лобби, статистика и экран итогов матча.
+- HUD голосования в лобби и экран итогов матча.
 - Предложенная в TODO шина событий/bootstrap-архитектура: сейчас системы
   инициализируются напрямую в `OneSpellChaos:Init()` и взаимодействуют
   через общие модули, события движка, net tables и custom game events.

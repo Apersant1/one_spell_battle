@@ -38,6 +38,8 @@ OSC_CONFIG = {
     -- порядку; у варианта value (строка для клиента) и overrides — какие
     -- значения конфига он задаёт через OSC_Config.SetOverride. Побеждает
     -- большинство; при ничьей или без голосов — default.
+    -- Статистика матча по игрокам (osc/systems/stats.lua)
+    STATS_ENABLED = true,
     VOTE_ENABLED = true,
     VOTE_QUESTIONS = {
         {

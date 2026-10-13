@@ -33,6 +33,9 @@
 --   casino_spin_resolved { player_id, hero, stake, payout, net, multiplier,
 --     item_stake } — спин казино рассчитан и выплачен; net = payout - stake.
 --     Спин, отменённый с возвратом ставки, не публикуется. Присылает casino.
+--   match_stats { players = { [playerID] = { hero, rotations, abilities,
+--     kills, kill_abilities, casino_net, chaos_damage } } } — итоговая
+--     статистика матча на POST_GAME. Присылает stats.
 --
 -- Подписка именованная: повторный Subscribe с тем же id заменяет обработчик,
 -- поэтому повторная инициализация и script_reload не дублируют подписки.
@@ -57,6 +60,7 @@ local KNOWN_EVENTS = {
     chaos_started = true,
     chaos_ended = true,
     casino_spin_resolved = true,
+    match_stats = true,
 }
 
 function OSC_GameEvents.Subscribe(eventName, id, handler)

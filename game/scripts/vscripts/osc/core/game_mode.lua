@@ -36,6 +36,7 @@ function OneSpellChaos:Init()
     SafeInit("Couriers", OSC_Couriers)
     SafeInit("Rotation", OSC_Rotation)
     SafeInit("ChaosRounds", OSC_ChaosRounds)
+    SafeInit("Stats", OSC_Stats)
 
     OSC_Logger.Log("One Spell Chaos loaded")
 end

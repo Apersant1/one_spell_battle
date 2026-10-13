@@ -30,6 +30,7 @@ require("osc/systems/chaos_events/weather_storm")
 require("osc/systems/chaos_events/weather_torrent")
 require("osc/systems/chaos_events/weather_drones")
 require("osc/systems/chaos_rounds")
+require("osc/systems/stats")
 require("osc/core/game_mode")
 
 function Precache(context)
