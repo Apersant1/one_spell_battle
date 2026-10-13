@@ -8,6 +8,12 @@ OSC_KEEP_ABILITIES = {
     ogre_magi_casino = true,
 }
 
+-- Запись пула: name, hero (для прекэша), label, weight (по умолчанию 4),
+-- linked — подспособности, без которых основная работает не полностью:
+-- { name = "...", hidden = true } выдаётся вместе с основной и удаляется с ней.
+-- Способности, которых нет в KV, при старте убирает OSC_Abilities.ValidatePools.
+-- Призванные существа (варды и т. п.) после смены способности остаются до смерти.
+
 OSC_ABILITY_POOL = {
     { name = "lina_dragon_slave",            hero = "npc_dota_hero_lina",            label = "Dragon Slave" },
     { name = "lina_light_strike_array",      hero = "npc_dota_hero_lina",            label = "Light Strike Array" },
@@ -37,7 +43,8 @@ OSC_ABILITY_POOL = {
     { name = "dazzle_shallow_grave",         hero = "npc_dota_hero_dazzle",          label = "Shallow Grave" },
     { name = "abaddon_death_coil",           hero = "npc_dota_hero_abaddon",         label = "Mist Coil" },
     { name = "windrunner_shackleshot",       hero = "npc_dota_hero_windrunner",      label = "Shackleshot" },
-    { name = "puck_illusory_orb",            hero = "npc_dota_hero_puck",            label = "Illusory Orb" },
+    { name = "puck_illusory_orb",            hero = "npc_dota_hero_puck",            label = "Illusory Orb",
+      linked = { { name = "puck_ethereal_jaunt" } } },
     { name = "puck_waning_rift",             hero = "npc_dota_hero_puck",            label = "Waning Rift" },
     { name = "storm_spirit_static_remnant",  hero = "npc_dota_hero_storm_spirit",    label = "Static Remnant" },
     { name = "storm_spirit_electric_vortex", hero = "npc_dota_hero_storm_spirit",   label = "Electric Vortex" },
@@ -58,7 +65,8 @@ OSC_ABILITY_POOL = {
     { name = "phantom_assassin_phantom_strike", hero = "npc_dota_hero_phantom_assassin", label = "Phantom Strike" },
     { name = "riki_blink_strike",            hero = "npc_dota_hero_riki",            label = "Blink Strike" },
     { name = "bane_brain_sap",               hero = "npc_dota_hero_bane",            label = "Brain Sap" },
-    { name = "bane_nightmare",               hero = "npc_dota_hero_bane",            label = "Nightmare" },
+    { name = "bane_nightmare",               hero = "npc_dota_hero_bane",            label = "Nightmare",
+      linked = { { name = "bane_nightmare_end", hidden = true } } },
     { name = "shadow_demon_disruption",      hero = "npc_dota_hero_shadow_demon",   label = "Disruption" },
     { name = "tinker_laser",                 hero = "npc_dota_hero_tinker",          label = "Laser" },
     { name = "juggernaut_blade_dance",       hero = "npc_dota_hero_juggernaut",     label = "Blade Dance", weight = 2 },
@@ -72,7 +80,8 @@ OSC_ULTIMATE_POOL = {
     { name = "lion_finger_of_death",          hero = "npc_dota_hero_lion",            label = "Finger of Death" },
     { name = "sven_gods_strength",            hero = "npc_dota_hero_sven",            label = "God's Strength" },
     { name = "zuus_thundergods_wrath",        hero = "npc_dota_hero_zuus",            label = "Thundergod's Wrath" },
-    { name = "crystal_maiden_freezing_field", hero = "npc_dota_hero_crystal_maiden",  label = "Freezing Field" },
+    { name = "crystal_maiden_freezing_field", hero = "npc_dota_hero_crystal_maiden",  label = "Freezing Field",
+      linked = { { name = "crystal_maiden_freezing_field_stop", hidden = true } } },
     { name = "lich_chain_frost",              hero = "npc_dota_hero_lich",            label = "Chain Frost" },
     { name = "earthshaker_echo_slam",         hero = "npc_dota_hero_earthshaker",    label = "Echo Slam" },
     { name = "sandking_epicenter",            hero = "npc_dota_hero_sand_king",       label = "Epicenter" },

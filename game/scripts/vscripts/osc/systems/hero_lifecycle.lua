@@ -60,11 +60,7 @@ end
 function OSC_HeroLifecycle.TryInitializeUnit(unit, source)
     if not IsValidEntity(unit) or not unit.IsHero or not unit:IsHero() then return end
 
-    local isCopy = unit:IsIllusion()
-        or (unit.IsTempestDouble and unit:IsTempestDouble())
-        or (unit.IsClone and unit:IsClone())
-
-    if isCopy then
+    if OSC_Abilities.IsCopy(unit) then
         if unit.osc_copy_done then return end
         unit.osc_copy_done = true
 
@@ -106,23 +102,26 @@ local function OnPlayerLevelUp(event)
     else
         hero = PlayerResource:GetSelectedHeroEntity(event.player_id)
     end
-    if not IsValidEntity(hero) then return end
+    -- До инициализации уровни не трогаем: она сама выдаст ультимейт с 6-го уровня
+    if not IsValidEntity(hero) or not hero.osc_initialized then return end
 
-    local level = event.level or hero:GetLevel()
-    if level >= 6 and not hero.osc_current_ultimate then
-        OSC_Abilities.GiveRandomUltimate(hero, true)
-    end
+    local ok, err = pcall(function()
+        local level = event.level or hero:GetLevel()
+        if level >= 6 and not hero.osc_current_ultimate then
+            OSC_Abilities.GiveRandomUltimate(hero, true)
+        end
 
-    local ability = hero.osc_current_ability and hero:FindAbilityByName(hero.osc_current_ability)
-    if ability then
-        local newLevel = OSC_Abilities.CalcLevel(level, ability)
-        ability:SetLevel(math.max(ability:GetLevel(), newLevel))
-    end
+        for _, name in pairs({ hero.osc_current_ability, hero.osc_current_ultimate }) do
+            local ability = hero:FindAbilityByName(name)
+            if ability then
+                OSC_Abilities.SetEntryLevel(hero, name, OSC_Abilities.CalcLevel(level, ability))
+            end
+        end
 
-    local ultimate = hero.osc_current_ultimate and hero:FindAbilityByName(hero.osc_current_ultimate)
-    if ultimate then
-        local newLevel = OSC_Abilities.CalcLevel(level, ultimate)
-        ultimate:SetLevel(math.max(ultimate:GetLevel(), newLevel))
+        OSC_Abilities.SyncCopies(hero)
+    end)
+    if not ok then
+        OSC_Logger.Error("Level up handling failed for " .. hero:GetUnitName() .. ": " .. tostring(err))
     end
 end
 

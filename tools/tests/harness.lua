@@ -113,6 +113,10 @@ GameRules = {
     GetGameModeEntity = function() return thinker end,
     GetCustomGameTeamMaxPlayers = function() return 5 end,
     PlayerHasCustomGameHostPrivileges = function(_, player) return player.host == true end,
+    SetCustomGameTeamMaxPlayers = function() end,
+    SetCustomGameSetupAutoLaunchDelay = function() end,
+    SetCustomGameSetupTimeout = function() end,
+    LockCustomGameSetupTeamAssignment = function() end,
 }
 
 PlayerResource = {
