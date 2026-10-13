@@ -4,6 +4,9 @@
         <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/osc_hud.xml" />
         <CustomUIElement type="GameSetup"
             layoutfile="file://{resources}/layout/custom_game/osc_team_select.xml" />
+        <!-- Дополняет стандартный экран выбора героев: голосование (osc_vote.xml) -->
+        <CustomUIElement type="HeroSelection"
+            layoutfile="file://{resources}/layout/custom_game/osc_vote.xml" />
 
     </Panel>
 </root>
