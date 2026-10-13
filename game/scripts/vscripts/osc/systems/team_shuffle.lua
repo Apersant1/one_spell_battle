@@ -9,6 +9,13 @@ local function IsHost(playerID)
   return player ~= nil and GameRules:PlayerHasCustomGameHostPrivileges(player)
 end
 
+local function IsPlayableTeam(team)
+  for _, playable in ipairs(TEAMS) do
+    if playable == team then return true end
+  end
+  return false
+end
+
 local function IsSetup()
   return GameRules:State_Get() == DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP
 end
@@ -48,7 +55,7 @@ function TeamShuffle:OnMove(event)
 
   local target = tonumber(event.player_id)
   local team = tonumber(event.team)
-  if target == nil or team == nil then return end
+  if target == nil or not IsPlayableTeam(team) then return end
 
   -- Себя может двигать любой, других — только хост
   if target ~= event.PlayerID and not IsHost(event.PlayerID) then return end

@@ -66,6 +66,7 @@ OSC_CONFIG = {
         FOUNTAIN_ARRIVAL_DISTANCE = 350,
         HOME_FORWARD_OFFSET = 250,
         HOME_SIDE_OFFSET = 160,
+        HOME_ROW_SPACING = 200,      -- третий и следующие курьеры встают рядами дальше
         STASH_FIRST_SLOT = 9,
         STASH_LAST_SLOT = 14,
         INVENTORY_FIRST_SLOT = 0,

@@ -47,16 +47,18 @@ local function FindTeamFountain(team)
     end
 end
 
-local function GetCourierHomePositions(fountain)
-    local origin = fountain:GetAbsOrigin()
-    local forward = fountain:GetForwardVector()
-    local right = fountain:GetRightVector()
-    return {
-        origin + forward * COURIER_CONFIG.HOME_FORWARD_OFFSET
-            + right * COURIER_CONFIG.HOME_SIDE_OFFSET,
-        origin + forward * COURIER_CONFIG.HOME_FORWARD_OFFSET
-            - right * COURIER_CONFIG.HOME_SIDE_OFFSET,
-    }
+-- Места курьеров перед фонтаном: пары справа/слева, каждая следующая
+-- пара на HOME_ROW_SPACING дальше вперёд
+function OSC_Couriers.GetHomePositions(origin, forward, right, count)
+    local positions = {}
+    for index = 1, count do
+        local row = math.floor((index - 1) / 2)
+        local side = index % 2 == 1 and 1 or -1
+        positions[index] = origin
+            + forward * (COURIER_CONFIG.HOME_FORWARD_OFFSET + row * COURIER_CONFIG.HOME_ROW_SPACING)
+            + right * (COURIER_CONFIG.HOME_SIDE_OFFSET * side)
+    end
+    return positions
 end
 
 local function IssueMoveOrder(courier, position)
@@ -205,6 +207,10 @@ local function ThinkCourier(courier)
     if not IsValidEntity(courier) then
         return nil
     end
+    -- Мёртвый курьер ничего не берёт и не везёт; доставка продолжится после возрождения
+    if not courier:IsAlive() then
+        return COURIER_CONFIG.THINK_INTERVAL
+    end
 
     local now = GameRules:GetGameTime()
     if courier.osc_next_ability_time and now >= courier.osc_next_ability_time then
@@ -307,7 +313,12 @@ function OSC_Couriers.EnsureTeamCouriers(hero)
         return
     end
 
-    local homePositions = GetCourierHomePositions(fountain)
+    local homePositions = OSC_Couriers.GetHomePositions(
+        fountain:GetAbsOrigin(),
+        fountain:GetForwardVector(),
+        fountain:GetRightVector(),
+        COURIER_CONFIG.COUNT_PER_TEAM
+    )
     local couriers = {}
     for _, courier in pairs(Entities:FindAllByClassname("npc_dota_courier") or {}) do
         if IsValidEntity(courier) and courier:GetTeamNumber() == team then

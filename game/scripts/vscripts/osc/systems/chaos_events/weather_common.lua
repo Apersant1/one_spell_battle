@@ -103,11 +103,18 @@ function OSC_Weather.HeroesInRadius(position, radius)
     return result
 end
 
--- Выполнить fn через delay секунд, если хаос-событие ещё идёт
+-- Выполнить fn через delay секунд, если тот же хаос-раунд ещё идёт
+-- (раунд мог закончиться досрочно через -chaos_stop или смениться)
 function OSC_Weather.After(delay, fn)
+    local rounds = OSC_ChaosRounds
+    local event = rounds and rounds.event
+    local endTime = rounds and rounds.endTime
     GameRules:GetGameModeEntity():SetContextThink(
         DoUniqueString("osc_weather_delay"),
         function()
+            if rounds and (rounds.event ~= event or rounds.endTime ~= endTime) then
+                return nil
+            end
             local ok, err = pcall(fn)
             if not ok then
                 OSC_Logger.Error("[Weather] " .. tostring(err))

@@ -135,6 +135,21 @@ PlayerResource = {
 
 HeroList = { GetAllHeroes = function() return H.heroes end }
 
+H.byClass = {}
+Entities = {
+    FindAllByClassname = function(_, className) return H.byClass[className] or {} end,
+}
+function ExecuteOrderFromTable(order) H.lastOrder = order end
+function CreateUnitByName() return nil end
+
+function H.NewItem(name)
+    return {
+        name = name,
+        IsNull = function() return false end,
+        GetAbilityName = function(self) return self.name end,
+    }
+end
+
 CustomNetTables = {
     SetTableValue = function(_, _, key, value) H.netTables[key] = value end,
 }
@@ -211,7 +226,30 @@ function Hero:GetTeamNumber() return self.team end
 function Hero:GetAbsOrigin() return self.origin end
 function Hero:GetForwardVector() return Vector(1, 0, 0) end
 function Hero:GetGold() return H.players[self.playerID].gold end
-function Hero:GetItemInSlot() return nil end
+function Hero:GetRightVector() return Vector(0, 1, 0) end
+function Hero:GetBaseMoveSpeed() return 300 end
+function Hero:SetControllableByPlayer() end
+function Hero:entindex() return self.index or 0 end
+function Hero:GetItemInSlot(slot) return self.items[slot] end
+
+function Hero:TakeItem(item)
+    for slot, current in pairs(self.items) do
+        if current == item then
+            self.items[slot] = nil
+            return item
+        end
+    end
+end
+
+-- Как в Dota: сначала основной инвентарь и рюкзак (0-8)
+function Hero:AddItem(item)
+    for slot = 0, 8 do
+        if not self.items[slot] then
+            self.items[slot] = item
+            return item
+        end
+    end
+end
 function Hero:HasModifier(name) return self.modifiers[name] ~= nil end
 function Hero:AddNewModifier(_, _, name, params) self.modifiers[name] = params or {}; return {} end
 function Hero:RemoveModifierByName(name) self.modifiers[name] = nil end
@@ -277,6 +315,7 @@ function H.NewHero(opts)
         origin = opts.origin or Vector(0, 0, 0),
         slots = {},
         modifiers = {},
+        items = {},
     }, Hero)
     for index, name in ipairs(opts.abilities or {}) do
         if not H.kv[name] then H.DefineAbility(name) end
