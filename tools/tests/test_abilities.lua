@@ -185,4 +185,32 @@ return {
         OSC_Abilities.SetEntryLevel(hero, "test_b", 2)
         H.eq(hero:FindAbilityByName("test_b"):GetLevel(), 3, "level never lowered")
     end,
+    sync_copies_keeps_unchanged_ability = function()
+        setup()
+        H.DefineAbility("test_a")
+        OSC_ABILITY_POOL = { entry("test_a") }
+        local owner = heroWith("test_a")
+        owner:FindAbilityByName("test_a"):SetLevel(3)
+        H.AddPlayer(0, owner)
+        local clone = heroWith("test_a", { copy = "clone" })
+        local cloneAbility = clone:FindAbilityByName("test_a")
+        cloneAbility.cooldown = 12
+
+        OSC_Abilities.SyncCopies(owner)
+
+        H.eq(clone:FindAbilityByName("test_a"), cloneAbility, "same ability handle kept")
+        H.eq(cloneAbility.cooldown, 12, "cooldown not reset")
+        H.eq(cloneAbility:GetLevel(), 3, "level synced")
+    end,
+
+    validate_keeps_pool_when_everything_missing = function()
+        setup()
+        OSC_ABILITY_POOL = { entry("test_x"), entry("test_y") }
+        OSC_ULTIMATE_POOL = {}
+
+        OSC_Abilities.ValidatePools()
+
+        H.eq(#OSC_ABILITY_POOL, 2, "pool left intact")
+        H.truthy(H.logged("validation skipped"), "skip is logged")
+    end,
 }

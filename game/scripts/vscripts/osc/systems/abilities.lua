@@ -112,21 +112,34 @@ function OSC_Abilities.ValidatePools()
     }
 
     for _, pool in ipairs(pools) do
+        local reasons, invalidCount = {}, 0
+        for index, entry in ipairs(pool.list) do
+            if not GetAbilityKeyValuesByName(entry.name) then
+                reasons[index] = "ability not found"
+            elseif not IsValidWeight(entry.weight) then
+                reasons[index] = "invalid weight " .. tostring(entry.weight)
+            end
+            if reasons[index] then
+                invalidCount = invalidCount + 1
+            end
+        end
+
+        -- Если не прошла ни одна запись, скорее сломана сама проверка, чем пул:
+        -- пустой пул остановил бы режим, поэтому оставляем его как есть
+        local skip = #pool.list > 0 and invalidCount == #pool.list
+        if skip then
+            OSC_Logger.Error(pool.name .. ": validation skipped, no entry passed the KV check")
+        end
+
         for index = #pool.list, 1, -1 do
             local entry = pool.list[index]
-            local reason
-            if not GetAbilityKeyValuesByName(entry.name) then
-                reason = "ability not found"
-            elseif not IsValidWeight(entry.weight) then
-                reason = "invalid weight " .. tostring(entry.weight)
-            end
-
+            local reason = not skip and reasons[index]
             if reason then
                 OSC_Logger.Error(pool.name .. ": removed " .. tostring(entry.name)
                     .. " (" .. reason .. ")")
                 table.remove(pool.list, index)
                 removed = removed + 1
-            else
+            elseif not skip then
                 local linked = entry.linked or {}
                 for linkIndex = #linked, 1, -1 do
                     local link = linked[linkIndex]
@@ -141,7 +154,7 @@ function OSC_Abilities.ValidatePools()
         end
 
         if #pool.list == 0 then
-            OSC_Logger.Error(pool.name .. " is empty after validation")
+            OSC_Logger.Error(pool.name .. " is empty")
         end
     end
 
@@ -359,6 +372,31 @@ function OSC_Abilities.CopyFromOwner(unit, owner)
     unit.osc_current_ultimate = CopyEntry(unit, owner, owner.osc_current_ultimate, ULTIMATE_SLOT)
 end
 
+local function HasAbility(unit, name)
+    return name == nil or unit:FindAbilityByName(name) ~= nil
+end
+
+-- Копия с теми же способностями только догоняет уровни: пересоздание
+-- сбросило бы её перезарядки (клоны Meepo живут всю игру)
+local function SyncCopy(unit, owner)
+    local mainName, ultimateName = owner.osc_current_ability, owner.osc_current_ultimate
+    local unchanged = unit.osc_current_ability == mainName
+        and unit.osc_current_ultimate == ultimateName
+        and HasAbility(unit, mainName)
+        and HasAbility(unit, ultimateName)
+    if not unchanged then
+        OSC_Abilities.CopyFromOwner(unit, owner)
+        return
+    end
+
+    for _, name in pairs({ mainName, ultimateName }) do
+        local source = owner:FindAbilityByName(name)
+        if source then
+            OSC_Abilities.SetEntryLevel(unit, name, source:GetLevel())
+        end
+    end
+end
+
 -- Обновляет живые копии владельца (клоны Meepo, иллюзии, Tempest Double).
 -- Иллюзии чужих героев под контролем игрока (Wall of Replica) не трогаем.
 function OSC_Abilities.SyncCopies(owner)
@@ -371,7 +409,7 @@ function OSC_Abilities.SyncCopies(owner)
             and OSC_Abilities.IsCopy(unit)
             and unit:GetPlayerOwnerID() == playerID
             and unit:GetUnitName() == unitName then
-            local ok, err = pcall(OSC_Abilities.CopyFromOwner, unit, owner)
+            local ok, err = pcall(SyncCopy, unit, owner)
             if not ok then
                 OSC_Logger.Error("Copy sync failed for " .. unitName .. ": " .. tostring(err))
             end
