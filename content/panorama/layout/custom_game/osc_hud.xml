@@ -44,19 +44,6 @@
             </Panel>
         </Panel>
 
-        <!-- Выбор следующей способности: под таймером, кликабельны только карточки -->
-        <Panel id="ChoicePanel" class="OSCSurface OSCChaos" hittest="false">
-            <Panel id="ChoiceHeaderRow" hittest="false">
-                <Label id="ChoiceHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
-                    hittest="false" />
-                <Label id="ChoiceTimer" class="OSCTextSmall OSCBold OSCGold" hittest="false" />
-            </Panel>
-            <Panel id="ChoiceCards" hittest="false" />
-            <Panel id="ChoiceProgress" hittest="false">
-                <Panel id="ChoiceProgressFill" hittest="false" />
-            </Panel>
-        </Panel>
-
         <Panel id="ChaosRoundPanel" class="OSCSurface OSCChaos" hittest="false">
             <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
                 text="#osc_hud_chaos_header" />
@@ -111,6 +98,20 @@
             </Panel>
             <!-- Слой для частиц поверх окна -->
             <Panel id="CasinoFx" hittest="false" />
+        </Panel>
+
+        <!-- Выбор следующей способности: последним, поверх затемнения казино
+             (иначе #CasinoPanel перехватывает клики). Кликабельны только карточки -->
+        <Panel id="ChoicePanel" class="OSCSurface OSCChaos" hittest="false">
+            <Panel id="ChoiceHeaderRow" hittest="false">
+                <Label id="ChoiceHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
+                    hittest="false" />
+                <Label id="ChoiceTimer" class="OSCTextSmall OSCBold OSCGold" hittest="false" />
+            </Panel>
+            <Panel id="ChoiceCards" hittest="false" />
+            <Panel id="ChoiceProgress" hittest="false">
+                <Panel id="ChoiceProgressFill" hittest="false" />
+            </Panel>
         </Panel>
     </Panel>
 </root>

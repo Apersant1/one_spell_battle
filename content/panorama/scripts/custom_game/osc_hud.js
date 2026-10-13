@@ -1,6 +1,7 @@
 "use strict";
 
 (function () {
+  OSC.HudError.Init();
   OSC.Version.Init();
   OSC.Timer.Init();
   OSC.ChaosRound.Init();
