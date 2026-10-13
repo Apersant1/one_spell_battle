@@ -11,9 +11,10 @@ OSC.ChaosRound = (function () {
     if (phase === "active") OSC.Util.PlaySound(OSC.Sounds.chaosStart);
   }
 
-  function LocalizeKey(key, fallback, panel) {
-    if (!key) return fallback;
-    return panel ? $.Localize("#" + key, panel) : $.Localize("#" + key);
+  // key — ключ события с сервера; fallbackKey — свой ключ, если события нет
+  function LocalizeKey(key, fallbackKey, panel) {
+    var token = "#" + (key || fallbackKey);
+    return panel ? $.Localize(token, panel) : $.Localize(token);
   }
 
   function Update() {
@@ -58,16 +59,18 @@ OSC.ChaosRound = (function () {
       }
       $("#ChaosRoundTitle").text = LocalizeKey(
         data.title_key,
-        isActive ? "Хаос-раунд" : "Приближается хаос-раунд"
+        isActive ? "osc_hud_chaos_active_fallback" : "osc_hud_chaos_soon_fallback"
       );
-      description.text = LocalizeKey(
-        data.desc_key,
-        isActive ? "" : "Правила матча скоро изменятся.",
-        description
+      description.text =
+        data.desc_key || !isActive
+          ? LocalizeKey(data.desc_key, "osc_hud_chaos_soon_desc", description)
+          : "";
+      var timer = $("#ChaosRoundTimer");
+      timer.SetDialogVariable("time", OSC.Util.FormatTime(timeLeft));
+      timer.text = $.Localize(
+        isActive ? "#osc_hud_chaos_time_left" : "#osc_hud_chaos_time_until",
+        timer
       );
-      $("#ChaosRoundTimer").text =
-        (isActive ? "До конца: " : "До события: ") +
-        OSC.Util.FormatTime(timeLeft);
     }
 
     return true;

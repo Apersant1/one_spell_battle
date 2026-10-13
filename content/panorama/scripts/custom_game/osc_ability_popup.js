@@ -21,6 +21,13 @@ OSC.AbilityPopup = (function () {
     });
   }
 
+  // Имя способности из локализации Dota; если ключа нет — подпись из пула
+  function AbilityDisplayName(event) {
+    var token = "#DOTA_Tooltip_Ability_" + event.ability;
+    var localized = $.Localize(token);
+    return localized && localized !== token ? localized : event.label;
+  }
+
   function OnAbilityChanged(event) {
     if (parseInt(event.player_id, 10) !== Players.GetLocalPlayer()) return;
 
@@ -34,8 +41,8 @@ OSC.AbilityPopup = (function () {
     flipHandle = $.Schedule(FLIP_DURATION, function () {
       flipHandle = null;
       $("#PopupIcon").abilityname = event.ability;
-      $("#PopupTitle").text = "Новая способность";
-      $("#PopupName").text = event.label;
+      $("#PopupTitle").text = $.Localize("#osc_hud_popup_title");
+      $("#PopupName").text = AbilityDisplayName(event);
       card.RemoveClass("FlipHidden"); // новая разворачивается
       Flash();
       OSC.Util.PlaySound(OSC.Sounds.abilityChanged);

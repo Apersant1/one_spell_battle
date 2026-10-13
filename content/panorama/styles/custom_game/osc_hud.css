@@ -407,6 +407,12 @@
   horizontal-align: center;
   flow-children: right;
 }
+#CasinoItemsEmpty {
+  horizontal-align: center;
+}
+#CasinoItemsEmpty.Hidden {
+  visibility: collapse;
+}
 .CasinoItem {
   width: 60px;
   margin: 0px 3px;

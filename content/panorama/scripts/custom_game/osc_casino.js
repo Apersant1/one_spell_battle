@@ -341,9 +341,18 @@ OSC.Casino = (function () {
     });
   }
 
+  // Пока окно открыто и спина нет, держим баланс и список предметов свежими:
+  // золото меняется и без казино (убийства, покупки)
   function PollItems() {
     if (OSC.Util.IsPostGame()) return false;
-    if (machine >= 0 && !waiting && !animating) RefreshItems(false);
+    if (machine < 0 || waiting || animating) return;
+    var gold = Players.GetGold(Players.GetLocalPlayer());
+    if (gold !== currentGold) {
+      SetBalance(gold);
+      UpdateStakeLabel();
+      UpdateSpinButton();
+    }
+    RefreshItems(false);
   }
 
   // ================= Жизненный цикл спина =================

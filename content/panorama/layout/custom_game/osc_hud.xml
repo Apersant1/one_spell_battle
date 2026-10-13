@@ -39,11 +39,11 @@
 
         <Panel id="ChaosRoundPanel" class="OSCSurface OSCChaos" hittest="false">
             <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
-                text="Хаос-раунд" />
-            <Label id="ChaosRoundTitle" class="OSCTextTitle" text="Ожидание события" />
+                text="#osc_hud_chaos_header" />
+            <Label id="ChaosRoundTitle" class="OSCTextTitle" text="#osc_hud_chaos_waiting" />
             <Label id="ChaosRoundDescription" class="OSCTextBody OSCMuted"
-                text="Правила матча скоро изменятся." />
-            <Label id="ChaosRoundTimer" class="OSCTextBody OSCBold OSCGold" text="До события: --:--" />
+                text="#osc_hud_chaos_soon_desc" />
+            <Label id="ChaosRoundTimer" class="OSCTextBody OSCBold OSCGold" text="--:--" />
         </Panel>
 
         <Panel id="Popup" hittest="false">
@@ -70,6 +70,8 @@
                     <Label id="CasinoItemsLabel" class="OSCTextSmall OSCMuted"
                         text="#osc_casino_items_label" />
                     <Panel id="CasinoItems" />
+                    <Label id="CasinoItemsEmpty" class="OSCTextSmall OSCMuted Hidden"
+                        text="#osc_casino_items_empty" />
                 </Panel>
                 <Panel id="CasinoReels">
                     <Label id="CasinoReel1" class="CasinoReel" text="7" />

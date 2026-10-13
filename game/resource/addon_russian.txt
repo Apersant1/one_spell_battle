@@ -5,8 +5,8 @@
 	{
 		"addon_game_name"		"lucky battle"
 		"DOTA_Tooltip_Ability_ogre_magi_casino"	"Казино Огра"
-		"DOTA_Tooltip_Ability_ogre_magi_casino_Description"	"Призывает игровой автомат. Играть могут Огр и его <font color='#E0C27A'>союзники</font>: подойдите к автомату и кликните по нему."
-		"DOTA_Tooltip_Ability_ogre_magi_casino_SummaryDescription"	"Призывает игровой автомат, в котором вся команда может сыграть на золото."
+		"DOTA_Tooltip_Ability_ogre_magi_casino_Description"	"Призывает игровой автомат. Играть может <font color='#E0C27A'>любой герой</font> рядом с ним: подойдите к автомату и кликните по нему."
+		"DOTA_Tooltip_Ability_ogre_magi_casino_SummaryDescription"	"Призывает игровой автомат, в котором любой герой может сыграть на золото."
 		"DOTA_Tooltip_Ability_ogre_magi_casino_duration"	"ВРЕМЯ РАБОТЫ:"
 		"DOTA_Tooltip_Ability_ogre_magi_casino_min_stake"	"МИНИМАЛЬНАЯ СТАВКА:"
 		"DOTA_Tooltip_Ability_ogre_magi_casino_Note0"	"Пока один игрок крутит барабаны, автомат занят для остальных."
@@ -94,6 +94,21 @@
 		"osc_ts_btn_shuffle"			"ПЕРЕМЕШАТЬ"
 		"osc_ts_btn_auto"				"АВТОРАСПРЕДЕЛЕНИЕ"
 		"osc_ts_btn_start"				"НАЧАТЬ ИГРУ"
- 
+		// ---------- Аудит 2026-10: казино и HUD ----------
+		"osc_casino_err_bad_item"		"Этот предмет нельзя поставить"
+		"osc_casino_err_item_not_yours"		"Ставить можно только купленные вами предметы"
+		"osc_casino_err_item_unsellable"		"Непродаваемые предметы ставить нельзя"
+		"osc_casino_err_dead"		"Мёртвые в казино не играют"
+		"osc_casino_items_empty"		"Нет предметов, которые можно поставить"
+		"osc_hud_timer_pregame"		"Смена способностей начнётся после горна"
+		"osc_hud_timer_next"		"Новая способность через {s:time}"
+		"osc_hud_chaos_header"		"Хаос-раунд"
+		"osc_hud_chaos_waiting"		"Ожидание события"
+		"osc_hud_chaos_active_fallback"		"Хаос-раунд"
+		"osc_hud_chaos_soon_fallback"		"Приближается хаос-раунд"
+		"osc_hud_chaos_soon_desc"		"Правила матча скоро изменятся."
+		"osc_hud_chaos_time_left"		"До конца: {s:time}"
+		"osc_hud_chaos_time_until"		"До события: {s:time}"
+		"osc_hud_popup_title"		"Новая способность"
 	}
 }

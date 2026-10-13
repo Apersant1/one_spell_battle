@@ -26,7 +26,7 @@ OSC.Timer = (function () {
     var data = CustomNetTables.GetTableValue("osc_state", "timer");
 
     if (!data || data.next_rotation < 0) {
-      label.text = "Смена способностей начнётся после горна";
+      label.text = $.Localize("#osc_hud_timer_pregame");
       SetRingProgress(1);
       panel.SetHasClass("Urgent", false);
       return;
@@ -39,7 +39,8 @@ OSC.Timer = (function () {
     }
 
     SetRingProgress(rotationInterval > 0 ? left / rotationInterval : 0);
-    label.text = "Новая способность через " + OSC.Util.FormatTime(left);
+    label.SetDialogVariable("time", OSC.Util.FormatTime(left));
+    label.text = $.Localize("#osc_hud_timer_next", label);
     panel.SetHasClass("Urgent", left <= URGENT_AT);
   }
 

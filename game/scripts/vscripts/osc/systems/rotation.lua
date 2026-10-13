@@ -6,6 +6,7 @@ OSC_Rotation = {
 local function PublishTimer()
     CustomNetTables:SetTableValue("osc_state", "timer", {
         next_rotation = OSC_Rotation.next_time or -1,
+        interval = OSC_CONFIG.ROTATION_INTERVAL,
     })
 end
 
