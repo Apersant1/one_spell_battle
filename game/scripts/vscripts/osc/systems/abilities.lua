@@ -172,6 +172,38 @@ local function PlaceEntry(unit, entry, ability, level)
     end
 end
 
+-- Полная перезарядка способности на её текущем уровне с учётом снижения
+-- перезарядки у героя — столько он ждал бы после каста
+local function FullCooldown(ability)
+    local levelIndex = ability:GetLevel() - 1
+    if ability.GetEffectiveCooldown then
+        return ability:GetEffectiveCooldown(levelIndex) or 0
+    end
+    return ability:GetCooldown(levelIndex) or 0
+end
+
+-- Перезарядка способности, пришедшей на смену прежней (NEW_ABILITY_COOLDOWN_MODE)
+local function ApplyNewAbilityCooldown(ability)
+    local mode = OSC_CONFIG.NEW_ABILITY_COOLDOWN_MODE or "ready"
+    if mode == "ready" then return end
+    if mode ~= "partial" then
+        OSC_Logger.Error("Unknown NEW_ABILITY_COOLDOWN_MODE: " .. tostring(mode))
+        return
+    end
+
+    local fraction = OSC_CONFIG.NEW_ABILITY_COOLDOWN_FRACTION
+    if type(fraction) ~= "number" or fraction < 0 or fraction > 1 then
+        OSC_Logger.Error("NEW_ABILITY_COOLDOWN_FRACTION must be between 0 and 1, got "
+            .. tostring(fraction))
+        return
+    end
+
+    local cooldown = FullCooldown(ability) * fraction
+    if cooldown > 0 then
+        ability:StartCooldown(cooldown)
+    end
+end
+
 -- Новая способность добавляется до снятия старой (если движок её не выдал,
 -- у героя остаётся прежняя) и через SwapAbilities встаёт в слот старой.
 -- slot — "ability" или "ultimate" (поле состояния героя).
@@ -198,6 +230,9 @@ local function SwapEntry(hero, slot, entry)
 
     PlaceEntry(hero, entry, ability, OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
     ability:EndCooldown()
+    if oldName then
+        ApplyNewAbilityCooldown(ability)
+    end
     state[slot] = entry.name
     return true
 end
@@ -231,6 +266,12 @@ local function CopyEntry(unit, owner, name)
     local source = owner:FindAbilityByName(name)
     PlaceEntry(unit, FindEntry(name) or { name = name }, ability,
         source and source:GetLevel() or 1)
+    -- Копия не получает готовую способность, пока у владельца она на
+    -- перезарядке (в том числе частичной после смены)
+    local remaining = source and source:GetCooldownTimeRemaining() or 0
+    if remaining > 0 then
+        ability:StartCooldown(remaining)
+    end
     return name
 end
 

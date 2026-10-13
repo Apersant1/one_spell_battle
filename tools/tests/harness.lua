@@ -182,7 +182,7 @@ CustomGameEventManager = {
 
 local SLOT_COUNT = 16
 
--- opts: ultimate, maxLevel, innate
+-- opts: ultimate, maxLevel, innate, passive, cooldown (число или список по уровням)
 function H.DefineAbility(name, opts)
     opts = opts or {}
     H.kv[name] = {
@@ -190,6 +190,7 @@ function H.DefineAbility(name, opts)
         _ultimate = opts.ultimate == true,
         _maxLevel = opts.maxLevel or (opts.ultimate and 3 or 4),
         _passive = opts.passive == true,
+        _cooldown = opts.cooldown or 0,
     }
 end
 
@@ -207,6 +208,17 @@ end
 function Ability:SetHidden(hidden) self.hidden = hidden end
 function Ability:IsHidden() return self.hidden end
 function Ability:EndCooldown() self.cooldown = 0 end
+function Ability:StartCooldown(seconds) self.cooldown = seconds end
+function Ability:GetCooldownTimeRemaining() return self.cooldown or 0 end
+-- iLevel — индекс уровня с нуля, как в движке
+function Ability:GetCooldown(levelIndex)
+    local cooldown = H.kv[self.name]._cooldown
+    if type(cooldown) == "table" then
+        return cooldown[math.min(levelIndex + 1, #cooldown)]
+    end
+    return cooldown
+end
+function Ability:GetEffectiveCooldown(levelIndex) return self:GetCooldown(levelIndex) end
 function Ability:IsChanneling() return self.channeling == true end
 function Ability:GetToggleState() return self.toggled == true end
 function Ability:ToggleAbility() self.toggled = not self.toggled end

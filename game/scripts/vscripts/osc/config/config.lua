@@ -11,6 +11,12 @@ OSC_CONFIG = {
     ROTATION_CAST_PHASE_DEFER = true,
     ROTATION_DEFER_STEP = 0.25,
     ROTATION_MAX_DEFER = 3,
+    -- Перезарядка способности, пришедшей на смену прежней (ротация, -reroll,
+    -- смена ультимейта): "ready" — готова сразу; "partial" — на перезарядке
+    -- NEW_ABILITY_COOLDOWN_FRACTION от полной на текущем уровне. Первая
+    -- способность героя и первый ультимейт всегда готовы.
+    NEW_ABILITY_COOLDOWN_MODE = "ready",
+    NEW_ABILITY_COOLDOWN_FRACTION = 0.5,
     CHAT_MESSAGES = true,
     DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
