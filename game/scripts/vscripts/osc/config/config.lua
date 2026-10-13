@@ -1,9 +1,9 @@
 OSC_CONFIG = {
-    VERSION = "0.1.0",
+    VERSION = "1.0.0",
     ROTATION_INTERVAL = 60,
     WARNING_TIME = 10,
     CHAT_MESSAGES = true,
-    DEVELOPMENT_MODE = true,
+    DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
     CHAOS_ROUNDS = {
         INTERVAL                = 200,
@@ -13,6 +13,50 @@ OSC_CONFIG = {
         MANA_COST_REDUCTION_PCT = 100,
         GOLD_RUSH_AMOUNT        = 15,
         GOLD_RUSH_TICK          = 2,
+        WEATHER = {
+            STORM = {                       -- Гроза: молнии Зевса
+                WEIGHT     = 5,
+                TICK       = 2.5,           -- раз в N секунд
+                TARGETS    = 2,             -- сколько героев бьёт за раз
+                DAMAGE_PCT = 8,
+                STUN       = 0.2,
+                PARTICLE   = "particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf",
+                SOUND      = "Hero_Zuus.LightningBolt",
+            },
+            TORRENT = {                     -- Штормовое предупреждение: потоки Кунки
+                WEIGHT        = 5,
+                TICK          = 2,
+                TARGETS       = 2,
+                DELAY         = 1.6,        -- сколько секунд видна метка до удара
+                RADIUS        = 225,
+                DAMAGE_PCT    = 10,
+                LIFT_DURATION = 1.0,        -- сколько герой висит в воздухе
+                LIFT_HEIGHT   = 350,
+                WARN_PARTICLE = "particles/units/heroes/hero_kunkka/kunkka_spell_torrent_bubbles.vpcf",
+                WARN_SOUND    = "Ability.pre.Torrent",
+                PARTICLE      = "particles/units/heroes/hero_kunkka/kunkka_spell_torrent_splash.vpcf",
+                SOUND         = "Ability.Torrent",
+            },
+            DRONES = {                      -- Атака дронов: ракеты Клокверка
+                WEIGHT     = 5,
+                TICK       = 1.5,
+                TARGETS    = 3,
+                DELAY      = 1.2,
+                RADIUS     = 200,
+                SPREAD     = 350,           -- ракета падает в случайную точку рядом с героем
+                DAMAGE_PCT = 6,
+                PARTICLE   = "particles/units/heroes/hero_rattletrap/rattletrap_rocket_flare_explosion.vpcf",
+                SOUND      = "Hero_Rattletrap.Rocket_Flare.Explode",
+            },
+            -- Звуки героев, которых может не быть в матче
+            SOUND_FILES = {
+                "soundevents/game_sounds_heroes/game_sounds_zuus.vsndevts",
+                "soundevents/game_sounds_heroes/game_sounds_kunkka.vsndevts",
+                "soundevents/game_sounds_heroes/game_sounds_rattletrap.vsndevts",
+            },
+            WARNING_RING = "particles/ui_mouseactions/range_display.vpcf",
+        },
+    
     },
     COURIERS = {
         COUNT_PER_TEAM = 2,

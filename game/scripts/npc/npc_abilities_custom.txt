@@ -8,6 +8,7 @@
 		"BaseClass"					"ability_lua"
 		"ScriptFile"				"scripts/vscripts/osc/heroes/ogre_casino.lua"
 		"AbilityBehavior"			"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"MaxLevel"					"1"
 		"AbilityCastPoint"			"0.3"
 		"AbilityCooldown"			"30"
 		"AbilityManaCost"			"0"

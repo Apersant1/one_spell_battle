@@ -15,6 +15,10 @@ require("osc/systems/chaos_events/registry")
 require("osc/systems/chaos_events/cooldowns")
 require("osc/systems/chaos_events/mana_free")
 require("osc/systems/chaos_events/gold_rush")
+require("osc/systems/chaos_events/weather_common")
+require("osc/systems/chaos_events/weather_storm")
+require("osc/systems/chaos_events/weather_torrent")
+require("osc/systems/chaos_events/weather_drones")
 require("osc/systems/chaos_rounds")
 require("osc/core/game_mode")
 
@@ -45,6 +49,20 @@ function Precache(context)
         if particle and particle ~= "" then
             PrecacheResource("particle", particle, context)
         end
+    end
+
+    -- Погодные хаос-события: частицы и звуки героев, которых может не быть в матче
+    local weather = OSC_CONFIG.CHAOS_ROUNDS.WEATHER
+    PrecacheResource("particle", weather.WARNING_RING, context)
+    for _, event in ipairs({ weather.STORM, weather.TORRENT, weather.DRONES }) do
+        for _, key in ipairs({ "PARTICLE", "WARN_PARTICLE" }) do
+            if event[key] and event[key] ~= "" then
+                PrecacheResource("particle", event[key], context)
+            end
+        end
+    end
+    for _, soundFile in ipairs(weather.SOUND_FILES) do
+        PrecacheResource("soundfile", soundFile, context)
     end
 end
 
