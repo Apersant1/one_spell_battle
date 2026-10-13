@@ -1,6 +1,7 @@
 require("osc/core/heroes")
 require("osc/core/game_events")
 require("osc/core/hero_state")
+require("osc/core/anchor")
 require("osc/systems/rotation_choice")
 
 OSC_Rotation = OSC_Rotation or {
@@ -20,6 +21,13 @@ end
 -- предложенных), а без предложения — случайная. Предложение закрывается в
 -- любом случае, даже если выдача сорвалась.
 local function RotateHero(hero, round)
+    -- «Якорь»: эту ротацию герой пропускает, якорь снимается
+    if OSC_Anchor.Consume(hero) then
+        OSC_RotationChoice.Close(hero, OSC_HeroState.Get(hero).ability)
+        OSC_Logger.Log("Rotation skipped by anchor for " .. hero:GetUnitName())
+        return
+    end
+
     local entry = OSC_RotationChoice.TakeEntry(hero, round)
     local ok, result = pcall(function()
         if entry then

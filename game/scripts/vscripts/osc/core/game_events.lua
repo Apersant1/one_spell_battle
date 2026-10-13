@@ -10,6 +10,8 @@
 --   hero_initialized(hero) — основной герой получил способности режима
 --     (присылает hero_lifecycle).
 --   game_started() — игра перешла в GAME_IN_PROGRESS; приходит один раз.
+--   hero_anchored(hero) — основному герою поставлен «Якорь» (присылает
+--     OSC_Anchor).
 --
 -- Подписка именованная: повторный Subscribe с тем же id заменяет обработчик,
 -- поэтому повторная инициализация и script_reload не дублируют подписки.
@@ -29,6 +31,7 @@ local KNOWN_EVENTS = {
     hero_spawned = true,
     hero_initialized = true,
     game_started = true,
+    hero_anchored = true,
 }
 
 function OSC_GameEvents.Subscribe(eventName, id, handler)

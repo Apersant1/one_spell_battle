@@ -3,6 +3,7 @@
 1. Синтаксис всех .lua в game/scripts/vscripts (компиляция LuaJIT).
 2. Синтаксис всех .js в content/panorama (node --check).
 3. Локализация: ключи из кода есть в обоих addon_*.txt, наборы ключей совпадают.
+   Цены предметов в npc_items_custom.txt совпадают с OSC_CONFIG.
 4. Тесты tools/tests/test_*.lua с моками Dota API (каждый тест в свежем рантайме).
 
 Запуск: pip install lupa && python tools/tests/run_tests.py
@@ -25,11 +26,18 @@ VSCRIPTS = ROOT / "game" / "scripts" / "vscripts"
 PANORAMA = ROOT / "content" / "panorama"
 RESOURCE = ROOT / "game" / "resource"
 TESTS = Path(__file__).resolve().parent
+ITEMS_KV = ROOT / "game" / "scripts" / "npc" / "npc_items_custom.txt"
+
+# KV не может брать цену из Lua-конфига, поэтому держим их согласованными
+ITEM_COSTS = {
+    "item_osc_anchor": "ANCHOR_COST",
+}
 
 LOC_PREFIXES = (
     "osc_casino_err_",
     "osc_casino_result_",
     "osc_casino_items_",
+    "osc_anchor_err_",
     "osc_hud_",
     "osc_notify_",
     "osc_ts_",
@@ -117,6 +125,30 @@ def check_localization():
     return errors
 
 
+def kv_item_cost(text, item):
+    match = re.search(r'"' + re.escape(item) + r'"\s*\{(.*?)\}', text, re.S)
+    if not match:
+        return None
+    cost = re.search(r'"ItemCost"\s+"(\d+)"', match.group(1))
+    return int(cost.group(1)) if cost else None
+
+
+def check_item_costs():
+    runtime = lupa_runtime.LuaRuntime()
+    runtime.execute(read_text(VSCRIPTS / "osc" / "config" / "config.lua"))
+    config = runtime.globals().OSC_CONFIG
+    text = read_text(ITEMS_KV)
+    errors = []
+    for item, key in ITEM_COSTS.items():
+        kv_cost = kv_item_cost(text, item)
+        config_cost = config[key]
+        if kv_cost is None:
+            errors.append(f"{item}: no ItemCost in npc_items_custom.txt")
+        elif kv_cost != config_cost:
+            errors.append(f"{item}: ItemCost {kv_cost} != OSC_CONFIG.{key} {config_cost}")
+    return errors
+
+
 def run_lua_tests():
     failures, passed = [], 0
     for path in sorted(TESTS.glob("test_*.lua")):
@@ -143,6 +175,7 @@ def main():
         ("Lua syntax", check_lua_syntax),
         ("JS syntax", check_js_syntax),
         ("Localization", check_localization),
+        ("Item costs", check_item_costs),
     ):
         errors = check()
         print(f"{title}: {'OK' if not errors else 'FAIL'}")

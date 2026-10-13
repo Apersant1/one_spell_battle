@@ -14,6 +14,7 @@
 require("osc/core/heroes")
 require("osc/core/hero_state")
 require("osc/core/client_commands")
+require("osc/core/game_events")
 require("osc/systems/ability_selection")
 
 OSC_RotationChoice = OSC_RotationChoice or {}
@@ -208,5 +209,10 @@ end
 function OSC_RotationChoice.Init()
     CustomGameEventManager:RegisterListener("osc_rotation_choice_pick", function(sourceIndex, event)
         OSC_RotationChoice.OnPick(sourceIndex, event)
+    end)
+    -- «Якорь», купленный после предложения, отменяет выбор: способность
+    -- останется текущей
+    OSC_GameEvents.Subscribe("hero_anchored", "rotation_choice", function(hero)
+        OSC_RotationChoice.Close(hero, OSC_HeroState.Get(hero).ability)
     end)
 end

@@ -24,6 +24,11 @@ OSC_CONFIG = {
     -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них
     ROTATION_CHOICE_ENABLED = true,
     ROTATION_CHOICE_COUNT = 3,
+    -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшую ротацию.
+    -- ANCHOR_COST должен совпадать с ItemCost в npc_items_custom.txt
+    -- (это проверяет tools/tests/run_tests.py)
+    ANCHOR_ENABLED = true,
+    ANCHOR_COST = 400,
     ABILITY_TAG_STREAK_ENABLED = true,
     MAX_SAME_TAG_STREAK = 2,
     CHAT_MESSAGES = true,

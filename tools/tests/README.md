@@ -5,6 +5,7 @@
 - синтаксис всех Lua-скриптов (компиляция LuaJIT, как в игре);
 - синтаксис Panorama JS (`node --check`);
 - локализацию: ключи из кода есть в `addon_russian.txt` и `addon_english.txt`, наборы ключей совпадают;
+- цены предметов: `ItemCost` в `npc_items_custom.txt` совпадает с конфигом (`ITEM_COSTS` в `run_tests.py`);
 - логику модулей `osc/` на моках Dota API (`harness.lua`), каждый тест — в свежем рантайме.
 
 Запуск:

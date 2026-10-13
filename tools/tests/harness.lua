@@ -276,6 +276,11 @@ function Hero:AddItem(item)
         end
     end
 end
+function Hero:RemoveItem(item)
+    self:TakeItem(item)
+    item._removed = true
+    self.removedItems = (self.removedItems or 0) + 1
+end
 function Hero:HasModifier(name) return self.modifiers[name] ~= nil end
 function Hero:GetModifierCount()
     local count = 0

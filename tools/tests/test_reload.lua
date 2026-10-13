@@ -9,6 +9,7 @@ local MODULES = {
     { file = "osc/core/game_events", global = "OSC_GameEvents" },
     { file = "osc/core/client_commands", global = "OSC_ClientCommands" },
     { file = "osc/core/hero_state", global = "OSC_HeroState" },
+    { file = "osc/core/anchor", global = "OSC_Anchor" },
     { file = "osc/systems/ability_selection", global = "OSC_AbilitySelection" },
     { file = "osc/systems/abilities", global = "OSC_Abilities" },
     { file = "osc/systems/casino", global = "OSC_Casino" },

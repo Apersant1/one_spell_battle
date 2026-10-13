@@ -15,4 +15,19 @@
 		"ItemStockTime"             "0"
 		"ItemShareability"          "ITEM_SHAREABLE"
 	}
+
+	// «Якорь»: пропустить ближайшую ротацию. Цена = OSC_CONFIG.ANCHOR_COST
+	"item_osc_anchor"
+	{
+		"BaseClass"                 "item_lua"
+		"ScriptFile"                "scripts/vscripts/osc/items/item_anchor.lua"
+		"AbilityTextureName"        "item_aeon_disk"
+		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityCooldown"           "0"
+		"ItemCost"                  "400"
+		"ItemPurchasable"           "1"
+		"ItemInitialCharges"        "1"
+		"ItemStackable"             "0"
+		"ItemShareability"          "ITEM_NOT_SHAREABLE"
+	}
 }
