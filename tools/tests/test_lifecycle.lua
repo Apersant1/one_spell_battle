@@ -45,4 +45,16 @@ return {
         H.eq(hero:FindAbilityByName("test_a"):GetLevel(), 3, "owner ability level")
         H.eq(clone:FindAbilityByName("test_a"):GetLevel(), 3, "clone ability level")
     end,
+    ogre_init_puts_ability_before_casino = function()
+        setup()
+        H.DefineAbility("ogre_magi_casino")
+        local ogre = H.NewHero({ name = "npc_dota_hero_ogre_magi" })
+        H.AddPlayer(0, ogre)
+
+        OSC_HeroLifecycle.TryInitializeUnit(ogre, "test")
+        H.RunThink("osc_init")
+
+        H.eq(ogre:GetAbilityByIndex(0).name, "test_a", "rotating ability in slot Q")
+        H.eq(ogre:GetAbilityByIndex(1).name, "ogre_magi_casino", "casino in slot W")
+    end,
 }

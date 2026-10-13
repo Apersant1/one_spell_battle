@@ -18,7 +18,7 @@ return {
 
         H.eq(hero.osc_current_ability, "test_b", "current ability")
         H.eq(hero:GetAbilityByIndex(0).name, "test_b", "slot 0")
-        H.eq(hero:FindAbilityByName("test_a"), nil, "old ability removed")
+        H.eq(hero:FindAbilityByName("test_a"):IsHidden(), true, "old ability hidden")
         H.eq(hero:GetAbilityByIndex(0).level, 2, "level for hero level 3")
     end,
 }

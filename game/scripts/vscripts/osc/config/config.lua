@@ -2,6 +2,9 @@ OSC_CONFIG = {
     VERSION = "1.0.0",
     ROTATION_INTERVAL = 60,
     WARNING_TIME = 10,
+    -- Сколько секунд снятая активная способность живёт скрытой, чтобы её
+    -- снаряды и эффекты доиграли (Illusory Orb, Static Remnant ~12 с)
+    ROTATION_OLD_ABILITY_LIFETIME = 15,
     CHAT_MESSAGES = true,
     DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,

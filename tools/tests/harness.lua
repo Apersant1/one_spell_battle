@@ -175,6 +175,7 @@ function H.DefineAbility(name, opts)
         Innate = opts.innate and "1" or nil,
         _ultimate = opts.ultimate == true,
         _maxLevel = opts.maxLevel or (opts.ultimate and 3 or 4),
+        _passive = opts.passive == true,
     }
 end
 
@@ -195,16 +196,12 @@ function Ability:EndCooldown() self.cooldown = 0 end
 function Ability:IsChanneling() return self.channeling == true end
 function Ability:GetToggleState() return self.toggled == true end
 function Ability:ToggleAbility() self.toggled = not self.toggled end
+function Ability:IsPassive() return H.kv[self.name]._passive end
 
+-- В игре SetAbilityIndex не переставляет способность на панели: слот
+-- определяют AddAbility (первый свободный) и SwapAbilities. Мок повторяет это.
 function Ability:SetAbilityIndex(index)
-    local slots = self.owner.slots
-    local current = self.owner:IndexOf(self)
-    if current == index then return end
-    local other = slots[index]
-    slots[index] = self
-    if current ~= nil then
-        slots[current] = other
-    end
+    self.requestedIndex = index
 end
 
 local Hero = {}
@@ -289,6 +286,15 @@ function Hero:RemoveAbilityByHandle(ability)
     end
 end
 
+function Hero:SwapAbilities(name1, name2, enable1, enable2)
+    local first, second = self:FindAbilityByName(name1), self:FindAbilityByName(name2)
+    assert(first and second, "SwapAbilities: both abilities must exist")
+    local firstIndex, secondIndex = self:IndexOf(first), self:IndexOf(second)
+    self.slots[firstIndex], self.slots[secondIndex] = second, first
+    first.hidden = not enable1
+    second.hidden = not enable2
+end
+
 function Hero:RemoveAbility(name)
     local ability = self:FindAbilityByName(name)
     if ability then self:RemoveAbilityByHandle(ability) end
@@ -333,6 +339,20 @@ function H.AddPlayer(id, hero, opts)
         player = { id = id, host = opts.host },
         gold = opts.gold or 1000,
     }
+end
+
+-- Запускает все отложенные действия, в имени которых есть prefix
+function H.RunThinksMatching(prefix)
+    local names = {}
+    for name in pairs(H.thinks) do
+        if string.find(name, prefix, 1, true) then
+            table.insert(names, name)
+        end
+    end
+    for _, name in ipairs(names) do
+        H.RunThink(name)
+    end
+    return #names
 end
 
 function H.RunThink(name)

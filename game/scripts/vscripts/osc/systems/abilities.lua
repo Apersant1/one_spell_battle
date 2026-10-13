@@ -1,9 +1,7 @@
 OSC_Abilities = {}
 
-local MAIN_SLOT = 0
-local ULTIMATE_SLOT = 5
--- Слоты для связанных подспособностей: между казино Огра (1) и ультимейтом (5)
-local LINKED_SLOTS = { 2, 3, 4 }
+-- Слот способности на панели задают AddAbility (первый свободный слот) и
+-- SwapAbilities; SetAbilityIndex в игре способности не переставляет.
 
 local function IsInnateAbility(ability)
     local abilityData = GetAbilityKeyValuesByName(ability:GetAbilityName())
@@ -23,25 +21,6 @@ local function ShouldKeep(ability)
         return true
     end
     return IsInnateAbility(ability)
-end
-
-local SCEPTER_ABILITY = "ogre_magi_unrefined_fireblast"
-
-local function PreserveScepterAbilitySlot(hero, preferredIndex)
-    local scepterAbility = hero:FindAbilityByName(SCEPTER_ABILITY)
-    if not scepterAbility or hero:GetAbilityByIndex(preferredIndex) ~= scepterAbility then
-        return
-    end
-
-    local lastVisibleIndex = math.min(hero:GetAbilityCount() - 1, 5)
-    for index = 0, lastVisibleIndex do
-        if index ~= preferredIndex and not hero:GetAbilityByIndex(index) then
-            scepterAbility:SetAbilityIndex(index)
-            return
-        end
-    end
-
-    error("[OSC] No free ability slot to preserve " .. SCEPTER_ABILITY)
 end
 
 -- Иллюзия, Tempest Double или клон (Meepo): копирует способности владельца
@@ -78,7 +57,6 @@ function OSC_Abilities.EnsureOgreCasinoAbility(hero)
         error("[OSC] Failed to add Ogre casino ability")
     end
 
-    ability:SetAbilityIndex(1)
     ability:SetLevel(1)
     ability:SetHidden(false)
 end
@@ -254,7 +232,8 @@ end
 
 -- ================= Выдача и удаление =================
 
-local function RemoveAbilityHandle(unit, ability)
+local function RemoveNow(unit, ability)
+    if ability:IsNull() then return end
     if ability:IsChanneling() then
         unit:InterruptChannel()
     end
@@ -265,21 +244,46 @@ local function RemoveAbilityHandle(unit, ability)
     unit:RemoveAbilityByHandle(ability)
 end
 
--- Убирает способность и её связанные подспособности
-local function RemoveEntryAbilities(unit, name)
-    if not name then return end
-
-    local ability = unit:FindAbilityByName(name)
-    if ability then
-        RemoveAbilityHandle(unit, ability)
+-- Снимает способность с панели. Пассивку удаляем сразу: скрытая, она
+-- продолжала бы работать. Активную прячем и удаляем позже — её снаряды и
+-- эффекты (Illusory Orb, Static Remnant) без живой способности не доигрывают
+-- и остаются висеть на карте. Начатый ченнел при этом не обрывается.
+local function RetireAbility(unit, ability)
+    if ability:IsPassive() then
+        RemoveNow(unit, ability)
+        return
     end
 
+    if ability:GetToggleState() then
+        ability:ToggleAbility()
+    end
+    ability:SetHidden(true)
+    ability.osc_retired = true
+    unit:SetContextThink(DoUniqueString("osc_retire_ability"), function()
+        if not unit:IsNull() then
+            RemoveNow(unit, ability)
+        end
+        return nil
+    end, OSC_CONFIG.ROTATION_OLD_ABILITY_LIFETIME)
+end
+
+-- Снимает подспособности записи (Ethereal Jaunt и т. п.)
+local function RetireLinked(unit, name)
     local entry = FindEntry(name)
     for _, link in ipairs(entry and entry.linked or {}) do
         local sub = unit:FindAbilityByName(link.name)
-        if sub then
-            RemoveAbilityHandle(unit, sub)
+        if sub and not sub.osc_retired then
+            RetireAbility(unit, sub)
         end
+    end
+end
+
+-- Если та же способность ещё ждёт удаления после прошлой смены, убираем её
+-- сразу, чтобы у героя не оказалось двух одинаковых
+local function ClearRetired(unit, name)
+    local ability = unit:FindAbilityByName(name)
+    if ability and ability.osc_retired then
+        RemoveNow(unit, ability)
     end
 end
 
@@ -287,29 +291,15 @@ local function LinkedLevel(sub, level)
     return math.max(1, math.min(sub:GetMaxLevel(), level))
 end
 
-local function FindFreeSlot(unit, slots)
-    for _, index in ipairs(slots) do
-        if index < unit:GetAbilityCount() and not unit:GetAbilityByIndex(index) then
-            return index
-        end
-    end
-end
-
--- Ставит уже добавленную способность записи в слот и выдаёт её связанные
+-- Настраивает уже добавленную способность записи и выдаёт её связанные
 -- подспособности (например, Ethereal Jaunt к Illusory Orb)
-local function PlaceEntry(unit, entry, ability, slot, level)
-    PreserveScepterAbilitySlot(unit, slot)
-    ability:SetAbilityIndex(slot)
+local function PlaceEntry(unit, entry, ability, level)
     ability:SetLevel(level)
     ability:SetHidden(false)
 
     for _, link in ipairs(entry.linked or {}) do
         local sub = unit:FindAbilityByName(link.name) or unit:AddAbility(link.name)
         if sub then
-            local freeSlot = FindFreeSlot(unit, LINKED_SLOTS)
-            if freeSlot then
-                sub:SetAbilityIndex(freeSlot)
-            end
             sub:SetLevel(LinkedLevel(sub, level))
             sub:SetHidden(link.hidden == true)
         else
@@ -318,17 +308,29 @@ local function PlaceEntry(unit, entry, ability, slot, level)
     end
 end
 
--- Новая способность добавляется до удаления старой: если движок её не выдал,
--- у героя остаётся прежняя
-local function SwapEntry(hero, field, entry, slot)
+-- Новая способность добавляется до снятия старой (если движок её не выдал,
+-- у героя остаётся прежняя) и через SwapAbilities встаёт в слот старой
+local function SwapEntry(hero, field, entry)
+    ClearRetired(hero, entry.name)
+    for _, link in ipairs(entry.linked or {}) do
+        ClearRetired(hero, link.name)
+    end
+
     local ability = hero:AddAbility(entry.name)
     if not ability then
         OSC_Logger.Error("Failed to add ability: " .. entry.name)
         return false
     end
 
-    RemoveEntryAbilities(hero, hero[field])
-    PlaceEntry(hero, entry, ability, slot, OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
+    local oldName = hero[field]
+    local old = oldName and hero:FindAbilityByName(oldName)
+    if old then
+        hero:SwapAbilities(oldName, entry.name, false, true)
+        RetireAbility(hero, old)
+    end
+    RetireLinked(hero, oldName)
+
+    PlaceEntry(hero, entry, ability, OSC_Abilities.CalcLevel(hero:GetLevel(), ability))
     ability:EndCooldown()
     hero[field] = entry.name
     return true
@@ -351,7 +353,7 @@ function OSC_Abilities.SetEntryLevel(hero, name, level)
     end
 end
 
-local function CopyEntry(unit, owner, name, slot)
+local function CopyEntry(unit, owner, name)
     if not name then return nil end
 
     local ability = unit:AddAbility(name)
@@ -361,15 +363,15 @@ local function CopyEntry(unit, owner, name, slot)
     end
 
     local source = owner:FindAbilityByName(name)
-    PlaceEntry(unit, FindEntry(name) or { name = name }, ability, slot,
+    PlaceEntry(unit, FindEntry(name) or { name = name }, ability,
         source and source:GetLevel() or 1)
     return name
 end
 
 function OSC_Abilities.CopyFromOwner(unit, owner)
     OSC_Abilities.StripHero(unit)
-    unit.osc_current_ability = CopyEntry(unit, owner, owner.osc_current_ability, MAIN_SLOT)
-    unit.osc_current_ultimate = CopyEntry(unit, owner, owner.osc_current_ultimate, ULTIMATE_SLOT)
+    unit.osc_current_ability = CopyEntry(unit, owner, owner.osc_current_ability)
+    unit.osc_current_ultimate = CopyEntry(unit, owner, owner.osc_current_ultimate)
 end
 
 local function HasAbility(unit, name)
@@ -419,7 +421,7 @@ end
 
 function OSC_Abilities.GiveRandomUltimate(hero, notify)
     local entry = OSC_Abilities.PickRandomUltimate(hero.osc_current_ultimate, hero)
-    if not SwapEntry(hero, "osc_current_ultimate", entry, ULTIMATE_SLOT) then
+    if not SwapEntry(hero, "osc_current_ultimate", entry) then
         return nil
     end
 
@@ -432,7 +434,7 @@ end
 
 function OSC_Abilities.GiveRandom(hero, notify)
     local entry = OSC_Abilities.PickRandom(hero.osc_current_ability)
-    if not SwapEntry(hero, "osc_current_ability", entry, MAIN_SLOT) then
+    if not SwapEntry(hero, "osc_current_ability", entry) then
         return nil
     end
 

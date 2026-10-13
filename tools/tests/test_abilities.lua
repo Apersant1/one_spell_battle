@@ -107,8 +107,6 @@ return {
         H.truthy(sub, "linked ability added")
         H.eq(sub:IsHidden(), true, "linked ability hidden")
         H.eq(sub:GetLevel(), 1, "linked level capped by its max level")
-        local subSlot = slotOf(hero, "test_b_sub")
-        H.truthy(subSlot >= 2 and subSlot <= 4, "linked ability in slots 2-4, got " .. tostring(subSlot))
     end,
 
     give_random_removes_old_linked = function()
@@ -126,8 +124,13 @@ return {
         OSC_Abilities.GiveRandom(hero, false)
 
         H.eq(hero.osc_current_ability, "test_a", "new ability")
-        H.eq(hero:FindAbilityByName("test_b"), nil, "old ability removed")
-        H.eq(hero:FindAbilityByName("test_b_sub"), nil, "old linked ability removed")
+        H.eq(hero:FindAbilityByName("test_b"):IsHidden(), true, "old ability hidden")
+        H.eq(hero:FindAbilityByName("test_b_sub"):IsHidden(), true, "old linked ability hidden")
+
+        H.RunThinksMatching("osc_retire_ability")
+
+        H.eq(hero:FindAbilityByName("test_b"), nil, "old ability removed after delay")
+        H.eq(hero:FindAbilityByName("test_b_sub"), nil, "old linked ability removed after delay")
     end,
 
     toggle_turned_off_before_removal = function()
@@ -141,8 +144,7 @@ return {
 
         OSC_Abilities.GiveRandom(hero, false)
 
-        H.eq(old.toggled, false, "toggle switched off")
-        H.eq(hero:FindAbilityByName("test_a"), nil, "old ability removed")
+        H.eq(old.toggled, false, "toggle switched off right away")
     end,
 
     sync_copies_updates_clone = function()
@@ -212,5 +214,79 @@ return {
 
         H.eq(#OSC_ABILITY_POOL, 2, "pool left intact")
         H.truthy(H.logged("validation skipped"), "skip is logged")
+    end,
+    rotation_puts_new_ability_into_old_slot = function()
+        setup()
+        H.DefineAbility("test_a")
+        H.DefineAbility("test_b")
+        H.DefineAbility("test_casino")
+        OSC_ABILITY_POOL = { entry("test_a"), entry("test_b") }
+        local hero = H.NewHero({ abilities = { "test_a", "test_casino" }, level = 3 })
+        hero.osc_current_ability = "test_a"
+
+        OSC_Abilities.GiveRandom(hero, false)
+
+        H.eq(slotOf(hero, "test_b"), 0, "new ability takes the old slot (Q)")
+        H.eq(slotOf(hero, "test_casino"), 1, "other abilities stay in place")
+        H.eq(hero:FindAbilityByName("test_b"):IsHidden(), false, "new ability visible")
+    end,
+
+    active_old_ability_kept_hidden_until_delay = function()
+        setup()
+        H.DefineAbility("test_a")
+        H.DefineAbility("test_b")
+        OSC_ABILITY_POOL = { entry("test_a"), entry("test_b") }
+        local hero = heroWith("test_a")
+
+        OSC_Abilities.GiveRandom(hero, false)
+
+        local old = hero:FindAbilityByName("test_a")
+        H.truthy(old, "old ability still exists so its projectiles finish")
+        H.eq(old:IsHidden(), true, "old ability hidden")
+        local think
+        for name, value in pairs(H.thinks) do
+            if string.find(name, "osc_retire_ability", 1, true) then think = value end
+        end
+        H.truthy(think, "removal scheduled")
+        H.eq(think.delay, OSC_CONFIG.ROTATION_OLD_ABILITY_LIFETIME, "removal delay from config")
+
+        H.RunThinksMatching("osc_retire_ability")
+        H.eq(hero:FindAbilityByName("test_a"), nil, "old ability removed after delay")
+    end,
+
+    passive_old_ability_removed_at_once = function()
+        setup()
+        H.DefineAbility("test_passive", { passive = true })
+        H.DefineAbility("test_b")
+        OSC_ABILITY_POOL = { entry("test_passive"), entry("test_b") }
+        local hero = heroWith("test_passive")
+
+        OSC_Abilities.GiveRandom(hero, false)
+
+        H.eq(hero:FindAbilityByName("test_passive"), nil, "hidden passive would keep working, so it goes now")
+    end,
+
+    reroll_back_to_retired_ability = function()
+        setup()
+        H.DefineAbility("test_a")
+        H.DefineAbility("test_b")
+        OSC_ABILITY_POOL = { entry("test_a"), entry("test_b") }
+        local hero = heroWith("test_a")
+
+        OSC_Abilities.GiveRandom(hero, false)
+        OSC_Abilities.GiveRandom(hero, false)
+
+        H.eq(hero.osc_current_ability, "test_a", "current ability")
+        local count = 0
+        for index = 0, hero:GetAbilityCount() - 1 do
+            local ability = hero:GetAbilityByIndex(index)
+            if ability and ability.name == "test_a" then count = count + 1 end
+        end
+        H.eq(count, 1, "single test_a on the hero")
+        H.eq(hero:FindAbilityByName("test_a"):IsHidden(), false, "it is the visible one")
+        H.eq(slotOf(hero, "test_a"), 0, "in slot Q")
+
+        H.RunThinksMatching("osc_retire_ability")
+        H.truthy(hero:FindAbilityByName("test_a"), "pending removal does not take the new ability")
     end,
 }

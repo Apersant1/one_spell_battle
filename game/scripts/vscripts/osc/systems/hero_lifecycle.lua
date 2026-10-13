@@ -24,8 +24,10 @@ local function InitializeHeroAbilities(hero, source)
 
         local ok, err = pcall(function()
             OSC_Abilities.StripHero(hero)
-            OSC_Abilities.EnsureOgreCasinoAbility(hero)
+            -- Порядок выдачи задаёт слоты: способность первой встаёт на Q,
+            -- казино Огра — следующим на W
             OSC_Abilities.GiveRandom(hero, true)
+            OSC_Abilities.EnsureOgreCasinoAbility(hero)
             if hero:GetLevel() >= 6 then
                 OSC_Abilities.GiveRandomUltimate(hero, true)
             end
