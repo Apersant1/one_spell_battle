@@ -278,11 +278,7 @@ function OSC_Abilities.SyncCopies(owner)
     end)
 end
 
--- Выдаёт основному герою запись пула в слот ("ability" или "ultimate"):
--- заменяет прежнюю способность слота, уведомляет и обновляет копии.
--- Возвращает запись или nil, если движок не выдал способность.
-function OSC_Abilities.Give(hero, slot, entry, notify)
-    OSC_AbilitySelection.GetPool(slot) -- неизвестный слот — ошибка
+local function ApplyGive(hero, slot, entry, notify)
     if not SwapEntry(hero, slot, entry) then
         return nil
     end
@@ -292,6 +288,91 @@ function OSC_Abilities.Give(hero, slot, entry, notify)
     end
     OSC_Abilities.SyncCopies(hero)
     return entry
+end
+
+-- Способность слота (или её подспособность) в фазе каста: скрытие или
+-- удаление в этот момент может сорвать каст
+local function IsInCastPhase(hero, slot)
+    local name = OSC_HeroState.Get(hero)[slot]
+    if not name then return false end
+
+    local names = { name }
+    local entry = FindEntry(name)
+    for _, link in ipairs(entry and entry.linked or {}) do
+        table.insert(names, link.name)
+    end
+    for _, abilityName in ipairs(names) do
+        local ability = hero:FindAbilityByName(abilityName)
+        if ability and ability.IsInAbilityPhase and ability:IsInAbilityPhase() then
+            return true
+        end
+    end
+    return false
+end
+
+local function CanDefer()
+    return OSC_CONFIG.ROTATION_CAST_PHASE_DEFER == true
+        and type(OSC_CONFIG.ROTATION_MAX_DEFER) == "number"
+        and OSC_CONFIG.ROTATION_MAX_DEFER > 0
+        and type(OSC_CONFIG.ROTATION_DEFER_STEP) == "number"
+        and OSC_CONFIG.ROTATION_DEFER_STEP > 0
+end
+
+-- Шаг таймера отложенной замены (таймер на самом герое). Возвращает задержку
+-- до следующей проверки или nil, когда замена выполнена или отменена.
+function OSC_Abilities.ProcessDeferred(hero, slot)
+    if hero:IsNull() then return nil end
+    local state = OSC_HeroState.Get(hero)
+    local pending = state.deferred[slot]
+    if not pending then return nil end
+
+    if IsInCastPhase(hero, slot) and GameRules:GetGameTime() < pending.deadline then
+        return OSC_CONFIG.ROTATION_DEFER_STEP
+    end
+
+    state.deferred[slot] = nil
+    local ok, err = pcall(ApplyGive, hero, slot, pending.entry, pending.notify)
+    if not ok then
+        OSC_Logger.Error("Deferred " .. slot .. " change failed for "
+            .. hero:GetUnitName() .. ": " .. tostring(err))
+    end
+    return nil
+end
+
+-- Выдаёт основному герою запись пула в слот ("ability" или "ultimate"):
+-- заменяет прежнюю способность слота, уведомляет и обновляет копии.
+-- Если прежняя способность в фазе каста, замена (вместе с уведомлением и
+-- копиями) откладывается до конца фазы, но не дольше ROTATION_MAX_DEFER.
+-- Возвращает запись (в том числе отложенную) или nil, если движок не выдал
+-- способность.
+function OSC_Abilities.Give(hero, slot, entry, notify)
+    OSC_AbilitySelection.GetPool(slot) -- неизвестный слот — ошибка
+    local state = OSC_HeroState.Get(hero)
+
+    -- Пока замена ждёт, новая запрошенная замена встаёт вместо неё;
+    -- срок ожидания остаётся прежним
+    local pending = state.deferred[slot]
+    if pending then
+        pending.entry = entry
+        pending.notify = pending.notify or notify
+        return entry
+    end
+
+    if CanDefer() and IsInCastPhase(hero, slot) then
+        state.deferred[slot] = {
+            entry = entry,
+            notify = notify,
+            deadline = GameRules:GetGameTime() + OSC_CONFIG.ROTATION_MAX_DEFER,
+        }
+        OSC_Logger.Log("Deferred " .. slot .. " change for " .. hero:GetUnitName()
+            .. ": " .. tostring(state[slot]) .. " is in cast phase")
+        hero:SetContextThink("osc_deferred_" .. slot, function()
+            return OSC_Abilities.ProcessDeferred(hero, slot)
+        end, OSC_CONFIG.ROTATION_DEFER_STEP)
+        return entry
+    end
+
+    return ApplyGive(hero, slot, entry, notify)
 end
 
 function OSC_Abilities.GiveRandomUltimate(hero, notify)

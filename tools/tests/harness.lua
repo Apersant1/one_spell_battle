@@ -211,6 +211,7 @@ function Ability:IsChanneling() return self.channeling == true end
 function Ability:GetToggleState() return self.toggled == true end
 function Ability:ToggleAbility() self.toggled = not self.toggled end
 function Ability:IsPassive() return H.kv[self.name]._passive end
+function Ability:IsInAbilityPhase() return self.in_phase == true end
 
 -- В игре SetAbilityIndex не переставляет способность на панели: слот
 -- определяют AddAbility (первый свободный) и SwapAbilities. Мок повторяет это.
@@ -376,11 +377,16 @@ function H.RunThinksMatching(prefix)
     return #names
 end
 
+-- Как в движке: если think вернул число, он запланирован снова
 function H.RunThink(name)
     local think = H.thinks[name]
     assert(think, "no think registered: " .. tostring(name))
     H.thinks[name] = nil
-    return think.fn()
+    local delay = think.fn()
+    if type(delay) == "number" and H.thinks[name] == nil then
+        H.thinks[name] = { fn = think.fn, delay = delay }
+    end
+    return delay
 end
 
 -- ================= Проверки =================

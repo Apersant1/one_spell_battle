@@ -14,6 +14,10 @@ local FIELDS = {
     { name = "ability", doc = "текущая основная способность (слот Q)" },
     { name = "ultimate", doc = "текущий ультимейт" },
 
+    -- Замены, отложенные до конца фазы каста старой способности:
+    -- слот -> { entry, notify, deadline }
+    { name = "deferred", default = function() return {} end, doc = "отложенные замены по слотам" },
+
     -- Инициализация основного героя (hero_lifecycle)
     { name = "initialized", default = false, doc = "способности режима выданы" },
     { name = "init_state", doc = "nil | initializing | retry_pending | failed" },

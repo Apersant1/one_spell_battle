@@ -5,6 +5,12 @@ OSC_CONFIG = {
     -- Сколько секунд снятая активная способность живёт скрытой, чтобы её
     -- снаряды и эффекты доиграли (Illusory Orb, Static Remnant ~12 с)
     ROTATION_OLD_ABILITY_LIFETIME = 15,
+    -- Если старая способность в фазе каста (замах до применения), замена
+    -- откладывается шагами ROTATION_DEFER_STEP, но не дольше
+    -- ROTATION_MAX_DEFER секунд, потом выполняется принудительно
+    ROTATION_CAST_PHASE_DEFER = true,
+    ROTATION_DEFER_STEP = 0.25,
+    ROTATION_MAX_DEFER = 3,
     CHAT_MESSAGES = true,
     DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
