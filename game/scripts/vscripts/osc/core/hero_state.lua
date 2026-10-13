@@ -14,6 +14,11 @@ local FIELDS = {
     { name = "ability", doc = "текущая основная способность (слот Q)" },
     { name = "ultimate", doc = "текущий ультимейт" },
 
+    -- Теги последних выданных способностей по слотам (старые — первыми):
+    -- слот -> { { "damage", "disable" }, ... }; для MAX_SAME_TAG_STREAK
+    { name = "recent_tags", default = function() return { ability = {}, ultimate = {} } end,
+      doc = "теги последних выданных способностей" },
+
     -- Замены, отложенные до конца фазы каста старой способности:
     -- слот -> { entry, notify, deadline }
     { name = "deferred", default = function() return {} end, doc = "отложенные замены по слотам" },

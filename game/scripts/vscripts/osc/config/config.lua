@@ -17,6 +17,11 @@ OSC_CONFIG = {
     -- способность героя и первый ультимейт всегда готовы.
     NEW_ABILITY_COOLDOWN_MODE = "ready",
     NEW_ABILITY_COOLDOWN_FRACTION = 0.5,
+    -- Не выдавать герою больше MAX_SAME_TAG_STREAK способностей подряд с
+    -- одним тегом (отдельно для основной способности и ультимейта). Если
+    -- подходящих способностей не остаётся, правило не применяется.
+    ABILITY_TAG_STREAK_ENABLED = true,
+    MAX_SAME_TAG_STREAK = 2,
     CHAT_MESSAGES = true,
     DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,

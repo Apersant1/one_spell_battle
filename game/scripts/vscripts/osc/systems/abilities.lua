@@ -234,6 +234,7 @@ local function SwapEntry(hero, slot, entry)
         ApplyNewAbilityCooldown(ability)
     end
     state[slot] = entry.name
+    OSC_AbilitySelection.Remember(hero, slot, entry)
     return true
 end
 

@@ -9,7 +9,7 @@ local function setup()
 end
 
 local function entry(name, extra)
-    local result = { name = name, hero = "npc_dota_hero_axe", label = name }
+    local result = { name = name, hero = "npc_dota_hero_axe", label = name, tags = { "damage" } }
     for key, value in pairs(extra or {}) do result[key] = value end
     return result
 end
