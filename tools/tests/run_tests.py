@@ -106,6 +106,26 @@ def localization_keys(path):
     return set(re.findall(r'^\s*"([^"]+)"\s+"', read_text(path), re.M))
 
 
+def dynamic_localization_keys():
+    """Ключи, которые код собирает из id в конфиге: голосование и титулы итогов."""
+    runtime = lupa_runtime.LuaRuntime()
+    runtime.execute(read_text(VSCRIPTS / "osc" / "config" / "config.lua"))
+    config = runtime.globals().OSC_CONFIG
+    keys = set()
+    for question in (config.VOTE_QUESTIONS or {}).values():
+        qid = question.id
+        keys.add(f"osc_hud_vote_q_{qid}")
+        for option in question.options.values():
+            keys.add(f"osc_hud_vote_opt_{qid}_{option.value}")
+            # Числа лента подставляет как есть (OSC_Notifications.VoteResult)
+            if not str(option.value).lstrip("-").replace(".", "", 1).isdigit():
+                keys.add(f"osc_notify_vote_{qid}_{option.value}")
+    for title in (config.SUMMARY_TITLES or {}).values():
+        keys.add(f"osc_hud_title_{title}")
+        keys.add(f"osc_hud_title_{title}_desc")
+    return keys
+
+
 def check_localization():
     ru = localization_keys(RESOURCE / "addon_russian.txt")
     en = localization_keys(RESOURCE / "addon_english.txt")
@@ -119,6 +139,7 @@ def check_localization():
             # "osc_notify_vote_" и т. п. — префикс ключа, собираемого в коде
             if key.startswith(LOC_PREFIXES) and key not in NOT_LOC_KEYS and not key.endswith("_"):
                 used.add(key)
+    used |= dynamic_localization_keys()
     for key in sorted(used):
         for name, keys in (("addon_russian.txt", ru), ("addon_english.txt", en)):
             if key not in keys:
