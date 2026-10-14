@@ -32,9 +32,9 @@ local function FindEntry(name)
     end
 end
 
--- «Якорь» выключается своим флагом ANCHOR_ENABLED
+-- «Якорь» любого уровня выключается своим флагом ANCHOR_ENABLED
 local function IsItemEnabled(name)
-    return name ~= "item_osc_anchor" or OSC_Anchor.IsEnabled()
+    return name:find("^item_osc_anchor") == nil or OSC_Anchor.IsEnabled()
 end
 
 -- Остаток товара у команды; -1 — без лимита
@@ -90,6 +90,17 @@ local function FindItemSlot(hero, item)
     end
 end
 
+local function CountCharges(hero, name)
+    local charges = 0
+    for slot = 0, DOTA_STASH_SLOT_6 do
+        local item = hero:GetItemInSlot(slot)
+        if item and item:GetAbilityName() == name then
+            charges = charges + item:GetCurrentCharges()
+        end
+    end
+    return charges
+end
+
 -- Куда положить покупку: "inventory" — герой жив, у базового магазина и в
 -- инвентаре или рюкзаке есть место; иначе номер свободного слота тайника;
 -- nil — некуда
@@ -115,13 +126,20 @@ local function GiveItem(hero, name, stashSlot)
     if freed then
         hero:SwapItems(BACKPACK_LAST_SLOT, stashSlot)
     end
+    local chargesBefore = CountCharges(hero, name)
     hero:AddItem(item)
-    local slot = FindItemSlot(hero, item)
+    local slot = IsValidEntity(item) and FindItemSlot(hero, item) or nil
     if slot == nil then
         if freed then
             hero:SwapItems(BACKPACK_LAST_SLOT, stashSlot)
         end
-        UTIL_Remove(item)
+        -- Стакающийся предмет («Якорь») влился зарядом в уже лежащий
+        if CountCharges(hero, name) > chargesBefore then
+            return true
+        end
+        if IsValidEntity(item) then
+            UTIL_Remove(item)
+        end
         return false
     end
     if stashSlot ~= nil and slot ~= stashSlot then

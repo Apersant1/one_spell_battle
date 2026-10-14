@@ -747,8 +747,9 @@
 }
 
 /* ---------- Якорь у таймера ---------- */
+/* 88:64, как иконка предмета */
 #AnchorBadge {
-  width: 28px;
+  width: 38px;
   height: 28px;
   margin-left: 10px;
   vertical-align: center;
@@ -1825,59 +1826,59 @@
 #ChaosShopItems {
   width: 100%;
   margin: 12px 0px;
+  flow-children: right-wrap;
+}
+
+/* Плитка товара как в стандартном магазине; 4 в ряд при ширине 380px */
+.ChaosShopTile {
+  width: 84px;
+  margin: 4px;
   flow-children: down;
 }
 
-.ChaosShopRow {
+/* 88:64, как иконки предметов Dota */
+.ChaosShopIcon {
+  width: 84px;
+  height: 61px;
+  border: 1px solid #000000aa;
+}
+
+.ChaosShopIcon DOTAItemImage {
   width: 100%;
-  margin-bottom: 8px;
-  flow-children: right;
+  height: 100%;
 }
 
-.ChaosShopRow DOTAItemImage {
-  width: 64px;
-  height: 48px;
-  vertical-align: center;
-}
-
-.ChaosShopInfo {
-  width: fill-parent-flow(1);
-  margin: 0px 10px;
-  vertical-align: center;
-  flow-children: down;
-}
-
-/* Подложка кнопки Хаос-лавки, 4:1 */
-.ChaosShopBuy {
-  width: 120px;
-  height: 30px;
-  min-width: 0px;
-  min-height: 0px;
-  padding: 0px;
-  vertical-align: center;
-  background-color: #00000000;
-  border: 0px solid #00000000;
-  background-image: url("file://{images}/custom_game/hud/chaos_shop.png");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-}
-
-.ChaosShopBuy:hover {
+.ChaosShopTile:hover .ChaosShopIcon {
   brightness: 1.3;
+  border: 1px solid #efc96c;
 }
 
-.ChaosShopBuy:disabled {
-  opacity: 0.45;
-}
-
-.ChaosShopBuy Label {
+.ChaosShopStock {
+  horizontal-align: right;
+  vertical-align: top;
+  margin: 1px 4px;
   font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: #000000 1px 1px 3px 2;
+}
+
+.ChaosShopCost {
+  horizontal-align: center;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: bold;
   color: #efc96c;
   text-shadow: #000000 1px 1px 3px 1;
 }
 
-.ChaosShopInfo Label {
-  text-shadow: #000000 1px 1px 3px 1;
+.ChaosShopTile.Unaffordable .ChaosShopCost {
+  color: #e05a4f;
+}
+
+.ChaosShopTile.SoldOut .ChaosShopIcon {
+  saturation: 0;
+  opacity: 0.5;
 }
 
 /* ================= Справка ================= */

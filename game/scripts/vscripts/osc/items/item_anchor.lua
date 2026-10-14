@@ -1,14 +1,22 @@
 require("osc/core/anchor")
 
 item_osc_anchor = class({})
+-- Уровни отличаются только rotations в KV
+item_osc_anchor_2 = item_osc_anchor
+item_osc_anchor_3 = item_osc_anchor
 
--- Один заряд: при успехе предмет расходуется, при отказе (якорь уже стоит,
--- не основной герой, механика выключена) остаётся у игрока
+-- Тратит один заряд стака: при успехе заряд расходуется, при отказе (якорь
+-- уже стоит, не основной герой, механика выключена) остаётся у игрока
 function item_osc_anchor:OnSpellStart()
     local hero = self:GetCaster()
-    local ok, reason = OSC_Anchor.Activate(hero)
+    local ok, reason = OSC_Anchor.Activate(hero, self:GetSpecialValueFor("rotations"))
     if ok then
-        hero:RemoveItem(self)
+        local charges = self:GetCurrentCharges()
+        if charges > 1 then
+            self:SetCurrentCharges(charges - 1)
+        else
+            hero:RemoveItem(self)
+        end
         return
     end
 

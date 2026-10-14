@@ -22,7 +22,7 @@ end
 -- предложенных), а без предложения — случайная. Предложение закрывается в
 -- любом случае, даже если выдача сорвалась.
 local function RotateHero(hero, round)
-    -- «Якорь»: эту ротацию герой пропускает, якорь снимается
+    -- «Якорь»: эту ротацию герой пропускает, с якоря снимается одна ротация
     if OSC_Anchor.Consume(hero) then
         OSC_RotationChoice.Close(hero, OSC_HeroState.Get(hero).ability)
         OSC_Logger.Log("Rotation skipped by anchor for " .. hero:GetUnitName())

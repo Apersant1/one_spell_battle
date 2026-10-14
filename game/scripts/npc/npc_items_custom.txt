@@ -6,7 +6,7 @@
 	{
 		"BaseClass"                 "item_lua"
 		"ScriptFile"                "scripts/vscripts/osc/items/item_ultimate_reroll.lua"
-		"AbilityTextureName"        "item_refresher"
+		"AbilityTextureName"        "item_osc_ultimate_reroll"
 		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
 		"AbilityCooldown"           "0"
 		"ItemCost"                  "3500"
@@ -16,19 +16,60 @@
 		"ItemShareability"          "ITEM_SHAREABLE"
 	}
 
-	// «Якорь»: пропустить ближайшую ротацию. Продаётся только в Хаос-лавке
+	// «Якорь»: пропустить ближайшие rotations ротаций. Все уровни продаются в
+	// Хаос-лавке, _2 и _3 ещё и получаются слиянием (osc/core/anchor.lua)
 	"item_osc_anchor"
 	{
 		"BaseClass"                 "item_lua"
 		"ScriptFile"                "scripts/vscripts/osc/items/item_anchor.lua"
-		"AbilityTextureName"        "item_aeon_disk"
+		"AbilityTextureName"        "item_osc_anchor"
 		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
 		"AbilityCooldown"           "0"
 		"ItemCost"                  "400"
 		"ItemPurchasable"           "0"
 		"ItemInitialCharges"        "1"
-		"ItemStackable"             "0"
+		"ItemStackable"             "1"
 		"ItemShareability"          "ITEM_NOT_SHAREABLE"
+		"AbilityValues"
+		{
+			"rotations"             "1"
+		}
+	}
+
+	"item_osc_anchor_2"
+	{
+		"BaseClass"                 "item_lua"
+		"ScriptFile"                "scripts/vscripts/osc/items/item_anchor.lua"
+		"AbilityTextureName"        "item_osc_anchor_2"
+		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityCooldown"           "0"
+		"ItemCost"                  "800"
+		"ItemPurchasable"           "0"
+		"ItemInitialCharges"        "1"
+		"ItemStackable"             "1"
+		"ItemShareability"          "ITEM_NOT_SHAREABLE"
+		"AbilityValues"
+		{
+			"rotations"             "2"
+		}
+	}
+
+	"item_osc_anchor_3"
+	{
+		"BaseClass"                 "item_lua"
+		"ScriptFile"                "scripts/vscripts/osc/items/item_anchor.lua"
+		"AbilityTextureName"        "item_osc_anchor_3"
+		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityCooldown"           "0"
+		"ItemCost"                  "1600"
+		"ItemPurchasable"           "0"
+		"ItemInitialCharges"        "1"
+		"ItemStackable"             "1"
+		"ItemShareability"          "ITEM_NOT_SHAREABLE"
+		"AbilityValues"
+		{
+			"rotations"             "3"
+		}
 	}
 
 	// Сфера хаоса: падает с Рошана (osc/systems/chaos_sphere.lua), не продаётся.

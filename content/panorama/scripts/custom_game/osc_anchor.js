@@ -2,15 +2,18 @@
 
 var OSC = OSC || {};
 
-// Значок «Якоря» у таймера ротации: osc_state/anchor_<playerID> = { active }.
-// Пока якорь стоит, следующая ротация этого игрока пропускается.
+// Значок «Якоря» у таймера ротации: osc_state/anchor_<playerID> = { active, rotations }.
+// Пока якорь стоит, ротации этого игрока пропускаются (rotations — сколько осталось).
 OSC.Anchor = (function () {
+  var rotations = 0;
+
   function NetTableKey() {
     return "anchor_" + Players.GetLocalPlayer();
   }
 
   function Apply(data) {
     var active = !!data && Number(data.active) === 1;
+    rotations = (data && Number(data.rotations)) || 1;
     var badge = $("#AnchorBadge");
     badge.SetHasClass("Active", active);
     $("#TimerPanel").SetHasClass("Anchored", active);
@@ -23,7 +26,7 @@ OSC.Anchor = (function () {
       "DOTAShowTitleTextTooltip",
       badge,
       $.Localize("#osc_hud_anchor_title"),
-      $.Localize("#osc_hud_anchor_tooltip")
+      $.Localize("#osc_hud_anchor_tooltip").replace("{n}", rotations)
     );
   }
 

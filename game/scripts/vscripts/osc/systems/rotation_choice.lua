@@ -65,7 +65,7 @@ end
 -- Возвращает true, если предложение отправлено.
 function OSC_RotationChoice.Offer(hero, round, deadline)
     local state = OSC_HeroState.Get(hero)
-    if not OSC_Heroes.IsMainHero(hero) or not state.initialized or state.anchored then
+    if not OSC_Heroes.IsMainHero(hero) or not state.initialized or state.anchor_rotations > 0 then
         return false
     end
 

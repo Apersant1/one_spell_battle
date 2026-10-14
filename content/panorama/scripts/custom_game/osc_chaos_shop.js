@@ -7,9 +7,9 @@ var OSC = OSC || {};
 // (stock = max = -1 — без лимита). Покупку решает сервер: osc_shop_buy { item },
 // ответ osc_shop_result { ok, item, error }; ошибки показывает OSC.HudError.
 OSC.ChaosShop = (function () {
-  var GOLD_POLL = 0.25; // как часто обновлять кнопки, пока панель открыта
+  var GOLD_POLL = 0.25; // как часто обновлять подсветку плиток, пока панель открыта
 
-  var rows = []; // { item, button } — для обновления кнопок по золоту
+  var rows = []; // { item, tile } — для подсветки плиток по золоту
   var open = false;
   var openToken = 0; // меняется при каждом открытии, чтобы не плодить опросы
 
@@ -30,58 +30,49 @@ OSC.ChaosShop = (function () {
       });
   }
 
-  // Только подсказка: золото и остаток проверяет сервер
-  function UpdateButtons() {
+  // Только подсветка: золото и остаток проверяет сервер, клик по
+  // недоступному товару вернёт его ошибку
+  function UpdateTiles() {
     var gold = Players.GetGold(Players.GetLocalPlayer());
     rows.forEach(function (row) {
-      row.button.enabled =
-        gold >= Number(row.item.cost) && Number(row.item.stock) !== 0;
+      row.tile.SetHasClass("Unaffordable", gold < Number(row.item.cost));
+      row.tile.SetHasClass("SoldOut", Number(row.item.stock) === 0);
     });
   }
 
-  function AddLabel(parent, classes, text) {
-    var label = $.CreatePanel("Label", parent, "");
-    classes.forEach(function (name) {
-      label.AddClass(name);
-    });
-    label.text = text;
-    return label;
-  }
+  // Плитка как в стандартном магазине: иконка, остаток в углу, цена под
+  // ней; название и описание — в подсказке предмета Dota. Покупка — любым кликом
+  function BuildTile(list, item) {
+    var tile = $.CreatePanel("Button", list, "");
+    tile.AddClass("ChaosShopTile");
 
-  function BuildRow(list, item) {
-    var row = $.CreatePanel("Panel", list, "");
-    row.AddClass("ChaosShopRow");
-
-    // Стандартная подсказка предмета Dota при наведении
-    var image = $.CreatePanel("DOTAItemImage", row, "");
+    var icon = $.CreatePanel("Panel", tile, "");
+    icon.AddClass("ChaosShopIcon");
+    var image = $.CreatePanel("DOTAItemImage", icon, "");
     image.itemname = item.name;
-    image.SetPanelEvent("onmouseover", function () {
-      $.DispatchEvent("DOTAShowAbilityTooltip", image, item.name);
-    });
-    image.SetPanelEvent("onmouseout", function () {
-      $.DispatchEvent("DOTAHideAbilityTooltip", image);
-    });
-
-    var info = $.CreatePanel("Panel", row, "");
-    info.AddClass("ChaosShopInfo");
-    AddLabel(info, ["OSCTextBody", "OSCBold"], $.Localize("#DOTA_Tooltip_ability_" + item.name));
-    AddLabel(info, ["OSCTextSmall", "OSCGold"], String(item.cost));
+    image.hittest = false;
     if (Number(item.max) >= 0) {
-      var stock = AddLabel(info, ["OSCTextSmall", "OSCMuted"], "");
-      stock.SetDialogVariableInt("stock", Number(item.stock));
-      stock.SetDialogVariableInt("max", Number(item.max));
-      stock.text = $.Localize("#osc_shop_stock", stock);
+      var stock = $.CreatePanel("Label", icon, "");
+      stock.AddClass("ChaosShopStock");
+      stock.text = String(item.stock);
     }
 
-    var button = $.CreatePanel("Button", row, "");
-    button.AddClass("OSCButton");
-    button.AddClass("OSCButtonPrimary");
-    button.AddClass("ChaosShopBuy");
-    AddLabel(button, [], $.Localize("#osc_shop_buy_button"));
-    button.SetPanelEvent("onactivate", function () {
-      GameEvents.SendCustomGameEventToServer("osc_shop_buy", { item: item.name });
+    var cost = $.CreatePanel("Label", tile, "");
+    cost.AddClass("ChaosShopCost");
+    cost.text = String(item.cost);
+
+    tile.SetPanelEvent("onmouseover", function () {
+      $.DispatchEvent("DOTAShowAbilityTooltip", tile, item.name);
     });
-    rows.push({ item: item, button: button });
+    tile.SetPanelEvent("onmouseout", function () {
+      $.DispatchEvent("DOTAHideAbilityTooltip", tile);
+    });
+    function Buy() {
+      GameEvents.SendCustomGameEventToServer("osc_shop_buy", { item: item.name });
+    }
+    tile.SetPanelEvent("onactivate", Buy);
+    tile.SetPanelEvent("oncontextmenu", Buy);
+    rows.push({ item: item, tile: tile });
   }
 
   function Refresh() {
@@ -98,9 +89,9 @@ OSC.ChaosShop = (function () {
     list.RemoveAndDeleteChildren();
     rows = [];
     ToList(data && data.items).forEach(function (item) {
-      BuildRow(list, item);
+      BuildTile(list, item);
     });
-    UpdateButtons();
+    UpdateTiles();
   }
 
   function SetOpen(show) {
@@ -111,7 +102,7 @@ OSC.ChaosShop = (function () {
     var token = ++openToken;
     OSC.Util.Loop(GOLD_POLL, function () {
       if (!open || token !== openToken || OSC.Util.IsPostGame()) return false;
-      UpdateButtons();
+      UpdateTiles();
     });
   }
 

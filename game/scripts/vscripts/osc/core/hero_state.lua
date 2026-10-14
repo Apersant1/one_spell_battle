@@ -35,7 +35,7 @@ local FIELDS = {
     { name = "casino_machine", doc = "текущий автомат казино героя" },
 
     -- Ротация с выбором (этап 1)
-    { name = "anchored", default = false, doc = "«Якорь»: пропустить следующую ротацию (1.5)" },
+    { name = "anchor_rotations", default = 0, doc = "«Якорь»: сколько ближайших ротаций пропустить (1.5)" },
     { name = "pending_choices",
       doc = "открытый выбор из трёх: { round, deadline, duration, options = { имена }, picked }" },
 

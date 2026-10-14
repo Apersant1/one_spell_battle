@@ -33,8 +33,12 @@ OSC_CONFIG = {
     -- Отказы на команды клиента (выбор из трёх, голосование) пишутся в лог
     -- не чаще раза в столько секунд на игрока и канал
     CLIENT_REFUSAL_LOG_INTERVAL = 5,
-    -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшую ротацию
+    -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшие ротации.
+    -- Уровни — item_osc_anchor, _2, _3 (сколько ротаций — AbilityValues
+    -- rotations в npc_items_custom.txt). Как Healing Lotus: ANCHOR_MERGE_COUNT
+    -- зарядов одного уровня в инвентаре сливаются в один заряд уровнем выше
     ANCHOR_ENABLED = true,
+    ANCHOR_MERGE_COUNT = 2,
     -- Хаос-лавка (osc/systems/chaos_shop.lua): предметы режима продаются в
     -- своей панели HUD, а не в стандартном магазине. Цена — ItemCost в
     -- npc_items_custom.txt; team_stock — сколько штук команда может купить
@@ -43,6 +47,8 @@ OSC_CONFIG = {
     CHAOS_SHOP_ITEMS = {
         { name = "item_osc_ultimate_reroll", team_stock = 5 }, -- 5 на команду за матч
         { name = "item_osc_anchor" },                          -- без лимита
+        { name = "item_osc_anchor_2" },
+        { name = "item_osc_anchor_3" },
     },
     -- Сфера хаоса (osc/systems/chaos_sphere.lua): падает с Рошана, владелец
     -- выбирает легендарный ультимейт (из CHAOS_SPHERE_ULTIMATE_CHOICES) или

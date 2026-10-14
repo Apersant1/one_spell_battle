@@ -88,8 +88,7 @@
                 <Label id="TimerLabel" class="OSCTextBody OSCBold" />
                 <!-- Якорь: виден, пока следующая ротация пропускается (osc_anchor.js) -->
                 <Panel id="AnchorBadge" hittest="true">
-                    <DOTAAbilityImage id="AnchorIcon" abilityname="tidehunter_anchor_smash"
-                        hittest="false" />
+                    <DOTAItemImage id="AnchorIcon" itemname="item_osc_anchor" hittest="false" />
                 </Panel>
             </Panel>
         </Panel>
@@ -210,7 +209,7 @@
         </Panel>
 
         <!-- Хаос-лавка (osc_chaos_shop.js): кнопка рядом со стандартным
-             магазином и панель товаров; строки товаров создаются из JS -->
+             магазином и панель товаров; плитки товаров создаются из JS -->
         <Button id="ChaosShopButton" class="OSCButton OSCButtonPrimary Hidden"
             onactivate="OSC.ChaosShop.Toggle()">
             <Label text="#osc_shop_button" />
