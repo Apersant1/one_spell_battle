@@ -29,6 +29,57 @@ OSC.ChaosRound = (function () {
     });
   }
 
+  // Хаос-раунд mouse_swap: левая кнопка ходит и атакует, правая выделяет.
+  // shortcut: только ходьба, атака и выделение — подбор предметов, рамка
+  // и миникарта не инвертируются; дописать, если игроки будут жаловаться.
+  var mouseSwapped = false;
+
+  function EntityUnderCursor() {
+    var entities = GameUI.FindScreenEntities(GameUI.GetCursorPosition());
+    for (var i = 0; i < entities.length; i++) {
+      if (entities[i].accurateCollision) return entities[i].entityIndex;
+    }
+    return entities.length > 0 ? entities[0].entityIndex : -1;
+  }
+
+  function IssueRightClick() {
+    var target = EntityUnderCursor();
+    var order = {
+      OrderIssuer: PlayerOrderIssuer_t.DOTA_ORDER_ISSUER_SELECTED_UNITS,
+      QueueBehavior: OrderQueueBehavior_t.DOTA_ORDER_QUEUE_NEVER,
+      ShowEffects: true,
+    };
+    if (target !== -1 && Entities.IsEnemy(target) && Entities.IsAlive(target)) {
+      order.OrderType = dotaunitorder_t.DOTA_UNIT_ORDER_ATTACK_TARGET;
+      order.TargetIndex = target;
+    } else {
+      var position = GameUI.GetScreenWorldPosition(GameUI.GetCursorPosition());
+      if (!position) return;
+      order.OrderType = dotaunitorder_t.DOTA_UNIT_ORDER_MOVE_TO_POSITION;
+      order.Position = position;
+    }
+    Game.PrepareUnitOrders(order);
+  }
+
+  function OnMouse(eventName, button) {
+    if (!mouseSwapped || (button !== 0 && button !== 1) || eventName === "wheeled") {
+      return false;
+    }
+    // Прицеливание способностью и прочие режимы клика — как обычно
+    if (GameUI.GetClickBehaviors() !== CLICK_BEHAVIORS.DOTA_CLICK_BEHAVIOR_NONE) {
+      return false;
+    }
+    if (eventName === "pressed") {
+      if (button === 0) {
+        IssueRightClick();
+      } else {
+        var target = EntityUnderCursor();
+        if (target !== -1) GameUI.SelectUnit(target, false);
+      }
+    }
+    return true;
+  }
+
   function OnPhaseChanged(phase) {
     if (phase === "warning") OSC.Util.PlaySound(OSC.Sounds.chaosWarning);
     if (phase === "active") OSC.Util.PlaySound(OSC.Sounds.chaosStart);
@@ -46,6 +97,7 @@ OSC.ChaosRound = (function () {
 
     if (OSC.Util.IsPostGame()) {
       SetHudHidden(false);
+      mouseSwapped = false;
       panel.SetHasClass("Shown", false);
       vignette.SetHasClass("Shown", false);
       return false;
@@ -62,6 +114,7 @@ OSC.ChaosRound = (function () {
     var phase = isActive ? "active" : isWarning ? "warning" : "none";
 
     SetHudHidden(isActive && data.event_id === "no_hud");
+    mouseSwapped = isActive && data.event_id === "mouse_swap";
 
     if (phase !== lastPhase) {
       OnPhaseChanged(phase);
@@ -103,6 +156,7 @@ OSC.ChaosRound = (function () {
   }
 
   function Init() {
+    GameUI.SetMouseCallback(OnMouse);
     OSC.Util.Loop(UPDATE_INTERVAL, Update);
   }
 

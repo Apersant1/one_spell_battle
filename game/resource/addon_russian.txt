@@ -75,6 +75,8 @@
 		"osc_chaos_mana_free_desc" "Способности не расходуют ману."
 		"osc_chaos_no_hud_title" "Без интерфейса"
 		"osc_chaos_no_hud_desc" "Панель способностей, инвентарь и миникарта пропали. Кулдауны считайте в голове!"
+		"osc_chaos_mouse_swap_title" "Левша"
+		"osc_chaos_mouse_swap_desc" "Кнопки мыши поменялись местами: левая ведёт героя и атакует, правая выделяет."
 		"osc_chaos_gold_rush_title" "Золотая лихорадка"
 		"osc_chaos_gold_rush_desc" "Каждые {s:tick} сек. все игроки получают {s:amount} ненадёжного золота."
 		"osc_chaos_weather_storm_title" "Гроза"

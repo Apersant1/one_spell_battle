@@ -141,7 +141,7 @@ dota_launch_custom_game one_spell dota
   `osc/systems/chaos_events/`; новый дескриптор добавляется через `require`
   в `addon_game_mode.lua`.
 - Пул содержит `cooldowns` (вес 10), `mana_free` (вес 8), `no_hud` (вес 8),
-  `gold_rush` (вес 6) и три погодных события по 5: `weather_storm` (молнии Зевса с
+  `mouse_swap` (вес 8), `gold_rush` (вес 6) и три погодных события по 5: `weather_storm` (молнии Зевса с
   коротким оглушением), `weather_torrent` (метки и потоки Кунки с
   подбрасыванием) и `weather_drones` (ракеты Клокверка у героев). События не
   повторяются подряд, а `mana_free` не следует сразу за `cooldowns`.
@@ -155,7 +155,10 @@ dota_launch_custom_game one_spell dota
   ненадёжного золота каждые 2 секунды. `no_hud` не трогает героев: пока он
   активен, `osc_chaos_round.js` прячет стандартный интерфейс Доты
   (способности, инвентарь, магазин, миникарта, верхняя полоса) через
-  `GameUI.SetDefaultUIEnabled`; HUD режима остаётся.
+  `GameUI.SetDefaultUIEnabled`; HUD режима остаётся. `mouse_swap` тоже
+  клиентский: через `GameUI.SetMouseCallback` левая кнопка отдаёт приказ
+  атаки или движения, правая выделяет юнита; в прицеливании способностью
+  кнопки работают как обычно. `no_hud` и `mouse_swap` не идут подряд.
 - Состояния `idle`, `warning` и `active`, ключи локализации и таймеры
   публикуются в `osc_state/chaos_round`; HUD локализует название и описание.
 - Эффект выдаётся всем боевым телам (основные герои, клоны Meepo, Tempest
@@ -174,7 +177,7 @@ dota_launch_custom_game one_spell dota
 1. Без команд первый раунд начинается через 200 секунд, предупреждение
    появляется за 10 секунд, эффект длится 30 секунд; HUD показывает
    локализованные название и описание.
-2. `-chaos <id>` (`cooldowns`, `mana_free`, `no_hud`, `gold_rush`, `weather_storm`,
+2. `-chaos <id>` (`cooldowns`, `mana_free`, `no_hud`, `mouse_swap`, `gold_rush`, `weather_storm`,
    `weather_torrent`, `weather_drones`) запускает соответствующий эффект. По завершении они снимаются, включая эффекты
    у мёртвых героев.
 3. `-chaos` во время активного события сначала завершает его, затем сразу

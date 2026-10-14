@@ -74,6 +74,8 @@
 			"osc_chaos_mana_free_desc" "Abilities cost no mana."
 			"osc_chaos_no_hud_title" "No HUD"
 			"osc_chaos_no_hud_desc" "The ability bar, inventory and minimap are gone. Count your cooldowns!"
+			"osc_chaos_mouse_swap_title" "Lefty"
+			"osc_chaos_mouse_swap_desc" "Mouse buttons are swapped: left click moves and attacks, right click selects."
 			"osc_chaos_gold_rush_title" "Gold Rush"
 			"osc_chaos_gold_rush_desc" "All players gain {s:amount} unreliable gold every {s:tick} seconds."
 			"osc_chaos_weather_storm_title" "Thunderstorm"

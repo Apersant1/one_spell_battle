@@ -2,4 +2,5 @@
 OSC_ChaosEvents:Register({
     id = "no_hud",
     weight = 8,
+    conflicts = { "mouse_swap" },
 })
