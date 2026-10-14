@@ -62,6 +62,25 @@ OSC.Summary = (function () {
     image.hittest = false;
   }
 
+  // 3D-модель героя на пьедестале. Пьедестал создаётся раньше сцены, чтобы
+  // ноги рисовались поверх него; лишнее место кадра обрезает рамка (CSS)
+  function CreatePodium(parent, hero) {
+    var podium = $.CreatePanel("Panel", parent, "");
+    podium.AddClass("SummaryPodium");
+    podium.hittest = false;
+    ["SummaryPedestalSide", "SummaryPedestalTop"].forEach(function (cssClass) {
+      var part = $.CreatePanel("Panel", podium, "");
+      part.AddClass(cssClass);
+      part.hittest = false;
+    });
+    var scene = $.CreatePanel("DOTAScenePanel", podium, "", {
+      unit: hero,
+      particleonly: "false",
+      allowrotation: "true",
+    });
+    scene.AddClass("SummaryPodiumScene");
+  }
+
   function CreateLabel(parent, cssClass, text) {
     var label = $.CreatePanel("Label", parent, "");
     label.AddClass(cssClass);
@@ -94,7 +113,7 @@ OSC.Summary = (function () {
       card.SetHasClass("Local", playerId === Players.GetLocalPlayer());
       card.hittest = false;
 
-      CreateHeroImage(card, hero, "landscape", "SummaryTitleHero");
+      CreatePodium(card, hero);
 
       var text = $.CreatePanel("Panel", card, "");
       text.AddClass("SummaryTitleText");
