@@ -18,8 +18,8 @@
 #SummaryPanel {
   width: 820px;
   horizontal-align: center;
-  vertical-align: top;
-  margin-top: 70px;
+  vertical-align: bottom;
+  margin-bottom: 210px; /* над «Продолжить», растёт вверх к баннеру */
   padding: 14px 18px 16px 18px;
   flow-children: down;
   visibility: collapse;
@@ -63,8 +63,8 @@
 
 #SummaryReopen {
   horizontal-align: center;
-  vertical-align: top;
-  margin-top: 70px;
+  vertical-align: bottom;
+  margin-bottom: 210px; /* над «Продолжить», растёт вверх к баннеру */
   padding: 6px 16px;
   visibility: collapse;
 }

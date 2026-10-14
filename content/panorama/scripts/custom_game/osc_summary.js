@@ -35,7 +35,7 @@ OSC.Summary = (function () {
       });
   }
 
-  // heroname идёт в XML-атрибут — пропускаем только имя юнита
+  // Данные с сервера — пропускаем только имя юнита
   function SafeHeroName(name) {
     name = String(name || "");
     return /^[a-z0-9_]+$/.test(name) ? name : "";
@@ -52,11 +52,14 @@ OSC.Summary = (function () {
     return hero ? $.Localize("#" + hero) : String(playerId);
   }
 
+  // BCreateChildren у панелей из $.CreatePanel нет (JS Exception в матче)
   function CreateHeroImage(parent, hero, style, cssClass) {
-    parent.BCreateChildren(
-      '<DOTAHeroImage class="' + cssClass + '" hittest="false" heroimagestyle="' +
-        style + '" heroname="' + hero + '" />'
-    );
+    var image = $.CreatePanel("DOTAHeroImage", parent, "", {
+      heroname: hero,
+      heroimagestyle: style,
+    });
+    image.AddClass(cssClass);
+    image.hittest = false;
   }
 
   function CreateLabel(parent, cssClass, text) {
