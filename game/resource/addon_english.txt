@@ -63,6 +63,7 @@
 			"DOTA_Tooltip_modifier_osc_courier_drunk"	"Drunken Beast"
 			"DOTA_Tooltip_modifier_osc_courier_drunk_Description"	"The courier can barely stay on its feet: movement speed reduced by %dMODIFIER_PROPERTY_TOOLTIP%%%."
 			"osc_notify_ability_changed" "{s:player_name} gets ability “{s:ability}”"
+			"osc_notify_legendary_ability"	"{s:player_name} got a LEGENDARY ability “{s:ability}”!"
 			"osc_notify_rotation_warning" "Abilities change in {s:seconds} sec!"
 			"osc_notify_rotation_started" "CHAOS! Everyone got new abilities!"
 			"osc_notify_chaos_round_warning" "Chaos round “{s:name}” starts in {s:seconds} sec!"

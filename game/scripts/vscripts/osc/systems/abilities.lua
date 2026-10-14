@@ -514,8 +514,14 @@ local function ApplyGive(hero, slot, entry, notify)
         return nil
     end
 
+    -- Здесь же проходит и отложенная выдача (ProcessDeferred): объявление
+    -- уходит в момент фактической смены, один раз
     if notify then
-        OSC_Notifications.AbilityChanged(hero, entry)
+        local rarity = OSC_AbilitySelection.GetRarity(entry)
+        OSC_Notifications.AbilityChanged(hero, entry, rarity)
+        if rarity == "legendary" then
+            OSC_Notifications.LegendaryAbility(hero, entry)
+        end
     end
     OSC_Abilities.SyncCopies(hero)
     OSC_GameEvents.Emit("ability_changed", {

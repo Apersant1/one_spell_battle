@@ -5,7 +5,7 @@
 --   сервер -> игрок  osc_rotation_choice_closed { round, chosen }
 --   игрок -> сервер  osc_rotation_choice_pick   { round, ability }
 --   net table osc_state/choice_<playerID> = { round, deadline, duration, options, picked }
---     options = { [1] = { name, label }, ... }; после смены options = {},
+--     options = { [1] = { name, label, rarity }, ... }; после смены options = {},
 --     picked — выданная способность; picked = "" — игрок ещё не выбрал.
 --
 -- Кандидаты лежат в состоянии героя: pending_choices =
@@ -34,7 +34,11 @@ local function ClientOptions(names)
     local options = {}
     for index, name in ipairs(names) do
         local entry = OSC_AbilitySelection.FindEntry(name)
-        options[index] = { name = name, label = entry and entry.label or name }
+        options[index] = {
+            name = name,
+            label = entry and entry.label or name,
+            rarity = OSC_AbilitySelection.GetRarity(entry),
+        }
     end
     return options
 end

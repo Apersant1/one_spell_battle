@@ -34,6 +34,14 @@ OSC_NOTIFICATIONS_CONFIG = {
             feed = { token = "#osc_notify_ability_changed", color = "#D98BFF", scope = "team" },
         },
 
+        -- Легендарная способность: лента всем и частица над героем; звук —
+        -- у владельца, по HUD-событию osc_ability_changed (rarity)
+        legendary_ability = {
+            category = "ability",
+            particle = { name = "particles/generic_hero_status/hero_levelup.vpcf" },
+            feed = { token = "#osc_notify_legendary_ability", color = "#FFC23A" },
+        },
+
         -- ===== Ротация =====
         rotation_warning = {
             category = "rotation",

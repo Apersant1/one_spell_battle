@@ -143,4 +143,76 @@ return {
             end
         end
     end,
+
+    client_options_have_rarity = function()
+        setup()
+        OSC_ABILITY_POOL = {
+            entry("test_cur"), entry("test_l1", "legendary"), entry("test_r1", "rare"), entry("test_c1"),
+        }
+        local hero = heroWith("test_cur")
+
+        H.truthy(OSC_RotationChoice.Offer(hero, 1, 10), "offer sent")
+
+        local options = H.lastEvent("osc_rotation_choice_offer").data.options
+        H.eq(#options, 3, "three options")
+        for _, option in ipairs(options) do
+            local expected = OSC_AbilitySelection.GetRarity(OSC_AbilitySelection.FindEntry(option.name))
+            H.eq(option.rarity, expected, "event rarity of " .. option.name)
+        end
+        for _, option in ipairs(H.netTables["choice_0"].options) do
+            H.truthy(option.rarity, "net table rarity of " .. option.name)
+        end
+    end,
+
+    legendary_give_announced = function()
+        setup()
+        local legendary, common = entry("test_l", "legendary"), entry("test_c")
+        OSC_ABILITY_POOL = { entry("test_cur"), legendary, common }
+        local hero = heroWith("test_cur")
+        local announced = {}
+        OSC_Notifications.LegendaryAbility = function(_, given) table.insert(announced, given.name) end
+
+        OSC_Abilities.Give(hero, "ability", legendary, true)
+        H.eq(#announced, 1, "legendary announced")
+        H.eq(announced[1], "test_l", "announced entry")
+        H.eq(H.lastEvent("osc_ability_changed").data.rarity, "legendary", "popup gets rarity")
+
+        OSC_Abilities.Give(hero, "ability", common, true)
+        H.eq(#announced, 1, "common not announced")
+        H.eq(H.lastEvent("osc_ability_changed").data.rarity, "common", "popup common")
+    end,
+
+    legendary_feed_goes_to_everyone = function()
+        setup()
+        local hero = heroWith("test_cur")
+
+        OSC_Notifications.LegendaryAbility(hero, entry("test_l", "legendary"))
+
+        local feed = H.lastEvent("osc_notification")
+        H.truthy(feed, "feed sent")
+        H.eq(feed.player, nil, "to all clients")
+        H.eq(feed.data.token, "#osc_notify_legendary_ability", "token")
+        H.eq(feed.data.params.player_id, "0", "player for the name")
+        H.eq(feed.data.params.ability, "#DOTA_Tooltip_Ability_test_l", "ability token")
+    end,
+
+    deferred_legendary_announced_once = function()
+        setup()
+        local legendary = entry("test_l", "legendary")
+        OSC_ABILITY_POOL = { entry("test_cur"), legendary }
+        local hero = heroWith("test_cur")
+        local old = hero:FindAbilityByName("test_cur")
+        old.in_phase = true
+        local announced = 0
+        OSC_Notifications.LegendaryAbility = function() announced = announced + 1 end
+
+        OSC_Abilities.Give(hero, "ability", legendary, true)
+        H.eq(announced, 0, "not announced while the old one is casting")
+
+        old.in_phase = false
+        H.time = 0.25
+        H.RunThink("osc_deferred_ability")
+        H.eq(OSC_HeroState.Get(hero).ability, "test_l", "given after the cast")
+        H.eq(announced, 1, "announced once at the real give")
+    end,
 }

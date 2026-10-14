@@ -64,6 +64,7 @@
 		"DOTA_Tooltip_modifier_osc_chaos_cooldowns"              "Хаос: ускоренные перезарядки"
         "DOTA_Tooltip_modifier_osc_chaos_cooldowns_Description"  "Перезарядка способностей уменьшена на %dMODIFIER_PROPERTY_COOLDOWN_PERCENTAGE%%%."
 		"osc_notify_ability_changed" "{s:player_name} получает способность «{s:ability}»"
+		"osc_notify_legendary_ability"	"{s:player_name} получает ЛЕГЕНДАРНУЮ способность «{s:ability}»!"
 		"osc_notify_rotation_warning" "Смена способностей через {s:seconds} сек!"
 		"osc_notify_rotation_started" "ХАОС! Все получили новые способности!"
 		"osc_notify_chaos_round_warning" "Хаос-раунд «{s:name}» начнётся через {s:seconds} сек.!"

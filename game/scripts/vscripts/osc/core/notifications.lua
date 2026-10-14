@@ -138,14 +138,25 @@ end
 
 -- ================= Обёртки для существующего кода =================
 
-function OSC_Notifications.AbilityChanged(hero, entry)
+-- rarity — редкость записи (OSC_AbilitySelection.GetRarity) для рамки
+-- всплывающего окна; по умолчанию "common"
+function OSC_Notifications.AbilityChanged(hero, entry, rarity)
     local playerID = hero:GetPlayerOwnerID()
     OSC_Notifications.Notify("ability_changed", {
         unit = hero,
         team = hero:GetTeamNumber(),
         player_id = playerID,
         ability = "#DOTA_Tooltip_Ability_" .. entry.name,
-        hud = { ability = entry.name, label = entry.label },
+        hud = { ability = entry.name, label = entry.label, rarity = rarity or "common" },
+    })
+end
+
+-- Герой получил легендарную способность: объявление всем игрокам
+function OSC_Notifications.LegendaryAbility(hero, entry)
+    OSC_Notifications.Notify("legendary_ability", {
+        unit = hero,
+        player_id = hero:GetPlayerOwnerID(),
+        ability = "#DOTA_Tooltip_Ability_" .. entry.name,
     })
 end
 
