@@ -9,5 +9,6 @@
   OSC.RotationChoice.Init();
   OSC.Anchor.Init();
   OSC.Casino.Init();
+  OSC.ChaosShop.Init();
   OSC.NotificationFeed.Init();
 })();

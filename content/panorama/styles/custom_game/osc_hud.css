@@ -675,3 +675,85 @@
   horizontal-align: center;
   vertical-align: center;
 }
+
+/* ================= Хаос-лавка ================= */
+
+/* Правый нижний угол рядом со стандартным магазином; отступы подогнать в игре */
+#ChaosShopButton {
+  min-width: 140px;
+  min-height: 34px;
+  horizontal-align: right;
+  vertical-align: bottom;
+  margin-right: 16px;
+  margin-bottom: 290px;
+}
+
+#ChaosShopButton.Hidden {
+  visibility: collapse;
+}
+
+#ChaosShopButton Label {
+  font-size: 16px;
+}
+
+#ChaosShopPanel {
+  width: 400px;
+  padding: 16px;
+  horizontal-align: right;
+  vertical-align: bottom;
+  margin-right: 16px;
+  margin-bottom: 336px;
+  flow-children: down;
+  visibility: collapse;
+}
+
+#ChaosShopPanel.Visible {
+  visibility: visible;
+}
+
+#ChaosShopTitle {
+  horizontal-align: center;
+}
+
+#ChaosShopItems {
+  width: 100%;
+  margin: 12px 0px;
+  flow-children: down;
+}
+
+.ChaosShopRow {
+  width: 100%;
+  margin-bottom: 8px;
+  flow-children: right;
+}
+
+.ChaosShopRow DOTAItemImage {
+  width: 64px;
+  height: 48px;
+  vertical-align: center;
+}
+
+.ChaosShopInfo {
+  width: fill-parent-flow(1.0);
+  margin: 0px 10px;
+  vertical-align: center;
+  flow-children: down;
+}
+
+.ChaosShopBuy {
+  min-width: 96px;
+  min-height: 36px;
+  vertical-align: center;
+}
+
+.ChaosShopBuy:disabled {
+  opacity: 0.45;
+}
+
+.ChaosShopBuy Label {
+  font-size: 16px;
+}
+
+#ChaosShopClose {
+  horizontal-align: center;
+}
