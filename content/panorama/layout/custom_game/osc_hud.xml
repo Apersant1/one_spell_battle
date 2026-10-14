@@ -13,6 +13,7 @@
         <include src="file://{resources}/scripts/custom_game/osc_rotation_choice.js" />
         <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_chaos_shop.js" />
         <include src="file://{resources}/scripts/custom_game/osc_notification_feed.js" />
         <include src="file://{resources}/scripts/custom_game/osc_hud.js" />
     </scripts>
@@ -98,6 +99,20 @@
             </Panel>
             <!-- Слой для частиц поверх окна -->
             <Panel id="CasinoFx" hittest="false" />
+        </Panel>
+
+        <!-- Хаос-лавка (osc_chaos_shop.js): кнопка рядом со стандартным
+             магазином и панель товаров; строки товаров создаются из JS -->
+        <Button id="ChaosShopButton" class="OSCButton OSCButtonPrimary Hidden"
+            onactivate="OSC.ChaosShop.Toggle()">
+            <Label text="#osc_shop_button" />
+        </Button>
+        <Panel id="ChaosShopPanel" class="OSCSurface OSCChaos" hittest="true">
+            <Label id="ChaosShopTitle" class="OSCTextTitle OSCChaosText" text="#osc_shop_title" />
+            <Panel id="ChaosShopItems" />
+            <Button id="ChaosShopClose" class="OSCButton" onactivate="OSC.ChaosShop.Close()">
+                <Label text="#osc_shop_close" />
+            </Button>
         </Panel>
 
         <!-- Выбор следующей способности: последним, поверх затемнения казино

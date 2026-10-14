@@ -10,6 +10,7 @@ OSC.Sounds = {
   reelStop: "",
   casinoWin: "General.Coins",
   casinoJackpot: "General.Coins",
+  shopBuy: "General.Buy", // покупка в Хаос-лавке
 
   teamPick: "ui_team_select_pick_team",
   teamShuffle: "ui_team_select_shuffle",
