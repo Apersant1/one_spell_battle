@@ -11,6 +11,7 @@
         <include src="file://{resources}/scripts/custom_game/osc_chaos_round.js" />
         <include src="file://{resources}/scripts/custom_game/osc_ability_popup.js" />
         <include src="file://{resources}/scripts/custom_game/osc_rotation_choice.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_chaos_sphere.js" />
         <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/osc_chaos_shop.js" />
@@ -183,6 +184,29 @@
             <Panel id="ChaosShopItems" />
             <Button id="ChaosShopClose" class="OSCButton" onactivate="OSC.ChaosShop.Close()">
                 <Label text="#osc_shop_close" />
+            </Button>
+        </Panel>
+
+        <!-- Сфера хаоса (osc_chaos_sphere.js): выбор режима, затем карточки
+             ультимейтов (создаются из JS) -->
+        <Panel id="ChaosSpherePanel" class="OSCSurface OSCChaos" hittest="true">
+            <Label id="ChaosSphereTitle" class="OSCTextTitle OSCGold" text="#osc_sphere_title" />
+            <Panel id="ChaosSphereModes">
+                <Button id="ChaosSphereUltimateButton" class="OSCButton OSCButtonPrimary"
+                    onactivate="OSC.ChaosSphere.ChooseUltimate()">
+                    <Label text="#osc_sphere_mode_ultimate" />
+                </Button>
+                <Button id="ChaosSphereEnemiesButton" class="OSCButton OSCButtonPrimary"
+                    onactivate="OSC.ChaosSphere.ChooseEnemies()">
+                    <Label text="#osc_sphere_mode_enemies" />
+                </Button>
+            </Panel>
+            <Label id="ChaosSphereLevelHint" class="OSCTextSmall OSCMuted" text="" />
+            <Label id="ChaosSphereChoose" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
+                text="#osc_sphere_choose" />
+            <Panel id="ChaosSphereCards" />
+            <Button id="ChaosSphereCancel" class="OSCButton" onactivate="OSC.ChaosSphere.Cancel()">
+                <Label text="#osc_sphere_cancel" />
             </Button>
         </Panel>
 

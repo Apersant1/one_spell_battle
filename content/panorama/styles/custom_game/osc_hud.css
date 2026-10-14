@@ -794,6 +794,73 @@
   background-color: #ff4fd8;
 }
 
+/* ---------- Сфера хаоса ---------- */
+/* Карточки — классы выбора из трёх (.ChoiceCard и рамки редкости) */
+#ChaosSpherePanel {
+  horizontal-align: center;
+  vertical-align: center;
+  padding: 16px;
+  flow-children: down;
+  visibility: collapse;
+}
+
+#ChaosSpherePanel.Visible {
+  visibility: visible;
+  animation-name: OSCChoiceIn;
+  animation-duration: 0.25s;
+  animation-timing-function: ease-out;
+}
+
+#ChaosSphereTitle {
+  horizontal-align: center;
+  margin-bottom: 12px;
+}
+
+#ChaosSphereModes {
+  horizontal-align: center;
+  flow-children: right;
+}
+
+#ChaosSphereModes Button {
+  min-width: 180px;
+  min-height: 40px;
+  margin: 0px 6px;
+}
+
+#ChaosSphereModes Button:disabled {
+  opacity: 0.45;
+}
+
+#ChaosSphereLevelHint {
+  horizontal-align: center;
+  margin-top: 6px;
+}
+
+#ChaosSphereLevelHint.Hidden,
+#ChaosSphereChoose,
+#ChaosSphereCards,
+#ChaosSpherePanel.Cards #ChaosSphereModes,
+#ChaosSpherePanel.Cards #ChaosSphereLevelHint {
+  visibility: collapse;
+}
+
+#ChaosSpherePanel.Cards #ChaosSphereChoose {
+  visibility: visible;
+  horizontal-align: center;
+  margin-bottom: 6px;
+}
+
+#ChaosSpherePanel.Cards #ChaosSphereCards {
+  visibility: visible;
+  horizontal-align: center;
+  flow-children: right;
+}
+
+#ChaosSphereCancel {
+  horizontal-align: center;
+  margin-top: 12px;
+}
+
 /* ---------- Хаос-раунд ---------- */
 #ChaosRoundPanel {
   width: 300px;

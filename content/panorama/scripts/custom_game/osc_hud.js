@@ -7,6 +7,7 @@
   OSC.ChaosRound.Init();
   OSC.AbilityPopup.Init();
   OSC.RotationChoice.Init();
+  OSC.ChaosSphere.Init();
   OSC.Anchor.Init();
   OSC.Casino.Init();
   OSC.ChaosShop.Init();
