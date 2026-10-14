@@ -868,7 +868,7 @@
 }
 
 .ChoiceCard.RarityLegendary {
-  background-image: url("file://{images}/custom_game/hud/ability_border_mysthic.png");
+  background-image: url("file://{images}/custom_game/hud/ability_border_legendary.png");
 }
 
 .ChoiceCard.Picked {
@@ -1114,7 +1114,7 @@
 }
 
 #PopupCard.RarityLegendary {
-  background-image: url("file://{images}/custom_game/hud/ability_border_mysthic.png");
+  background-image: url("file://{images}/custom_game/hud/ability_border_legendary.png");
 }
 
 #PopupCard.RarityLegendary #PopupIcon {
