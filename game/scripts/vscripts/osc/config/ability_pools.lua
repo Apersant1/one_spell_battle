@@ -22,7 +22,10 @@ OSC_HERO_EXTRA_ABILITIES = {
 -- tags — непустой список из OSC_ABILITY_TAGS: что способность даёт игроку.
 -- Запись с несколькими тегами участвует в серии каждого из них (см.
 -- MAX_SAME_TAG_STREAK в config.lua).
--- Способности, которых нет в KV, с неверным весом или тегами, при старте
+-- rarity — "rare" или "legendary" (из OSC_ABILITY_RARITIES); без поля —
+-- обычная. Редкость меняет только шанс выпадения (множитель веса
+-- ABILITY_RARITY_WEIGHT в config.lua) и оформление в HUD, но не силу.
+-- Способности, которых нет в KV, с неверным весом, тегами или редкостью, при старте
 -- убирает OSC_AbilitySelection.ValidatePools.
 -- Призванные существа (варды и т. п.) после смены способности остаются до смерти.
 
@@ -30,6 +33,9 @@ OSC_HERO_EXTRA_ABILITIES = {
 -- притягивание); mobility — перемещение; passive — пассивная способность;
 -- support — лечение, защита и усиление союзников
 OSC_ABILITY_TAGS = { "damage", "disable", "mobility", "passive", "support" }
+
+-- Редкости записей пула: common — обычная (поле rarity можно не писать)
+OSC_ABILITY_RARITIES = { "common", "rare", "legendary" }
 
 OSC_ABILITY_POOL = {
     { name = "lina_dragon_slave",            hero = "npc_dota_hero_lina",            label = "Dragon Slave", tags = { "damage" } },

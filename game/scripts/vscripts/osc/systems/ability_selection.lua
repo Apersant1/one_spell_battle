@@ -62,12 +62,41 @@ local function InvalidTagsReason(entry, known)
     return nil
 end
 
-local function GetWeight(entry)
+function OSC_AbilitySelection.GetRarity(entry)
+    if OSC_Config.Get("ABILITY_RARITY_ENABLED") ~= true then
+        return "common"
+    end
+    return entry and entry.rarity or "common"
+end
+
+-- Неверный множитель редкости пишется в лог один раз на редкость: вес
+-- считается на каждый взвешенный выбор
+local warnedRarities = {}
+
+local function RarityMultiplier(entry)
+    if OSC_Config.Get("ABILITY_RARITY_ENABLED") ~= true then
+        return 1
+    end
+    local rarity = OSC_AbilitySelection.GetRarity(entry)
+    local multiplier = OSC_Config.Get("ABILITY_RARITY_WEIGHT." .. rarity)
+    if type(multiplier) ~= "number" or multiplier < 1 or multiplier ~= math.floor(multiplier) then
+        if not warnedRarities[rarity] then
+            warnedRarities[rarity] = true
+            OSC_Logger.Error("ABILITY_RARITY_WEIGHT." .. rarity
+                .. " must be a positive integer, got " .. tostring(multiplier))
+        end
+        return 1
+    end
+    return multiplier
+end
+
+-- Итоговый вес записи: weight (по умолчанию DEFAULT_WEIGHT) × множитель редкости
+function OSC_AbilitySelection.GetWeight(entry)
     local weight = entry.weight == nil and DEFAULT_WEIGHT or entry.weight
     if not IsValidWeight(weight) then
         error("[OSC] Invalid weight for ability: " .. tostring(entry.name))
     end
-    return weight
+    return weight * RarityMultiplier(entry)
 end
 
 -- Запись пула по имени способности (основной или ультимейта)
@@ -296,7 +325,7 @@ end
 local function PickWeighted(candidates)
     local totalWeight = 0
     for _, entry in ipairs(candidates) do
-        totalWeight = totalWeight + GetWeight(entry)
+        totalWeight = totalWeight + OSC_AbilitySelection.GetWeight(entry)
     end
     if totalWeight == 0 then
         return nil
@@ -304,7 +333,7 @@ local function PickWeighted(candidates)
 
     local roll = RandomInt(1, totalWeight)
     for index, entry in ipairs(candidates) do
-        roll = roll - GetWeight(entry)
+        roll = roll - OSC_AbilitySelection.GetWeight(entry)
         if roll <= 0 then
             return index
         end

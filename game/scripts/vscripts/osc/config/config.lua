@@ -26,6 +26,10 @@ OSC_CONFIG = {
     -- ROTATION_CHOICE_COUNT кандидатов; не выбрал — случайный из них
     ROTATION_CHOICE_ENABLED = true,
     ROTATION_CHOICE_COUNT = 3,
+    -- Редкость способностей (поле rarity в ability_pools.lua): итоговый вес
+    -- записи = weight × ABILITY_RARITY_WEIGHT[редкость]. Выключено — все обычные.
+    ABILITY_RARITY_ENABLED = true,
+    ABILITY_RARITY_WEIGHT = { common = 4, rare = 2, legendary = 1 },
     -- Отказы на команды клиента (выбор из трёх, голосование) пишутся в лог
     -- не чаще раза в столько секунд на игрока и канал
     CLIENT_REFUSAL_LOG_INTERVAL = 5,
