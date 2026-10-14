@@ -215,4 +215,32 @@ return {
             H.eq(OSC_AbilitySelection.Pick(hero, "ultimate").name, "test_u2", "pending ultimate counted")
         end
     end,
+
+    -- Записи реальных пулов: имена не повторяются (в том числе между пулами
+    -- и с linked), редкость из списка, hero и label заданы
+    pool_entries_unique_and_well_formed = function()
+        setup()
+        local rarities = { common = true, rare = true, legendary = true }
+        local seen, problems = {}, {}
+        local function Claim(name)
+            if seen[name] then table.insert(problems, "duplicate " .. name) end
+            seen[name] = true
+        end
+        for _, pool in ipairs({ OSC_ABILITY_POOL, OSC_ULTIMATE_POOL }) do
+            for _, item in ipairs(pool) do
+                Claim(item.name)
+                for _, link in ipairs(item.linked or {}) do Claim(link.name) end
+                if item.rarity ~= nil and not rarities[item.rarity] then
+                    table.insert(problems, "rarity " .. item.name .. "=" .. tostring(item.rarity))
+                end
+                if type(item.hero) ~= "string" or string.sub(item.hero, 1, 14) ~= "npc_dota_hero_" then
+                    table.insert(problems, "hero " .. item.name)
+                end
+                if type(item.label) ~= "string" or item.label == "" then
+                    table.insert(problems, "label " .. item.name)
+                end
+            end
+        end
+        H.eq(table.concat(problems, ", "), "", "pool entries")
+    end,
 }
