@@ -45,7 +45,11 @@ OSC.AbilityPopup = (function () {
       $("#PopupName").text = AbilityDisplayName(event);
       card.RemoveClass("FlipHidden"); // новая разворачивается
       Flash();
-      OSC.Util.PlaySound(OSC.Sounds.abilityChanged);
+      card.SetHasClass("RarityRare", event.rarity === "rare");
+      card.SetHasClass("RarityLegendary", event.rarity === "legendary");
+      OSC.Util.PlaySound(
+        event.rarity === "legendary" ? OSC.Sounds.legendaryAbility : OSC.Sounds.abilityChanged,
+      );
     });
 
     if (hideHandle !== null) $.CancelScheduled(hideHandle);

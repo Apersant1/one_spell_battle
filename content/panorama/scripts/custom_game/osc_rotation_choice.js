@@ -22,7 +22,7 @@ OSC.RotationChoice = (function () {
   var round = -1;
   var deadline = 0;
   var duration = 0; // для полосы времени: от предложения до дедлайна
-  var options = []; // [{ name, label }] в порядке ключей "1", "2", "3"
+  var options = []; // [{ name, label, rarity }] в порядке ключей "1", "2", "3"
   var serverPick = ""; // picked из net table
   var localPick = ""; // последний клик в этом раунде, пока сервер не подтвердил
   var pendingPicks = []; // все неподтверждённые клики (подтверждения приходят по порядку)
@@ -44,7 +44,11 @@ OSC.RotationChoice = (function () {
       })
       .map(function (key) {
         var option = raw[key] || {};
-        return { name: String(option.name || ""), label: String(option.label || "") };
+        return {
+          name: String(option.name || ""),
+          label: String(option.label || ""),
+          rarity: String(option.rarity || "common"),
+        };
       })
       .filter(function (option) {
         return option.name !== "";
@@ -170,6 +174,9 @@ OSC.RotationChoice = (function () {
     var card = $.CreatePanel("Button", container, "");
     card.AddClass("ChoiceCard");
     card.SetAttributeString("osc_ability", option.name);
+    // Рамка редкости (osc_hud.css): обычная — без рамки
+    card.SetHasClass("RarityRare", option.rarity === "rare");
+    card.SetHasClass("RarityLegendary", option.rarity === "legendary");
 
     var image = $.CreatePanel("DOTAAbilityImage", card, "");
     image.AddClass("ChoiceIcon");

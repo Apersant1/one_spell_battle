@@ -5,6 +5,7 @@ var OSC = OSC || {};
 // Пустая строка = без звука. Имена подберите в Asset Browser.
 OSC.Sounds = {
   abilityChanged: "",
+  legendaryAbility: "DOTA_Item.Refresher.Activate", // своя легендарная способность
   chaosWarning: "",
   chaosStart: "",
   reelStop: "",

@@ -715,6 +715,32 @@
   background-color: #24152dcc;
 }
 
+/* Редкость: редкая — синяя рамка, легендарная — золотая с пульсирующим
+   свечением; обычная — без изменений. Те же классы у карточек Сферы хаоса */
+@keyframes 'OSCLegendaryGlow' {
+  0% {
+    box-shadow: #ffc23a55 0px 0px 6px 0px;
+  }
+  50% {
+    box-shadow: #ffc23acc 0px 0px 16px 2px;
+  }
+  100% {
+    box-shadow: #ffc23a55 0px 0px 6px 0px;
+  }
+}
+
+.ChoiceCard.RarityRare {
+  border: 2px solid #4b8bff;
+}
+
+.ChoiceCard.RarityLegendary {
+  border: 2px solid #ffc23a;
+  animation-name: OSCLegendaryGlow;
+  animation-duration: 1.6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
 .ChoiceCard.Picked {
   border: 2px solid #efc96c;
   background-color: #3a2c0acc;
@@ -842,6 +868,19 @@
   height: 100%;
   border: 2px solid #c157ff;
   box-shadow: #c157ffaa 0px 0px 16px 0px;
+}
+
+#PopupCard.RarityRare #PopupIcon {
+  border: 2px solid #4b8bff;
+  box-shadow: #4b8bffaa 0px 0px 16px 0px;
+}
+
+#PopupCard.RarityLegendary #PopupIcon {
+  border: 2px solid #ffc23a;
+  animation-name: OSCLegendaryGlow;
+  animation-duration: 1.6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
 }
 
 #PopupFlash {
