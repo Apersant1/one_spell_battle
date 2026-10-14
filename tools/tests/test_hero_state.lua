@@ -59,6 +59,7 @@ return {
         OSC_Commands.Init()
         local hero = H.NewHero({})
         H.AddPlayer(0, hero)
+        OSC_CONFIG.DEVELOPMENT_MODE = false
 
         H.FireGameEvent("player_chat", { text = "-hero_state", playerid = 0 })
         H.eq(H.logged("Hero state:"), false, "ignored outside development mode")
@@ -67,6 +68,32 @@ return {
         H.FireGameEvent("player_chat", { text = "-hero_state", playerid = 0 })
         H.truthy(H.logged("Hero state: npc_dota_hero_axe"), "state logged")
         H.truthy(H.logged("modifiers:"), "modifier count logged")
+    end,
+
+    dev_command_win_kills_enemy_ancient = function()
+        setup()
+        require("osc/core/commands")
+        OSC_Commands.Init()
+        H.AddPlayer(0, H.NewHero({}))
+        H.players[0].team = DOTA_TEAM_BADGUYS
+        local killed = {}
+        local function fort(team)
+            return {
+                GetTeamNumber = function() return team end,
+                ForceKill = function() table.insert(killed, team) end,
+            }
+        end
+        H.byClass["npc_dota_fort"] = { fort(DOTA_TEAM_GOODGUYS), fort(DOTA_TEAM_BADGUYS) }
+        OSC_CONFIG.DEVELOPMENT_MODE = false
+
+        H.FireGameEvent("player_chat", { text = "-win", playerid = 0 })
+        H.eq(#killed, 0, "ignored outside development mode")
+
+        OSC_CONFIG.DEVELOPMENT_MODE = true
+        H.FireGameEvent("player_chat", { text = "-win", playerid = 0 })
+        H.eq(#killed, 1, "one ancient killed")
+        H.eq(killed[1], DOTA_TEAM_GOODGUYS, "enemy ancient")
+        H.byClass["npc_dota_fort"] = nil
     end,
 
     give_puts_chosen_entry = function()

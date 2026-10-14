@@ -38,7 +38,7 @@
 --     пересинхронизируется. Присылает vote.
 --   match_stats { players = { [playerID] = { hero, rotations, abilities,
 --     kills, kill_abilities, casino_net, chaos_damage } } } — итоговая
---     статистика матча на POST_GAME. Присылает stats.
+--     статистика матча при разрушении трона. Присылает stats.
 --
 -- Подписка именованная: повторный Subscribe с тем же id заменяет обработчик,
 -- поэтому повторная инициализация и script_reload не дублируют подписки.

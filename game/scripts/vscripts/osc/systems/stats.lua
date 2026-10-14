@@ -17,8 +17,10 @@
 --     раунд не идёт, обработчик сразу выходит, поэтому это дёшево и не
 --     вмешивается в урон (в отличие от фильтра урона).
 --
--- На POST_GAME статистика публикуется в шину событием match_stats
--- { players = { [playerID] = запись } } — его забирает экран итогов.
+-- При разрушении трона (или на POST_GAME, что раньше) статистика
+-- публикуется в шину событием match_stats { players = { [playerID] = запись } }
+-- — его забирает экран итогов. Ждать только POST_GAME нельзя: в матче на
+-- POST_GAME серверные события и think уже не приходили.
 
 require("osc/core/runtime_config")
 require("osc/core/heroes")
@@ -94,6 +96,11 @@ end
 function OSC_Stats.OnEntityKilled(event)
     if not OSC_Stats.IsEnabled() then return end
     local killed = Entity(event.entindex_killed)
+    if OSC_Heroes.IsValid(killed) and killed.GetClassname
+        and killed:GetClassname() == "npc_dota_fort" then
+        OSC_Stats.Publish()
+        return
+    end
     if not OSC_Heroes.IsMainHero(killed) then return end
     if killed.IsReincarnating and killed:IsReincarnating() then return end
 
@@ -156,12 +163,15 @@ function OSC_Stats.Snapshot()
     return players
 end
 
-function OSC_Stats.OnStateChanged(change)
-    if change.state ~= DOTA_GAMERULES_STATE_POST_GAME or OSC_Stats.published then return end
-    if not OSC_Stats.IsEnabled() then return end
+function OSC_Stats.Publish()
+    if OSC_Stats.published or not OSC_Stats.IsEnabled() then return end
     OSC_Stats.published = true
     OSC_Logger.Log("Match stats published")
     OSC_GameEvents.Emit("match_stats", { players = OSC_Stats.Snapshot() })
+end
+
+function OSC_Stats.OnStateChanged(change)
+    if change.state == DOTA_GAMERULES_STATE_POST_GAME then OSC_Stats.Publish() end
 end
 
 function OSC_Stats.Init()

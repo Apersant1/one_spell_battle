@@ -14,8 +14,10 @@ local function OnPlayerChat(event)
         or string.match(text, "^%-chaos%s+(%S+)$")
     -- -casino <circle|diamond|star|seven>: следующие спины дают тройку символа; -casino off — обычный режим
     local casinoSymbol = string.match(text, "^%-casino%s+(%S+)$")
+    -- -win: убивает вражеский трон — быстрая проверка конца игры и итогов
+    local isWin = text == "-win"
     if abilityName == nil and not isReroll and not isChaosStop and chaosId == nil
-        and casinoSymbol == nil and not isHeroState then
+        and casinoSymbol == nil and not isHeroState and not isWin then
         return
     end
 
@@ -27,6 +29,15 @@ local function OnPlayerChat(event)
     local playerID = event.playerid
     if not playerID or not PlayerResource:IsValidPlayerID(playerID) then
         OSC_Logger.Error(text .. " ignored: invalid player")
+        return
+    end
+
+    if isWin then
+        local team = PlayerResource:GetTeam(playerID)
+        for _, fort in ipairs(Entities:FindAllByClassname("npc_dota_fort")) do
+            if fort:GetTeamNumber() ~= team then fort:ForceKill(false) end
+        end
+        OSC_Logger.Log(text .. " executed by player " .. tostring(playerID))
         return
     end
 

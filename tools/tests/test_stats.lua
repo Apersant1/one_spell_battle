@@ -130,6 +130,23 @@ return {
         H.eq(OSC_Stats.Player(0).kills, 2, "snapshot is a copy")
     end,
 
+    ancient_death_publishes_before_post_game = function()
+        setup()
+        duel()
+        local seen = 0
+        OSC_GameEvents.Subscribe("match_stats", "test", function() seen = seen + 1 end)
+        H.entities[30] = {
+            IsNull = function() return false end,
+            GetClassname = function() return "npc_dota_fort" end,
+        }
+
+        kill(30, 10)
+        H.eq(seen, 1, "published on ancient death")
+
+        OSC_Stats.OnStateChanged({ state = DOTA_GAMERULES_STATE_POST_GAME })
+        H.eq(seen, 1, "POST_GAME does not publish again")
+    end,
+
     disabled_flag_collects_nothing = function()
         setup()
         OSC_CONFIG.STATS_ENABLED = false

@@ -1,5 +1,5 @@
 -- Итоги матча (флаг SUMMARY_ENABLED): по событию шины match_stats (его
--- присылает stats на POST_GAME, поэтому нужен и STATS_ENABLED) собирает
+-- присылает stats при разрушении трона, поэтому нужен и STATS_ENABLED) собирает
 -- net table osc_state/summary для экрана итогов:
 --   { players = { ["<playerID>"] = { hero, rotations, distinct_kill_abilities,
 --       kills, casino_net, chaos_damage } },
