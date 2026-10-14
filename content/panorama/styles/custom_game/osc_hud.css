@@ -164,6 +164,234 @@
   );
 }
 
+/* ---------- Хаос-раунд «Туннель» ---------- */
+/* Сплошные чёрные полосы вокруг квадрата с круглой дырой по центру экрана
+   (герой в центре — камера держится на нём) */
+#TunnelMask {
+  width: 100%;
+  height: 100%;
+  flow-children: down;
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: 0.8s;
+}
+
+.TunnelFillV {
+  width: 100%;
+  height: fill-parent-flow(1);
+  background-color: #000000;
+}
+
+#TunnelRow {
+  width: 100%;
+  height: 560px;
+  flow-children: right;
+}
+
+.TunnelFillH {
+  width: fill-parent-flow(1);
+  height: 100%;
+  background-color: #000000;
+}
+
+#TunnelHole {
+  width: 560px;
+  height: 560px;
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#00000000),
+    color-stop(0.6, #00000000),
+    color-stop(0.98, #000000ff),
+    to(#000000ff)
+  );
+}
+
+#TunnelMask.Shown {
+  opacity: 1;
+}
+
+/* ---------- Хаос-раунд «Лас-Вегас» ---------- */
+@keyframes 'OSCVegasTint' {
+  0% {
+    background-color: #ff00c826;
+  }
+  33% {
+    background-color: #00ffd926;
+  }
+  66% {
+    background-color: #fff20026;
+  }
+  100% {
+    background-color: #ff00c826;
+  }
+}
+
+@keyframes 'OSCVegasFringe' {
+  0% {
+    opacity: 0.5;
+    transform: translateX(-12px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(12px);
+  }
+  100% {
+    opacity: 0.5;
+    transform: translateX(-12px);
+  }
+}
+
+#VegasOverlay {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: 1s;
+}
+
+#VegasOverlay.Shown {
+  opacity: 1;
+}
+
+/* Бензиновая лужа: мягкие цветные пятна плывут и перетекают друг в друга,
+   а вся плёнка непрерывно сдвигается по радуге (hue-rotation) */
+@keyframes 'OSCOilHue' {
+  0% {
+    hue-rotation: 0deg;
+  }
+  100% {
+    hue-rotation: 360deg;
+  }
+}
+
+@keyframes 'OSCOilDriftA' {
+  0% {
+    transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1);
+  }
+  33% {
+    transform: translate3d(260px, -140px, 0px) scale3d(1.35, 0.8, 1);
+  }
+  66% {
+    transform: translate3d(-180px, 160px, 0px) scale3d(0.85, 1.3, 1);
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1);
+  }
+}
+
+@keyframes 'OSCOilDriftB' {
+  0% {
+    transform: translate3d(0px, 0px, 0px) scale3d(1.1, 0.9, 1);
+  }
+  33% {
+    transform: translate3d(-240px, -200px, 0px) scale3d(0.8, 1.25, 1);
+  }
+  66% {
+    transform: translate3d(200px, 120px, 0px) scale3d(1.4, 1, 1);
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0px) scale3d(1.1, 0.9, 1);
+  }
+}
+
+#VegasOil {
+  width: 100%;
+  height: 100%;
+  opacity: 0.32;
+  animation-name: OSCOilHue;
+  animation-duration: 7s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.OilBlob {
+  width: 1000px;
+  height: 1000px;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+#OilBlob1 {
+  margin: -300px 0px 0px -250px;
+  animation-name: OSCOilDriftA;
+  animation-duration: 13s;
+  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#ff00b4cc), to(#ff00b400));
+}
+
+#OilBlob2 {
+  horizontal-align: right;
+  margin: -200px -300px 0px 0px;
+  animation-name: OSCOilDriftB;
+  animation-duration: 11s;
+  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#ffe600cc), to(#ffe60000));
+}
+
+#OilBlob3 {
+  vertical-align: bottom;
+  margin: 0px 0px -350px -150px;
+  animation-name: OSCOilDriftB;
+  animation-duration: 15s;
+  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#00ff88cc), to(#00ff8800));
+}
+
+#OilBlob4 {
+  horizontal-align: right;
+  vertical-align: bottom;
+  margin: 0px -250px -300px 0px;
+  animation-name: OSCOilDriftA;
+  animation-duration: 12s;
+  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#00b4ffcc), to(#00b4ff00));
+}
+
+#OilBlob5 {
+  horizontal-align: center;
+  vertical-align: center;
+  animation-name: OSCOilDriftA;
+  animation-duration: 17s;
+  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#9a00ffaa), to(#9a00ff00));
+}
+
+#OilBlob6 {
+  horizontal-align: center;
+  vertical-align: top;
+  margin-top: -450px;
+  animation-name: OSCOilDriftB;
+  animation-duration: 10s;
+  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#ff5a00aa), to(#ff5a0000));
+}
+
+#VegasTint {
+  width: 100%;
+  height: 100%;
+  animation-name: OSCVegasTint;
+  animation-duration: 6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.VegasFringe {
+  width: 260px;
+  height: 100%;
+  animation-name: OSCVegasFringe;
+  animation-duration: 1.7s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+#VegasFringeLeft {
+  horizontal-align: left;
+  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ff1a3a73), to(#ff1a3a00));
+}
+
+#VegasFringeRight {
+  horizontal-align: right;
+  animation-delay: 0.85s;
+  background-color: gradient(linear, 100% 0%, 0% 0%, from(#1ae0ff73), to(#1ae0ff00));
+}
+
 /* ---------- Таймер ротации: кольцо ---------- */
 #TimerPanel {
   horizontal-align: center;

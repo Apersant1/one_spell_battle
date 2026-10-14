@@ -5,27 +5,68 @@ var OSC = OSC || {};
 OSC.ChaosRound = (function () {
   var UPDATE_INTERVAL = 0.25;
   var lastPhase = "none";
-  var hudHidden = false;
-  // Хаос-раунд no_hud: стандартный интерфейс Доты, наш HUD остаётся
-  var NO_HUD_ELEMENTS = [
-    "DOTA_DEFAULT_UI_ACTION_PANEL",
-    "DOTA_DEFAULT_UI_INVENTORY_PANEL",
-    "DOTA_DEFAULT_UI_INVENTORY_SHOP",
-    "DOTA_DEFAULT_UI_INVENTORY_QUICKBUY",
-    "DOTA_DEFAULT_UI_INVENTORY_COURIER",
-    "DOTA_DEFAULT_UI_INVENTORY_GOLD",
-    "DOTA_DEFAULT_UI_ACTION_MINIMAP",
-    "DOTA_DEFAULT_UI_TOP_HEROES",
-    "DOTA_DEFAULT_UI_TOP_TIMEOFDAY",
-    "DOTA_DEFAULT_UI_TOP_BAR_BACKGROUND",
-  ];
+  // Какие элементы стандартного интерфейса Доты прячет раунд; наш HUD остаётся
+  var HIDDEN_UI = {
+    no_hud: [
+      "DOTA_DEFAULT_UI_ACTION_PANEL",
+      "DOTA_DEFAULT_UI_INVENTORY_PANEL",
+      "DOTA_DEFAULT_UI_INVENTORY_SHOP",
+      "DOTA_DEFAULT_UI_INVENTORY_QUICKBUY",
+      "DOTA_DEFAULT_UI_INVENTORY_COURIER",
+      "DOTA_DEFAULT_UI_INVENTORY_GOLD",
+      "DOTA_DEFAULT_UI_ACTION_MINIMAP",
+      "DOTA_DEFAULT_UI_TOP_HEROES",
+      "DOTA_DEFAULT_UI_TOP_TIMEOFDAY",
+      "DOTA_DEFAULT_UI_TOP_BAR_BACKGROUND",
+    ],
+    tunnel: ["DOTA_DEFAULT_UI_ACTION_MINIMAP"], // иначе вся карта видна на миникарте
+  };
+  var NOTHING_HIDDEN = [];
+  var hiddenUI = NOTHING_HIDDEN;
 
-  function SetHudHidden(hidden) {
-    if (hidden === hudHidden) return;
-    hudHidden = hidden;
-    NO_HUD_ELEMENTS.forEach(function (name) {
-      var element = DotaDefaultUIElement_t[name];
-      if (element !== undefined) GameUI.SetDefaultUIEnabled(element, !hidden);
+  function SetHiddenUI(names) {
+    if (names === hiddenUI) return;
+    function setEnabled(list, enabled) {
+      list.forEach(function (name) {
+        var element = DotaDefaultUIElement_t[name];
+        if (element !== undefined) GameUI.SetDefaultUIEnabled(element, enabled);
+      });
+    }
+    setEnabled(hiddenUI, true);
+    setEnabled(names, false);
+    hiddenUI = names;
+  }
+
+  // Туннель: камера держится на своём герое, маска в CSS оставляет круг в центре
+  var cameraLocked = false;
+
+  function SetCameraLocked(locked) {
+    if (locked === cameraLocked) return;
+    cameraLocked = locked;
+    var hero = Players.GetPlayerHeroEntityIndex(Players.GetLocalPlayer());
+    GameUI.SetCameraTarget(locked ? hero : -1);
+  }
+
+  // Лас-Вегас: камера покачивается и «дышит»; после раунда — стандартные значения
+  var DEFAULT_CAMERA_YAW = 0;
+  var DEFAULT_CAMERA_DISTANCE = 1134;
+  var cameraSwaying = false;
+
+  function SetCameraSwaying(swaying) {
+    if (swaying === cameraSwaying) return;
+    cameraSwaying = swaying;
+    if (!swaying) return;
+    var start = Game.Time();
+    OSC.Util.Loop(0.03, function () {
+      if (!cameraSwaying) {
+        GameUI.SetCameraYaw(DEFAULT_CAMERA_YAW);
+        GameUI.SetCameraDistance(DEFAULT_CAMERA_DISTANCE);
+        return false;
+      }
+      var t = Game.Time() - start;
+      GameUI.SetCameraYaw(DEFAULT_CAMERA_YAW + 7 * Math.sin(t * 1.1));
+      GameUI.SetCameraDistance(DEFAULT_CAMERA_DISTANCE + 140 * Math.sin(t * 1.5));
+      return true;
     });
   }
 
@@ -80,6 +121,16 @@ OSC.ChaosRound = (function () {
     return true;
   }
 
+  // Клиентские хаос-раунды: eventId — активный раунд или "" (нет раунда)
+  function ApplyScreenEffects(eventId) {
+    SetHiddenUI(HIDDEN_UI[eventId] || NOTHING_HIDDEN);
+    mouseSwapped = eventId === "mouse_swap";
+    SetCameraLocked(eventId === "tunnel");
+    SetCameraSwaying(eventId === "vegas");
+    $("#TunnelMask").SetHasClass("Shown", eventId === "tunnel");
+    $("#VegasOverlay").SetHasClass("Shown", eventId === "vegas");
+  }
+
   function OnPhaseChanged(phase) {
     if (phase === "warning") OSC.Util.PlaySound(OSC.Sounds.chaosWarning);
     if (phase === "active") OSC.Util.PlaySound(OSC.Sounds.chaosStart);
@@ -96,8 +147,7 @@ OSC.ChaosRound = (function () {
     var vignette = $("#ChaosVignette");
 
     if (OSC.Util.IsPostGame()) {
-      SetHudHidden(false);
-      mouseSwapped = false;
+      ApplyScreenEffects("");
       panel.SetHasClass("Shown", false);
       vignette.SetHasClass("Shown", false);
       return false;
@@ -113,8 +163,7 @@ OSC.ChaosRound = (function () {
     var timeLeft = Math.max(0, (timerEnd || 0) - now);
     var phase = isActive ? "active" : isWarning ? "warning" : "none";
 
-    SetHudHidden(isActive && data.event_id === "no_hud");
-    mouseSwapped = isActive && data.event_id === "mouse_swap";
+    ApplyScreenEffects(isActive ? data.event_id : "");
 
     if (phase !== lastPhase) {
       OnPhaseChanged(phase);

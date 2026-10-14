@@ -27,6 +27,30 @@
             <Panel id="VignetteRight" class="VignetteEdge" hittest="false" />
         </Panel>
 
+        <!-- Экранные хаос-раунды «Туннель» и «Лас-Вегас» (osc_chaos_round.js) -->
+        <Panel id="TunnelMask" hittest="false">
+            <Panel class="TunnelFillV" hittest="false" />
+            <Panel id="TunnelRow" hittest="false">
+                <Panel class="TunnelFillH" hittest="false" />
+                <Panel id="TunnelHole" hittest="false" />
+                <Panel class="TunnelFillH" hittest="false" />
+            </Panel>
+            <Panel class="TunnelFillV" hittest="false" />
+        </Panel>
+        <Panel id="VegasOverlay" hittest="false">
+            <Panel id="VegasOil" hittest="false">
+                <Panel id="OilBlob1" class="OilBlob" hittest="false" />
+                <Panel id="OilBlob2" class="OilBlob" hittest="false" />
+                <Panel id="OilBlob3" class="OilBlob" hittest="false" />
+                <Panel id="OilBlob4" class="OilBlob" hittest="false" />
+                <Panel id="OilBlob5" class="OilBlob" hittest="false" />
+                <Panel id="OilBlob6" class="OilBlob" hittest="false" />
+            </Panel>
+            <Panel id="VegasTint" hittest="false" />
+            <Panel id="VegasFringeLeft" class="VegasFringe" hittest="false" />
+            <Panel id="VegasFringeRight" class="VegasFringe" hittest="false" />
+        </Panel>
+
         <Panel id="NotificationFeed" hittest="false" />
 
         <Label id="VersionLabel" class="OSCTextSmall OSCMuted" hittest="false" />
