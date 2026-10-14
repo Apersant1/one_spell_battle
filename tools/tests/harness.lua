@@ -9,6 +9,7 @@ H = {
     gameEvents = {},
     thinks = {},
     kv = {},
+    itemCosts = {}, -- ItemCost предметов для GetItemCost
     failAdd = {},
     heroes = {},
     players = {},
@@ -48,6 +49,15 @@ DOTA_GAMERULES_STATE_SCENARIO_SETUP = 9
 DOTA_GAMERULES_STATE_GAME_IN_PROGRESS = 10
 DOTA_GAMERULES_STATE_POST_GAME = 11
 DOTA_ModifyGold_Unspecified = 0
+DOTA_ModifyGold_PurchaseItem = 4
+DOTA_SHOP_HOME = 0
+-- Слоты тайника как в Dota: 0-5 инвентарь, 6-8 рюкзак, 9-14 тайник
+DOTA_STASH_SLOT_1 = 9
+DOTA_STASH_SLOT_2 = 10
+DOTA_STASH_SLOT_3 = 11
+DOTA_STASH_SLOT_4 = 12
+DOTA_STASH_SLOT_5 = 13
+DOTA_STASH_SLOT_6 = 14
 PATTACH_ABSORIGIN_FOLLOW = 1
 PATTACH_WORLDORIGIN = 2
 LUA_MODIFIER_MOTION_NONE = 0
@@ -163,6 +173,8 @@ Entities = {
 }
 function ExecuteOrderFromTable(order) H.lastOrder = order end
 function CreateUnitByName() return nil end
+function CreateItem(name) return H.NewItem(name) end
+function GetItemCost(name) return H.itemCosts[name] or 0 end
 
 function H.NewItem(name)
     return {
@@ -284,6 +296,11 @@ function Hero:AddItem(item)
             return item
         end
     end
+end
+-- Тест ставит hero.at_shop = true, когда герой стоит у базового магазина
+function Hero:IsInRangeOfShop() return self.at_shop == true end
+function Hero:SwapItems(first, second)
+    self.items[first], self.items[second] = self.items[second], self.items[first]
 end
 function Hero:RemoveItem(item)
     self:TakeItem(item)
