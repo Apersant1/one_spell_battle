@@ -122,8 +122,9 @@ dota_launch_custom_game one_spell dota
   `osc_rotation_choice_closed` { round, chosen }, в net table
   `options = {}`, `picked` = выданное. Герой, готовый уже после
   предупреждения, меняет способность случайно. Копии копируют итог.
-- Предмет «Якорь» `item_osc_anchor` (`ANCHOR_ENABLED`, цена `ANCHOR_COST` =
-  400, один заряд): основной герой ставит якорь (`osc/core/anchor.lua`),
+- Предмет «Якорь» `item_osc_anchor` (`ANCHOR_ENABLED`, цена 400 — `ItemCost`
+  в KV, один заряд, продаётся в Хаос-лавке): основной герой ставит якорь
+  (`osc/core/anchor.lua`),
   net table `osc_state/anchor_<playerID>` = { active }. Пока якорь стоит,
   выбор из трёх не предлагается; уже выданный выбор закрывается
   (`osc_rotation_choice_closed` с текущей способностью). Ближайшая ротация
@@ -307,6 +308,31 @@ dota_launch_custom_game one_spell dota
   анимируется с последовательной остановкой барабанов. Автомат можно
   переоткрыть повторным выбором.
 
+### Хаос-лавка
+
+- Предметы режима (`item_osc_ultimate_reroll`, `item_osc_anchor`) продаются
+  только в Хаос-лавке: кнопка в правом нижнем углу HUD рядом со стандартным
+  магазином открывает панель с товарами. В стандартном магазине их нет
+  (`ItemPurchasable "0"`), цена — `ItemCost` в `npc_items_custom.txt`.
+- Список товаров и лимиты — `CHAOS_SHOP_ITEMS`: реролл ультимейта — 5 на
+  команду за матч (`team_stock`), «Якорь» — без лимита; `CHAOS_SHOP_ENABLED`
+  выключает лавку, `ANCHOR_ENABLED = false` убирает из неё «Якорь».
+- Сервер (`osc/systems/chaos_shop.lua`, `OSC_ChaosShop`): клиент шлёт
+  `osc_shop_buy` { item }, команда проходит `OSC_ClientCommands.Check`.
+  Затем по порядку: товар выключен, кончился сток команды, не хватает
+  золота, некуда положить — отказ без списания (`osc_shop_err_*`, красная
+  строка `osc_hud_error` и `osc_shop_result` { ok = 0, item, error }).
+- Герой жив и у базового магазина — предмет в инвентарь (инвентарь и рюкзак
+  полны — в тайник); иначе — в свободный слот тайника, оттуда его доставит
+  курьер. Золото списывается со сверкой фактически списанного, как в казино;
+  если списалось не всё или предмет не выдался — золото возвращается.
+- Net table `osc_state/shop_<team>` = { items = { [i] = { name, cost, stock,
+  max } } } (`stock = max = -1` — без лимита) публикуется при старте и после
+  каждой покупки команды; сток переживает `script_reload`.
+- Panorama: `osc_chaos_shop.js` (`OSC.ChaosShop`), панель `#ChaosShopPanel`.
+  Кнопка «Купить» неактивна при нехватке золота или пустом стоке — это
+  только подсказка, решает сервер.
+
 ### Уведомления и интерфейс
 
 - Уведомления настраиваются в `osc/config/notifications.lua`: типы,
@@ -428,7 +454,8 @@ Panorama отправляет серверу действия пользоват
   `osc_state`.
 - В ней сейчас используются ключи `version`, `timer`, `chaos_round`,
   `casino` (радиус автомата для подсветки по Alt), `choice_<playerID>`
-  (выбор из трёх), `anchor_<playerID>` («Якорь»), `vote` и
+  (выбор из трёх), `anchor_<playerID>` («Якорь»), `shop_<team>`
+  (Хаос-лавка), `vote` и
   `vote_<playerID>` (голосование в лобби), `summary` (итоги матча).
 - Серверные игровые определения и параметры находятся в
   `game/scripts/npc/`; тексты — в `game/resource/`.
@@ -493,7 +520,8 @@ Panorama отправляет серверу действия пользоват
 | `ROTATION_CHOICE_COUNT`                |              `3` | Сколько вариантов предлагать              |
 | `CLIENT_REFUSAL_LOG_INTERVAL`          |              `5` | Отказы команд клиента в лог не чаще, секунд |
 | `ANCHOR_ENABLED`                       |           `true` | Предмет «Якорь»                           |
-| `ANCHOR_COST`                          |            `400` | Цена «Якоря» (= ItemCost в KV)            |
+| `CHAOS_SHOP_ENABLED`                   |           `true` | Хаос-лавка                                |
+| `CHAOS_SHOP_ITEMS`                     |  реролл 5, якорь | Товары лавки и лимит на команду (`team_stock`) |
 | `ROTATION_CAST_PHASE_DEFER`            |           `true` | Откладывать смену в фазе каста            |
 | `ROTATION_DEFER_STEP`                  |           `0.25` | Шаг проверки отложенной смены, секунд     |
 | `ROTATION_MAX_DEFER`                   |              `3` | Максимум отсрочки смены, секунд           |
@@ -535,7 +563,6 @@ Panorama отправляет серверу действия пользоват
 - Дополнительные идеи из старого плана: `drunk_brawl`, `eclipse` и
   `ultimate_storm`.
 - Глобальный джекпот казино и динамический лимит ставки.
-- HUD голосования в лобби и экран итогов матча.
 - Предложенная в TODO шина событий/bootstrap-архитектура: сейчас системы
   инициализируются напрямую в `OneSpellChaos:Init()` и взаимодействуют
   через общие модули, события движка, net tables и custom game events.
@@ -553,6 +580,7 @@ Panorama отправляет серверу действия пользоват
 - Хаос-раунды: `osc/systems/chaos_rounds.lua`.
 - Курьеры: `osc/systems/couriers.lua`.
 - Серверная логика автомата: `osc/systems/casino.lua`.
+- Хаос-лавка: `osc/systems/chaos_shop.lua`.
 - HUD: `content/panorama/layout/custom_game/osc_hud.xml` и
   `content/panorama/scripts/custom_game/`.
 - Внешний вид HUD: `content/panorama/styles/custom_game/`.
@@ -564,8 +592,7 @@ Panorama отправляет серверу действия пользоват
 
 `tools/tests/` — проверки без запуска Dota 2 (в игру не попадают):
 синтаксис Lua (LuaJIT) и Panorama JS, сверка ключей локализации ru/en,
-цен предметов в KV с конфигом и
-модульные тесты систем на моках Dota API. Запуск:
+прямые чтения `OSC_CONFIG` и модульные тесты систем на моках Dota API. Запуск:
 
 ```text
 pip install lupa
