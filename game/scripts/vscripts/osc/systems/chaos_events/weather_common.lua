@@ -59,15 +59,29 @@ function OSC_Weather.Stun(hero, duration)
 end
 
 -- Частица в точке мира; extraPoints — номера контрольных точек, куда тоже
--- ставим эту позицию (у некоторых эффектов центр задаётся не в точке 0)
-function OSC_Weather.PlayParticle(name, position, extraPoints)
+-- ставим эту позицию (у некоторых эффектов центр задаётся не в точке 0).
+-- lifetime — для зацикленных эффектов (пузыри Torrent): сами они не гаснут,
+-- уничтожаем через lifetime секунд
+function OSC_Weather.PlayParticle(name, position, extraPoints, lifetime)
     if not name or name == "" then return end
     local particle = ParticleManager:CreateParticle(name, PATTACH_WORLDORIGIN, nil)
     ParticleManager:SetParticleControl(particle, 0, position)
     for _, point in ipairs(extraPoints or {}) do
         ParticleManager:SetParticleControl(particle, point, position)
     end
-    ParticleManager:ReleaseParticleIndex(particle)
+    if not lifetime then
+        ParticleManager:ReleaseParticleIndex(particle)
+        return
+    end
+    GameRules:GetGameModeEntity():SetContextThink(
+        DoUniqueString("osc_weather_particle"),
+        function()
+            ParticleManager:DestroyParticle(particle, false)
+            ParticleManager:ReleaseParticleIndex(particle)
+            return nil
+        end,
+        lifetime
+    )
 end
 
 -- Звук в точке; соседний герой нужен движку как «источник» звука

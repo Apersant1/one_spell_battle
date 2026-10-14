@@ -72,6 +72,25 @@ return {
         H.eq(called, false, "strike skipped after the round ended")
     end,
 
+    looped_particle_is_destroyed_after_lifetime = function()
+        setupWeather()
+        local destroyed = {}
+        local original = ParticleManager.DestroyParticle
+        ParticleManager.DestroyParticle = function(_, particle) table.insert(destroyed, particle) end
+        OSC_Weather.PlayParticle("particles/bubbles.vpcf", Vector(0, 0, 0), nil, 1.6)
+
+        local think
+        for name, entry in pairs(H.thinks) do
+            if string.find(name, "osc_weather_particle", 1, true) then think = entry end
+        end
+        H.eq(think ~= nil, true, "destroy scheduled")
+        H.eq(think.delay, 1.6, "after lifetime")
+        think.fn()
+        ParticleManager.DestroyParticle = original
+
+        H.eq(#destroyed, 1, "particle destroyed")
+    end,
+
     after_runs_when_round_same = function()
         setupWeather()
         local called = false

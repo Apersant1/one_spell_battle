@@ -44,7 +44,8 @@ OSC_ChaosEvents:Register({
         for _, hero in ipairs(OSC_Weather.PickTargets(cfg("TARGETS"))) do
             local position = hero:GetAbsOrigin()
             OSC_Weather.ShowWarning(position, cfg("RADIUS"), cfg("DELAY"))
-            OSC_Weather.PlayParticle(cfg("WARN_PARTICLE"), position)
+            -- пузыри зациклены: гасим к удару потока
+            OSC_Weather.PlayParticle(cfg("WARN_PARTICLE"), position, nil, cfg("DELAY"))
             OSC_Weather.PlaySound(cfg("WARN_SOUND"), position, hero)
             OSC_Weather.After(cfg("DELAY"), function()
                 Erupt(position, hero)
