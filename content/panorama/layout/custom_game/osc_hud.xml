@@ -76,23 +76,30 @@
 
         <Label id="VersionLabel" class="OSCTextSmall OSCMuted" hittest="false" />
 
-        <Panel id="TimerPanel" class="OSCSurface OSCChaos" hittest="false">
-            <Panel id="TimerRing" hittest="false">
-                <Panel id="TimerRingTrack" hittest="false" />
-                <Panel id="TimerRingFill" hittest="false" />
-                <Panel id="TimerRingHole" hittest="false" />
-            </Panel>
-            <Label id="TimerLabel" class="OSCTextBody OSCBold" />
-            <!-- Якорь: виден, пока следующая ротация пропускается (osc_anchor.js) -->
-            <Panel id="AnchorBadge" hittest="true">
-                <DOTAAbilityImage id="AnchorIcon" abilityname="tidehunter_anchor_smash"
-                    hittest="false" />
+        <Panel id="TimerPanel" hittest="false">
+            <!-- Срочная плашка вторым слоем: проявляется через opacity (Urgent) -->
+            <Panel id="TimerUrgentBg" hittest="false" />
+            <Panel id="TimerContent" hittest="false">
+                <Panel id="TimerRing" hittest="false">
+                    <Panel id="TimerRingTrack" hittest="false" />
+                    <Panel id="TimerRingFill" hittest="false" />
+                    <Panel id="TimerRingHole" hittest="false" />
+                </Panel>
+                <Label id="TimerLabel" class="OSCTextBody OSCBold" />
+                <!-- Якорь: виден, пока следующая ротация пропускается (osc_anchor.js) -->
+                <Panel id="AnchorBadge" hittest="true">
+                    <DOTAAbilityImage id="AnchorIcon" abilityname="tidehunter_anchor_smash"
+                        hittest="false" />
+                </Panel>
             </Panel>
         </Panel>
 
-        <Panel id="ChaosRoundPanel" class="OSCSurface OSCChaos" hittest="false">
-            <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
-                text="#osc_hud_chaos_header" />
+        <Panel id="ChaosRoundPanel" hittest="false">
+            <Panel id="ChaosRoundHeaderRow" hittest="false">
+                <Panel id="ChaosRoundIcon" hittest="false" />
+                <Label id="ChaosRoundHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
+                    text="#osc_hud_chaos_header" />
+            </Panel>
             <Label id="ChaosRoundTitle" class="OSCTextTitle" text="#osc_hud_chaos_waiting" />
             <Label id="ChaosRoundDescription" class="OSCTextBody OSCMuted"
                 text="#osc_hud_chaos_soon_desc" />
@@ -150,7 +157,10 @@
         <Button id="HelpButton" class="OSCButton" onactivate="OSC.Help.Toggle()">
             <Label text="#osc_hud_help_button" />
         </Button>
-        <Panel id="HelpPanel" class="OSCSurface OSCChaos" hittest="true">
+        <Panel id="HelpPanel" hittest="true">
+            <Button id="HelpClose" class="OSCButton" onactivate="OSC.Help.Close()">
+                <Label text="#osc_hud_help_close" />
+            </Button>
             <Label id="HelpTitle" class="OSCTextTitle OSCChaosText" text="#osc_hud_help_title" />
             <Panel id="HelpSections">
                 <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_rotation_title" />
@@ -168,9 +178,6 @@
                 <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_chaos_sphere_title" />
                 <Label class="HelpText OSCTextSmall" text="#osc_hud_help_chaos_sphere_text" />
             </Panel>
-            <Button id="HelpClose" class="OSCButton" onactivate="OSC.Help.Close()">
-                <Label text="#osc_hud_help_close" />
-            </Button>
         </Panel>
 
         <!-- Хаос-лавка (osc_chaos_shop.js): кнопка рядом со стандартным
@@ -179,12 +186,12 @@
             onactivate="OSC.ChaosShop.Toggle()">
             <Label text="#osc_shop_button" />
         </Button>
-        <Panel id="ChaosShopPanel" class="OSCSurface OSCChaos" hittest="true">
-            <Label id="ChaosShopTitle" class="OSCTextTitle OSCChaosText" text="#osc_shop_title" />
-            <Panel id="ChaosShopItems" />
+        <Panel id="ChaosShopPanel" hittest="true">
             <Button id="ChaosShopClose" class="OSCButton" onactivate="OSC.ChaosShop.Close()">
                 <Label text="#osc_shop_close" />
             </Button>
+            <Label id="ChaosShopTitle" class="OSCTextTitle OSCChaosText" text="#osc_shop_title" />
+            <Panel id="ChaosShopItems" />
         </Panel>
 
         <!-- Сфера хаоса (osc_chaos_sphere.js): выбор режима, затем карточки

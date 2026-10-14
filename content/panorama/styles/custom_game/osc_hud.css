@@ -548,34 +548,78 @@
 }
 
 /* ---------- Таймер ротации: кольцо ---------- */
+/* timer_plaque_hud 744x128 в 2x (tools/hud_assets.py): плашка с гнездом слева
+   и запечённой тенью (поля 6px); центр гнезда ~(32, 32) */
 #TimerPanel {
+  width: 372px;
+  height: 64px;
   horizontal-align: center;
-  margin-top: 48px;
-  padding: 4px 16px 4px 4px;
-  flow-children: right;
-  transition-property: background-color, border, box-shadow;
-  transition-duration: 0.3s;
+  margin-top: 42px;
+  background-image: url("file://{images}/custom_game/hud/timer_plaque_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
-#TimerPanel.Urgent {
-  background-color: #5a1440e6;
+#TimerContent {
+  width: 100%;
+  height: 100%;
+  flow-children: right;
+}
+
+/* background-image не анимируется — срочная плашка лежит сверху и плавно
+   проявляется, затем пульсирует яркостью */
+@keyframes 'OSCUrgentGlow' {
+  0% {
+    brightness: 1;
+  }
+  50% {
+    brightness: 1.4;
+  }
+  100% {
+    brightness: 1;
+  }
+}
+
+#TimerUrgentBg {
+  width: 100%;
+  height: 100%;
+  background-image: url("file://{images}/custom_game/hud/timer_plaque_urgent_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: 0.6s;
+  transition-timing-function: ease-in-out;
+}
+
+#TimerPanel.Urgent #TimerUrgentBg {
+  opacity: 1;
+  animation-name: OSCUrgentGlow;
+  animation-duration: 1.2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
 }
 
 #TimerPanel.Hidden {
   visibility: collapse;
 }
 
+/* Оправа timer_bezel поверх гнезда; дуга (Track/Fill) видна в прозрачном канале
+   оправы: внешний диаметр канала — 54% картинки */
 #TimerRing {
-  width: 36px;
-  height: 36px;
-  margin-right: 12px;
+  width: 60px;
+  height: 60px;
+  margin-left: 2px;
+  margin-right: 8px;
   vertical-align: center;
 }
 
 #TimerRingTrack,
 #TimerRingFill {
-  width: 100%;
-  height: 100%;
+  width: 33px;
+  height: 33px;
+  horizontal-align: center;
+  vertical-align: center;
   border-radius: 50%;
 }
 
@@ -589,12 +633,11 @@
 }
 
 #TimerRingHole {
-  width: 28px;
-  height: 28px;
-  horizontal-align: center;
-  vertical-align: center;
-  border-radius: 50%;
-  background-color: #0c0a12;
+  width: 100%;
+  height: 100%;
+  background-image: url("file://{images}/custom_game/hud/timer_bezel.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 #TimerPanel.Urgent #TimerRingFill {
@@ -608,8 +651,13 @@
   animation-timing-function: ease-in-out;
 }
 
+/* Ширина по тексту, чтобы «Якорь» стоял сразу за ним; длинная строка (до горна)
+   переносится на вторую строку внутри плашки */
 #TimerLabel {
+  max-width: 250px;
   vertical-align: center;
+  font-size: 15px;
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
 /* ---------- Якорь у таймера ---------- */
@@ -632,10 +680,6 @@
   width: 100%;
   height: 100%;
   border-radius: 3px;
-}
-
-#TimerPanel.Anchored {
-  border: 1px solid #efc96c;
 }
 
 #TimerPanel.Anchored #TimerRingFill {
@@ -704,6 +748,10 @@
   padding: 6px 4px;
   flow-children: down;
   background-color: #08070bcc;
+  background-image: url("file://{images}/custom_game/hud/ability_border_common.png");
+  background-size: 92px 92px;
+  background-position: 50% 0px;
+  background-repeat: no-repeat;
   border: 1px solid #bd72e840;
   border-radius: 4px;
   transition-property: border, background-color, box-shadow, opacity;
@@ -715,30 +763,26 @@
   background-color: #24152dcc;
 }
 
-/* Редкость: редкая — синяя рамка, легендарная — золотая с пульсирующим
-   свечением; обычная — без изменений. Те же классы у карточек Сферы хаоса */
+/* Редкость — картинка рамки вокруг иконки (hud/ability_border_*.png), у легендарной
+   ещё пульсирующее свечение попапа. Те же классы у карточек Сферы хаоса */
 @keyframes 'OSCLegendaryGlow' {
   0% {
-    box-shadow: #ffc23a55 0px 0px 6px 0px;
+    box-shadow: #ffc23a88 0px 0px 10px 2px;
   }
   50% {
-    box-shadow: #ffc23acc 0px 0px 16px 2px;
+    box-shadow: #ffc23aff 0px 0px 22px 6px;
   }
   100% {
-    box-shadow: #ffc23a55 0px 0px 6px 0px;
+    box-shadow: #ffc23a88 0px 0px 10px 2px;
   }
 }
 
 .ChoiceCard.RarityRare {
-  border: 2px solid #4b8bff;
+  background-image: url("file://{images}/custom_game/hud/ability_border_rare.png");
 }
 
 .ChoiceCard.RarityLegendary {
-  border: 2px solid #ffc23a;
-  animation-name: OSCLegendaryGlow;
-  animation-duration: 1.6s;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
+  background-image: url("file://{images}/custom_game/hud/ability_border_mysthic.png");
 }
 
 .ChoiceCard.Picked {
@@ -758,11 +802,13 @@
   animation-timing-function: ease-in-out;
 }
 
+/* Дыра в рамке 92px: 56x56 начиная с 22px от верха карточки (минус padding 6px) */
 .ChoiceIcon {
   width: 56px;
   height: 56px;
+  margin-top: 16px;
+  margin-bottom: 14px;
   horizontal-align: center;
-  border: 1px solid #00000080;
 }
 
 .ChoiceName {
@@ -777,21 +823,29 @@
   color: #efc96c;
 }
 
+/* Жёлоб progress_track_hud, внутри — заливка progress_fill_hud. JS меняет ширину
+   заливки, текстура фиксированной ширины (= ширина канала) обрезается, а не сжимается */
 #ChoiceProgress {
   width: 100%;
-  height: 3px;
+  height: 12px;
   margin-top: 6px;
-  background-color: #ffffff1a;
+  padding: 2px 8px 3px 8px;
+  background-image: url("file://{images}/custom_game/hud/progress_track_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 #ChoiceProgressFill {
   width: 100%;
   height: 100%;
-  background-color: #c157ff;
+  background-image: url("file://{images}/custom_game/hud/progress_fill_hud.png");
+  background-size: 314px 100%;
+  background-position: 0px 0px;
+  background-repeat: no-repeat;
 }
 
 #ChoicePanel.Urgent #ChoiceProgressFill {
-  background-color: #ff4fd8;
+  wash-color: #ff4fd8;
 }
 
 /* ---------- Сфера хаоса ---------- */
@@ -862,13 +916,19 @@
 }
 
 /* ---------- Хаос-раунд ---------- */
+/* chaos_round_bg_hud 728x528 в 2x (tools/hud_assets.py), тень запечена (поля 12px);
+   под длинный текст панель вытянется по высоте */
 #ChaosRoundPanel {
-  width: 300px;
+  width: 364px;
+  min-height: 264px;
   horizontal-align: right;
   vertical-align: top;
-  margin-top: 96px;
-  margin-right: 24px;
-  padding: 12px 16px;
+  margin-top: 84px;
+  margin-right: 12px;
+  padding: 64px 48px 42px 48px;
+  background-image: url("file://{images}/custom_game/hud/chaos_round_bg_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   flow-children: down;
   opacity: 0;
   transform: translateY(-20px);
@@ -886,6 +946,28 @@
   animation-name: OSCBlink;
   animation-duration: 1.2s;
   animation-iteration-count: infinite;
+}
+
+#ChaosRoundHeaderRow {
+  width: 100%;
+  flow-children: right;
+}
+
+#ChaosRoundIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  vertical-align: center;
+  background-image: url("file://{images}/custom_game/hud/chaos_round_icon_hud.png");
+  background-size: 100% 100%;
+}
+
+#ChaosRoundHeader {
+  vertical-align: center;
+}
+
+#ChaosRoundPanel Label {
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
 #ChaosRoundTitle,
@@ -916,10 +998,13 @@
   transform: scale3d(1, 1, 1);
 }
 
+/* Рамка 160px, дыра ~96x96 с 38px от верха */
 #PopupCard {
-  width: 96px;
-  height: 96px;
+  width: 160px;
+  height: 160px;
   horizontal-align: center;
+  background-image: url("file://{images}/custom_game/hud/ability_border_common.png");
+  background-size: 100% 100%;
   transform: rotateY(0deg);
   transition-property: transform;
   transition-duration: 0.15s;
@@ -930,20 +1015,23 @@
   transform: rotateY(90deg);
 }
 
-#PopupIcon {
-  width: 100%;
-  height: 100%;
-  border: 2px solid #c157ff;
-  box-shadow: #c157ffaa 0px 0px 16px 0px;
+#PopupIcon,
+#PopupFlash {
+  width: 96px;
+  height: 96px;
+  horizontal-align: center;
+  margin-top: 38px;
 }
 
-#PopupCard.RarityRare #PopupIcon {
-  border: 2px solid #4b8bff;
-  box-shadow: #4b8bffaa 0px 0px 16px 0px;
+#PopupCard.RarityRare {
+  background-image: url("file://{images}/custom_game/hud/ability_border_rare.png");
+}
+
+#PopupCard.RarityLegendary {
+  background-image: url("file://{images}/custom_game/hud/ability_border_mysthic.png");
 }
 
 #PopupCard.RarityLegendary #PopupIcon {
-  border: 2px solid #ffc23a;
   animation-name: OSCLegendaryGlow;
   animation-duration: 1.6s;
   animation-iteration-count: infinite;
@@ -951,8 +1039,6 @@
 }
 
 #PopupFlash {
-  width: 100%;
-  height: 100%;
   background-color: #ffffff;
   opacity: 0;
   transition-property: opacity;
@@ -1167,14 +1253,32 @@
 
 /* ================= Хаос-лавка ================= */
 
-/* Правый нижний угол рядом со стандартным магазином; отступы подогнать в игре */
-#ChaosShopButton {
-  min-width: 140px;
-  min-height: 34px;
+/* Столбик у левого края «Быстрой покупки» (1080p: её левый край ~285px от правого
+   края экрана): лавка внизу, «?» над ней по тому же правому краю; отступы подогнать в игре */
+#ChaosShopButton,
+#HelpButton {
+  min-width: 0px;
+  min-height: 0px;
+  padding: 0px;
+  background-color: #00000000;
+  border: 0px solid #00000000;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   horizontal-align: right;
   vertical-align: bottom;
-  margin-right: 16px;
-  margin-bottom: 290px;
+}
+
+#ChaosShopButton:hover,
+#HelpButton:hover {
+  brightness: 1.3;
+}
+
+#ChaosShopButton {
+  width: 200px;
+  height: 50px;
+  margin-right: 300px;
+  margin-bottom: 12px;
+  background-image: url("file://{images}/custom_game/hud/chaos_shop.png");
 }
 
 #ChaosShopButton.Hidden {
@@ -1182,18 +1286,39 @@
 }
 
 #ChaosShopButton Label {
-  font-size: 16px;
+  font-size: 18px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 0px;
 }
 
+/* shop_bg_shadow 1040x620 в 2x — рамка справки, растянутая по гладким участкам,
+   с той же запечённой тенью. min-height держит пропорции при малом числе товаров */
 #ChaosShopPanel {
-  width: 400px;
-  padding: 16px;
+  width: 520px;
+  min-height: 310px;
+  padding: 76px 70px 62px 70px;
+  background-image: url("file://{images}/custom_game/hud/shop_bg_shadow.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   horizontal-align: right;
   vertical-align: bottom;
-  margin-right: 16px;
-  margin-bottom: 336px;
+  /* над рядом кнопок, выше нижней панели HUD */
+  margin-right: 305px;
+  margin-bottom: 140px;
   flow-children: down;
   visibility: collapse;
+}
+
+/* Рамка целиком в картинке: гасим фон/обводку/тень OSCSurface, если класс
+   остался на панели после горячей перезагрузки */
+#ChaosShopPanel,
+#HelpPanel,
+#TimerPanel,
+#ChaosRoundPanel {
+  background-color: #00000000;
+  border: 0px solid #00000000;
+  border-radius: 0px;
+  box-shadow: #00000000 0px 0px 0px 0px;
 }
 
 #ChaosShopPanel.Visible {
@@ -1229,10 +1354,23 @@
   flow-children: down;
 }
 
+/* Подложка кнопки Хаос-лавки, 4:1 */
 .ChaosShopBuy {
-  min-width: 96px;
-  min-height: 36px;
+  width: 120px;
+  height: 30px;
+  min-width: 0px;
+  min-height: 0px;
+  padding: 0px;
   vertical-align: center;
+  background-color: #00000000;
+  border: 0px solid #00000000;
+  background-image: url("file://{images}/custom_game/hud/chaos_shop.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.ChaosShopBuy:hover {
+  brightness: 1.3;
 }
 
 .ChaosShopBuy:disabled {
@@ -1240,36 +1378,40 @@
 }
 
 .ChaosShopBuy Label {
-  font-size: 16px;
+  font-size: 14px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
-#ChaosShopClose {
-  horizontal-align: center;
+.ChaosShopInfo Label {
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
 /* ================= Справка ================= */
 
-/* Слева от кнопки Хаос-лавки (#ChaosShopButton: margin-right 16px,
-   min-width 140px, margin-bottom 290px); отступы подогнать в игре */
 #HelpButton {
-  width: 34px;
-  height: 34px;
-  horizontal-align: right;
-  vertical-align: bottom;
-  margin-right: 164px;
-  margin-bottom: 290px;
+  width: 40px;
+  height: 40px;
+  margin-right: 300px;
+  margin-bottom: 68px;
+  background-image: url("file://{images}/custom_game/hud/help_button_bg.png");
 }
 
 #HelpButton Label {
-  font-size: 18px;
-  horizontal-align: center;
-  vertical-align: center;
+  font-size: 20px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 0px;
 }
 
+/* helpdesk_bg_shadow 1136x1225 в 2x: рамка + запечённая тень по контуру (поля 24px);
+   box-shadow в Panorama только прямоугольный. padding — внутренняя область рамки */
 #HelpPanel {
-  width: 520px;
-  height: 560px;
-  padding: 16px;
+  width: 568px;
+  height: 612px;
+  padding: 124px 116px 94px 116px;
+  background-image: url("file://{images}/custom_game/hud/helpdesk_bg_shadow.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   horizontal-align: center;
   vertical-align: center;
   flow-children: down;
@@ -1295,13 +1437,46 @@
 .HelpHeading {
   width: 100%;
   margin-top: 10px;
+  text-shadow: #000000 1px 1px 4px 1.5;
 }
 
 .HelpText {
   width: 100%;
   margin-top: 2px;
+  color: #c9bdd3;
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
-#HelpClose {
-  horizontal-align: center;
+/* Крестик в правом верхнем углу рамки: первый в потоке панели, отрицательный
+   margin-bottom возвращает заголовок на место (absolute в Panorama нет) */
+#HelpClose,
+#ChaosShopClose {
+  width: 32px;
+  height: 32px;
+  min-width: 0px;
+  min-height: 0px;
+  padding: 0px;
+  horizontal-align: right;
+  margin-top: -8px;
+  margin-right: -10px;
+  margin-bottom: -24px;
+  background-color: #00000000;
+  border: 0px solid #00000000;
+}
+
+#ChaosShopClose {
+  margin-top: -10px;
+  margin-right: -8px;
+}
+
+#HelpClose Label,
+#ChaosShopClose Label {
+  font-size: 28px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1.0;
+}
+
+#HelpClose:hover Label,
+#ChaosShopClose:hover Label {
+  color: #ffffff;
 }
