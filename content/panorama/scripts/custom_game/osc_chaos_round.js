@@ -121,6 +121,42 @@ OSC.ChaosRound = (function () {
     return true;
   }
 
+  // Doom: камера прыгает за героем 20 раз в секунду без сглаживания — как при
+  // 20 FPS; изредка сбой трекинга сдвигает её вбок, шум VHS мигает
+  var DOOM_CAMERA_STEP = 0.05;
+  var VHS_GLITCH_CHANCE = 0.06;
+  var VHS_GLITCH_OFFSET = 45;
+  var cameraStepping = false;
+
+  function SetCameraStepping(stepping) {
+    if (stepping === cameraStepping) return;
+    cameraStepping = stepping;
+    if (!stepping) return;
+    OSC.Util.Loop(DOOM_CAMERA_STEP, function () {
+      if (!cameraStepping) return false;
+      var noiseA = Math.random() < 0.5;
+      $("#DoomNoiseA").SetHasClass("On", noiseA);
+      $("#DoomNoiseB").SetHasClass("On", !noiseA);
+      var hero = Players.GetPlayerHeroEntityIndex(Players.GetLocalPlayer());
+      if (hero === -1) return true;
+      var position = Entities.GetAbsOrigin(hero);
+      if (Math.random() < VHS_GLITCH_CHANCE) {
+        position[0] += (Math.random() < 0.5 ? -1 : 1) * VHS_GLITCH_OFFSET;
+      }
+      GameUI.SetCameraTargetPosition(position, -1);
+      return true;
+    });
+  }
+
+  function FormatVhsCounter(seconds) {
+    var total = Math.max(0, Math.floor(seconds));
+    return [Math.floor(total / 3600), Math.floor(total / 60) % 60, total % 60]
+      .map(function (part) {
+        return (part < 10 ? "0" : "") + part;
+      })
+      .join(":");
+  }
+
   // Клиентские хаос-раунды: eventId — активный раунд или "" (нет раунда)
   function ApplyScreenEffects(eventId) {
     SetHiddenUI(HIDDEN_UI[eventId] || NOTHING_HIDDEN);
@@ -129,6 +165,12 @@ OSC.ChaosRound = (function () {
     SetCameraSwaying(eventId === "vegas");
     $("#TunnelMask").SetHasClass("Shown", eventId === "tunnel");
     $("#VegasOverlay").SetHasClass("Shown", eventId === "vegas");
+    SetCameraStepping(eventId === "doom");
+    $("#DoomOverlay").SetHasClass("Shown", eventId === "doom");
+    $.GetContextPanel().SetHasClass("Doom", eventId === "doom");
+    if (eventId === "doom") {
+      $("#VhsCounter").text = FormatVhsCounter(Game.GetDOTATime(false, false));
+    }
   }
 
   function OnPhaseChanged(phase) {

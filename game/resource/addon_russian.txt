@@ -81,6 +81,8 @@
 		"osc_chaos_tunnel_desc" "Камера прикована к герою, видно только то, что рядом. Миникарты нет."
 		"osc_chaos_vegas_title" "Страх и ненависть в Лас-Вегасе"
 		"osc_chaos_vegas_desc" "Мир плывёт, краски сходят с ума. Держитесь за мышку."
+		"osc_chaos_doom_title" "DOOM"
+		"osc_chaos_doom_desc" "Добро пожаловать в 1993-й: пиксели, сканлайны и 20 кадров в секунду."
 		"osc_chaos_gold_rush_title" "Золотая лихорадка"
 		"osc_chaos_gold_rush_desc" "Каждые {s:tick} сек. все игроки получают {s:amount} ненадёжного золота."
 		"osc_chaos_weather_storm_title" "Гроза"

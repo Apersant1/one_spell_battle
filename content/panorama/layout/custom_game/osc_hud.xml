@@ -37,6 +37,25 @@
             </Panel>
             <Panel class="TunnelFillV" hittest="false" />
         </Panel>
+        <Panel id="DoomOverlay" hittest="false">
+            <Panel id="DoomTint" hittest="false" />
+            <Panel id="DoomNoiseA" class="VhsNoise" hittest="false" />
+            <Panel id="DoomNoiseB" class="VhsNoise" hittest="false" />
+            <Panel id="DoomPixels" hittest="false" />
+            <Panel id="VhsTracking" hittest="false" />
+            <!-- Выпуклый кинескоп: затемнение к краям, блик, рамка со скруглёнными углами -->
+            <Panel id="CrtVignette" hittest="false" />
+            <Panel id="CrtGlare" hittest="false" />
+            <Panel id="CrtEdge" hittest="false" />
+            <Panel id="CrtCornerTL" class="CrtCorner" hittest="false" />
+            <Panel id="CrtCornerTR" class="CrtCorner" hittest="false" />
+            <Panel id="CrtCornerBL" class="CrtCorner" hittest="false" />
+            <Panel id="CrtCornerBR" class="CrtCorner" hittest="false" />
+            <Panel id="VhsOsd" hittest="false">
+                <Label class="VhsOsdText" text="▶ PLAY" hittest="false" />
+                <Label id="VhsCounter" class="VhsOsdText" text="00:00:00" hittest="false" />
+            </Panel>
+        </Panel>
         <Panel id="VegasOverlay" hittest="false">
             <Panel id="VegasOil" hittest="false">
                 <Panel id="OilBlob1" class="OilBlob" hittest="false" />

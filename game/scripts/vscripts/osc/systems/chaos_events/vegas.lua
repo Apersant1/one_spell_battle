@@ -2,5 +2,5 @@
 OSC_ChaosEvents:Register({
     id = "vegas",
     weight = 8,
-    conflicts = { "no_hud", "mouse_swap", "tunnel" },
+    conflicts = OSC_ChaosEvents.SCREEN_EVENTS,
 })

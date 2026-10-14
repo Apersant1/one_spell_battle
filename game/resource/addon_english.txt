@@ -80,6 +80,8 @@
 			"osc_chaos_tunnel_desc" "The camera is locked to your hero and you only see what is close. No minimap."
 			"osc_chaos_vegas_title" "Fear and Loathing in Las Vegas"
 			"osc_chaos_vegas_desc" "The world is swaying and the colors have gone mad. Hold on to your mouse."
+			"osc_chaos_doom_title" "DOOM"
+			"osc_chaos_doom_desc" "Welcome to 1993: pixels, scanlines and 20 frames per second."
 			"osc_chaos_gold_rush_title" "Gold Rush"
 			"osc_chaos_gold_rush_desc" "All players gain {s:amount} unreliable gold every {s:tick} seconds."
 			"osc_chaos_weather_storm_title" "Thunderstorm"
