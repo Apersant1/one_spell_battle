@@ -218,6 +218,10 @@ function OSC_Casino.DebugForceSymbol(symbol)
     return false, "unknown casino symbol: " .. tostring(symbol)
 end
 
+-- Клиент показывает исход после остановки барабанов: последний встаёт через
+-- REEL_STOP_DELAYS[2] + REEL_BOUNCE_TIME (osc_casino.js) после ответа сервера
+local WIN_EFFECTS_DELAY = 1.4
+
 -- Вспышка и звук на автомате при выигрыше; джекпот — эффект побольше
 local function PlayWinEffects(machine, isJackpot)
     if not machine or machine:IsNull() then return end
@@ -642,7 +646,16 @@ function OSC_Casino.OnSpin(sourceIndex, event)
             end
 
             if payout > 0 then
-                PlayWinEffects(machine, reels[1] == "seven")
+                -- не раньше, чем у игрока остановятся барабаны
+                local isJackpot = reels[1] == "seven"
+                GameRules:GetGameModeEntity():SetContextThink(
+                    "osc_casino_fx_" .. machine:entindex(),
+                    function()
+                        PlayWinEffects(machine, isJackpot)
+                        return nil
+                    end,
+                    WIN_EFFECTS_DELAY
+                )
             end
             OSC_GameEvents.Emit("casino_spin_resolved", {
                 player_id = playerID,
