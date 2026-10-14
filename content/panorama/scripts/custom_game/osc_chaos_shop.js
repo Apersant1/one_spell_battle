@@ -77,7 +77,7 @@ OSC.ChaosShop = (function () {
     button.AddClass("OSCButton");
     button.AddClass("OSCButtonPrimary");
     button.AddClass("ChaosShopBuy");
-    AddLabel(button, [], $.Localize("#osc_shop_buy"));
+    AddLabel(button, [], $.Localize("#osc_shop_buy_button"));
     button.SetPanelEvent("onactivate", function () {
       GameEvents.SendCustomGameEventToServer("osc_shop_buy", { item: item.name });
     });

@@ -37,7 +37,7 @@ LOC_PREFIXES = (
     "osc_ts_",
 )
 # Имена событий с теми же префиксами — не ключи локализации
-NOT_LOC_KEYS = {"osc_hud_error", "osc_shop_result"}
+NOT_LOC_KEYS = {"osc_hud_error", "osc_shop_buy", "osc_shop_result"}
 
 
 def read_text(path):

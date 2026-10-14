@@ -51,7 +51,7 @@
 			"osc_anchor_err_disabled"	"Anchor is disabled"
 			"osc_shop_button"	"Chaos Shop"
 			"osc_shop_title"	"CHAOS SHOP"
-			"osc_shop_buy"	"Buy"
+			"osc_shop_buy_button"	"Buy"
 			"osc_shop_close"	"Close"
 			"osc_shop_stock"	"{d:stock} of {d:max} left"
 			"osc_shop_err_disabled"	"Item is unavailable"

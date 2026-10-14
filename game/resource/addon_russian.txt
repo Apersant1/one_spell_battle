@@ -54,7 +54,7 @@
 		"osc_anchor_err_disabled"	"Якорь отключён"
 		"osc_shop_button"	"Хаос-лавка"
 		"osc_shop_title"	"ХАОС-ЛАВКА"
-		"osc_shop_buy"	"Купить"
+		"osc_shop_buy_button"	"Купить"
 		"osc_shop_close"	"Закрыть"
 		"osc_shop_stock"	"Осталось {d:stock} из {d:max}"
 		"osc_shop_err_disabled"	"Товар недоступен"
