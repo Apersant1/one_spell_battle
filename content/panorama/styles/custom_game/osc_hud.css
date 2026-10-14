@@ -1179,3 +1179,62 @@
 #ChaosShopClose {
   horizontal-align: center;
 }
+
+/* ================= Справка ================= */
+
+/* Слева от кнопки Хаос-лавки (#ChaosShopButton: margin-right 16px,
+   min-width 140px, margin-bottom 290px); отступы подогнать в игре */
+#HelpButton {
+  width: 34px;
+  height: 34px;
+  horizontal-align: right;
+  vertical-align: bottom;
+  margin-right: 164px;
+  margin-bottom: 290px;
+}
+
+#HelpButton Label {
+  font-size: 18px;
+  horizontal-align: center;
+  vertical-align: center;
+}
+
+#HelpPanel {
+  width: 520px;
+  height: 560px;
+  padding: 16px;
+  horizontal-align: center;
+  vertical-align: center;
+  flow-children: down;
+  visibility: collapse;
+}
+
+#HelpPanel.Visible {
+  visibility: visible;
+}
+
+#HelpTitle {
+  horizontal-align: center;
+}
+
+#HelpSections {
+  width: 100%;
+  height: fill-parent-flow(1.0);
+  margin: 12px 0px;
+  flow-children: down;
+  overflow: squish scroll;
+}
+
+.HelpHeading {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.HelpText {
+  width: 100%;
+  margin-top: 2px;
+}
+
+#HelpClose {
+  horizontal-align: center;
+}

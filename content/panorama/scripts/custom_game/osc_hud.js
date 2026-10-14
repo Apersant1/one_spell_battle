@@ -10,5 +10,6 @@
   OSC.Anchor.Init();
   OSC.Casino.Init();
   OSC.ChaosShop.Init();
+  OSC.Help.Init();
   OSC.NotificationFeed.Init();
 })();
