@@ -15,6 +15,7 @@ local MODULES = {
     { file = "osc/systems/abilities", global = "OSC_Abilities" },
     { file = "osc/systems/casino", global = "OSC_Casino" },
     { file = "osc/systems/chaos_shop", global = "OSC_ChaosShop" },
+    { file = "osc/systems/chaos_sphere", global = "OSC_ChaosSphere" },
     { file = "osc/systems/couriers", global = "OSC_Couriers" },
     { file = "osc/systems/hero_lifecycle", global = "OSC_HeroLifecycle" },
     { file = "osc/systems/rotation_choice", global = "OSC_RotationChoice" },

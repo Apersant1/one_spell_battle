@@ -38,6 +38,10 @@ local FIELDS = {
     { name = "anchored", default = false, doc = "«Якорь»: пропустить следующую ротацию (1.5)" },
     { name = "pending_choices",
       doc = "открытый выбор из трёх: { round, deadline, duration, options = { имена }, picked }" },
+
+    -- Сфера хаоса (chaos_sphere): открытый выбор после применения сферы
+    { name = "sphere_offer",
+      doc = "выбор сферы хаоса: { item = entindex, options = { имена }, ultimate_allowed }" },
 }
 
 -- Заполняет недостающие поля значениями по умолчанию. schema — таблица

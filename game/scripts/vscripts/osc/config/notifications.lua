@@ -79,6 +79,16 @@ OSC_NOTIFICATIONS_CONFIG = {
             feed = { token = "#osc_notify_courier_wrong_delivery", color = "#FFB347", scope = "team" },
         },
 
+        -- Сфера хаоса (chaos_sphere.lua): выпала с Рошана; владелец выбрал «Хаос врагам»
+        chaos_sphere_dropped = {
+            category = "player",
+            feed = { token = "#osc_notify_chaos_sphere_dropped", color = "#FFC23A" },
+        },
+        chaos_sphere_enemies = {
+            category = "player",
+            feed = { token = "#osc_notify_chaos_sphere_enemies", color = "#FF4D4D" },
+        },
+
         -- ===== Голосование в лобби =====
         vote_result = {
             category = "vote",

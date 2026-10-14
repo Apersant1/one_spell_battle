@@ -10,6 +10,7 @@ H = {
     thinks = {},
     kv = {},
     itemCosts = {}, -- ItemCost предметов для GetItemCost
+    drops = {}, -- предметы на земле: { position, item } (CreateItemOnPositionSync)
     failAdd = {},
     heroes = {},
     players = {},
@@ -176,12 +177,26 @@ function CreateUnitByName() return nil end
 function CreateItem(name) return H.NewItem(name) end
 function GetItemCost(name) return H.itemCosts[name] or 0 end
 
+-- Индексы предметов не пересекаются с юнитами, которые тесты кладут в
+-- H.entities руками (там малые числа)
+local itemCounter = 1000
+
 function H.NewItem(name)
-    return {
+    itemCounter = itemCounter + 1
+    local item = {
         name = name,
+        index = itemCounter,
         IsNull = function() return false end,
         GetAbilityName = function(self) return self.name end,
+        entindex = function(self) return self.index end,
     }
+    H.entities[item.index] = item
+    return item
+end
+
+function CreateItemOnPositionSync(position, item)
+    table.insert(H.drops, { position = position, item = item })
+    return {}
 end
 
 CustomNetTables = {
