@@ -361,6 +361,40 @@ dota_launch_custom_game one_spell dota
   Кнопка «Купить» неактивна при нехватке золота или пустом стоке — это
   только подсказка, решает сервер.
 
+### Редкость способностей
+
+- Поле `rarity` записи пула (`"rare"` / `"legendary"`, без поля — обычная;
+  список — `OSC_ABILITY_RARITIES` в `ability_pools.lua`). Редкость меняет
+  только шанс выпадения: вес записи умножается на `ABILITY_RARITY_WEIGHT`
+  (`common = 4, rare = 2, legendary = 1`); `ABILITY_RARITY_ENABLED = false`
+  делает все способности обычными. `OSC_AbilitySelection.GetRarity/GetWeight`.
+- `PickCandidates(hero, slot, count, { rarity = "legendary" })` сначала берёт
+  способности этой редкости, недостающих добирает без фильтра.
+- HUD: рамки на карточках выбора и во всплывающем окне новой способности
+  (`.RarityRare`, `.RarityLegendary`); `osc_ability_changed` несёт `rarity`.
+  Выдача легендарки объявляется всем (`OSC_Notifications.LegendaryAbility`).
+
+### Сфера хаоса
+
+- Предмет `item_osc_chaos_sphere` падает с Рошана (`entity_killed`, смещение
+  `CHAOS_SPHERE_DROP_OFFSET`), не продаётся. Система —
+  `osc/systems/chaos_sphere.lua` (`OSC_ChaosSphere`), флаг `CHAOS_SPHERE_ENABLED`.
+- Применение (`item_chaos_sphere.lua` → `Offer`) шлёт `osc_sphere_offer`
+  { options, ultimate_allowed, min_level } и пишет `sphere_offer` в состояние
+  героя. Игрок отвечает `osc_sphere_pick` { mode, ability }:
+  `ultimate` — один из `CHAOS_SPHERE_ULTIMATE_CHOICES` легендарных ультимейтов
+  (с `CHAOS_SPHERE_MIN_LEVEL` уровня), `enemies` — новая случайная способность
+  всем врагам без «Якоря», `cancel` — закрыть окно.
+- Предмет расходуется только после успешного выбора; подделанный выбор,
+  вариант не из предложения, сфера, которой уже нет в инвентаре, — отказ в лог.
+- Panorama: `osc_chaos_sphere.js` (`OSC.ChaosSphere`), панель `#ChaosSpherePanel`.
+
+### Справка
+
+- Кнопка «?» рядом с Хаос-лавкой открывает панель правил режима
+  (`osc_help.js`, `OSC.Help`, `#HelpPanel`). Только клиент; тексты разделов —
+  ключи `osc_hud_help_*` в XML.
+
 ### Уведомления и интерфейс
 
 - Уведомления настраиваются в `osc/config/notifications.lua`: типы,
@@ -550,6 +584,12 @@ Panorama отправляет серверу действия пользоват
 | `ANCHOR_ENABLED`                       |           `true` | Предмет «Якорь»                           |
 | `CHAOS_SHOP_ENABLED`                   |           `true` | Хаос-лавка                                |
 | `CHAOS_SHOP_ITEMS`                     |  реролл 5, якорь | Товары лавки и лимит на команду (`team_stock`) |
+| `ABILITY_RARITY_ENABLED`               |           `true` | Редкость способностей                      |
+| `ABILITY_RARITY_WEIGHT`                | `4 / 2 / 1`      | Множитель веса: обычная / редкая / легендарная |
+| `CHAOS_SPHERE_ENABLED`                 |           `true` | Сфера хаоса с Рошана                      |
+| `CHAOS_SPHERE_ULTIMATE_CHOICES`        |              `3` | Вариантов легендарного ультимейта         |
+| `CHAOS_SPHERE_MIN_LEVEL`               |              `6` | Уровень для варианта «ультимейт»          |
+| `CHAOS_SPHERE_DROP_OFFSET`             |            `150` | Смещение сферы от Рошана                  |
 | `ROTATION_CAST_PHASE_DEFER`            |           `true` | Откладывать смену в фазе каста            |
 | `ROTATION_DEFER_STEP`                  |           `0.25` | Шаг проверки отложенной смены, секунд     |
 | `ROTATION_MAX_DEFER`                   |              `3` | Максимум отсрочки смены, секунд           |
