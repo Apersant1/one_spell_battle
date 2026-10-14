@@ -72,6 +72,8 @@
 			"osc_chaos_cooldowns_desc" "Ability cooldowns are reduced by {s:cooldown_reduction_pct}%."
 			"osc_chaos_mana_free_title" "Free Spells"
 			"osc_chaos_mana_free_desc" "Abilities cost no mana."
+			"osc_chaos_no_hud_title" "No HUD"
+			"osc_chaos_no_hud_desc" "The ability bar, inventory and minimap are gone. Count your cooldowns!"
 			"osc_chaos_gold_rush_title" "Gold Rush"
 			"osc_chaos_gold_rush_desc" "All players gain {s:amount} unreliable gold every {s:tick} seconds."
 			"osc_chaos_weather_storm_title" "Thunderstorm"

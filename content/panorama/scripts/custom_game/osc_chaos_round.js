@@ -5,6 +5,29 @@ var OSC = OSC || {};
 OSC.ChaosRound = (function () {
   var UPDATE_INTERVAL = 0.25;
   var lastPhase = "none";
+  var hudHidden = false;
+  // Хаос-раунд no_hud: стандартный интерфейс Доты, наш HUD остаётся
+  var NO_HUD_ELEMENTS = [
+    "DOTA_DEFAULT_UI_ACTION_PANEL",
+    "DOTA_DEFAULT_UI_INVENTORY_PANEL",
+    "DOTA_DEFAULT_UI_INVENTORY_SHOP",
+    "DOTA_DEFAULT_UI_INVENTORY_QUICKBUY",
+    "DOTA_DEFAULT_UI_INVENTORY_COURIER",
+    "DOTA_DEFAULT_UI_INVENTORY_GOLD",
+    "DOTA_DEFAULT_UI_ACTION_MINIMAP",
+    "DOTA_DEFAULT_UI_TOP_HEROES",
+    "DOTA_DEFAULT_UI_TOP_TIMEOFDAY",
+    "DOTA_DEFAULT_UI_TOP_BAR_BACKGROUND",
+  ];
+
+  function SetHudHidden(hidden) {
+    if (hidden === hudHidden) return;
+    hudHidden = hidden;
+    NO_HUD_ELEMENTS.forEach(function (name) {
+      var element = DotaDefaultUIElement_t[name];
+      if (element !== undefined) GameUI.SetDefaultUIEnabled(element, !hidden);
+    });
+  }
 
   function OnPhaseChanged(phase) {
     if (phase === "warning") OSC.Util.PlaySound(OSC.Sounds.chaosWarning);
@@ -22,6 +45,7 @@ OSC.ChaosRound = (function () {
     var vignette = $("#ChaosVignette");
 
     if (OSC.Util.IsPostGame()) {
+      SetHudHidden(false);
       panel.SetHasClass("Shown", false);
       vignette.SetHasClass("Shown", false);
       return false;
@@ -36,6 +60,8 @@ OSC.ChaosRound = (function () {
     var timerEnd = isActive ? data.end_time : data && data.start_time;
     var timeLeft = Math.max(0, (timerEnd || 0) - now);
     var phase = isActive ? "active" : isWarning ? "warning" : "none";
+
+    SetHudHidden(isActive && data.event_id === "no_hud");
 
     if (phase !== lastPhase) {
       OnPhaseChanged(phase);
