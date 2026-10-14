@@ -14,15 +14,40 @@
   }
 }
 
+/* vote_bg_hud 660x740 в 2x (tools/hud_assets.py): рамка хаос-раунда с запечённой
+   тенью (поля 12px); padding — внутренняя область рамки */
 #VotePanel {
-  width: 250px;
+  width: 330px;
+  min-height: 370px;
   horizontal-align: right;
   vertical-align: top;
-  margin-top: 150px;
-  margin-right: 12px;
-  padding: 10px 10px 8px 10px;
+  margin-top: 138px;
+  margin-right: 0px;
+  padding: 64px 44px 42px 44px;
   flow-children: down;
   visibility: collapse;
+  background-image: url("file://{images}/custom_game/hud/vote_bg_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  /* гасим OSCSurface, если класс остался после горячей перезагрузки */
+  background-color: #00000000;
+  border: 0px solid #00000000;
+  box-shadow: #00000000 0px 0px 0px 0px;
+}
+
+/* Свёрнуто — только заголовок на плашке кнопки Хаос-лавки (4:1) */
+#VotePanel.Collapsed {
+  width: 220px;
+  height: 55px;
+  min-height: 0px;
+  margin-top: 150px;
+  margin-right: 12px;
+  padding: 0px 30px;
+  background-image: url("file://{images}/custom_game/hud/chaos_shop.png");
+}
+
+#VotePanel.Collapsed #VoteHeader {
+  vertical-align: center;
 }
 
 #VotePanel.Visible {
@@ -40,11 +65,14 @@
 #VoteTitle {
   width: fill-parent-flow(1);
   font-size: 15px;
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
 #VoteCollapse {
   margin-left: 8px;
-  font-size: 18px;
+  font-size: 20px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
 #VoteHeader:hover #VoteCollapse {
@@ -70,6 +98,8 @@
 .VoteQuestionTitle {
   width: 100%;
   margin-bottom: 4px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1.0;
 }
 
 .VoteOptions {
@@ -77,27 +107,30 @@
   flow-children: right;
 }
 
+/* Кнопки малы для картинок — металл рамок повторён в CSS: тёмный камень,
+   бронзовый кант, выбранный вариант — золото со свечением */
 .VoteOption {
   width: fill-parent-flow(1);
   height: 30px;
   margin-right: 4px;
   padding: 0px 6px;
   flow-children: right;
-  background-color: #08070bcc;
-  border: 1px solid #bd72e840;
-  border-radius: 3px;
+  background-color: gradient(linear, 0% 0%, 0% 100%, from(#1d1324), to(#0b0810));
+  border: 1px solid #8a6a3a;
+  border-radius: 2px;
   transition-property: border, background-color, box-shadow;
   transition-duration: 0.12s;
 }
 
 .VoteOption:hover {
-  border: 1px solid #bd72e8;
-  background-color: #24152dcc;
+  border: 1px solid #c9a15a;
+  background-color: gradient(linear, 0% 0%, 0% 100%, from(#2e1d38), to(#140d1a));
 }
 
 .VoteOption.Picked {
-  border: 2px solid #efc96c;
-  background-color: #3a2c0acc;
+  border: 1px solid #ffd36a;
+  background-color: gradient(linear, 0% 0%, 0% 100%, from(#5a3f12), to(#2a1c06));
+  box-shadow: #ffc23a66 0px 0px 8px 0px;
 }
 
 .VoteOptionName {
@@ -105,6 +138,7 @@
   vertical-align: center;
   font-size: 13px;
   color: #ffffff;
+  text-shadow: #000000 1px 1px 2px 1.0;
 }
 
 .VoteOption.Picked .VoteOptionName {
@@ -131,6 +165,7 @@
 
 #VoteHint {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 12px;
+  text-shadow: #000000 1px 1px 2px 1.0;
 }

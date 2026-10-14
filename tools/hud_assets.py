@@ -131,5 +131,12 @@ chaos = stretch(
     xzones=[(93, 148), (243, 298)], yzones=[(128, 193), (268, 348)],
 )
 save("chaos_round_bg_hud.png", shadow(chaos, pad=24, sigma=14, dy=8, opacity=0.8))
+
+# Голосование: та же рамка хаос-раунда, вытянутая под три вопроса и подсказку
+vote = stretch(
+    load("chaos_round_bg.png"), (612, 692), 1.2,
+    xzones=[(93, 148), (243, 298)], yzones=[(128, 193), (268, 348)],
+)
+save("vote_bg_hud.png", shadow(vote, pad=24, sigma=14, dy=8, opacity=0.8))
 icon = Image.fromarray((load("chaos_round_icon.png") * 255).astype(np.uint8)).resize((64, 64), Image.LANCZOS)
 save("chaos_round_icon_hud.png", np.asarray(icon, np.float64) / 255)

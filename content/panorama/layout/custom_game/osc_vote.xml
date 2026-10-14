@@ -12,7 +12,7 @@
     <!-- Голосование на экране выбора героев (CustomUIElement type="HeroSelection").
          Окно компактное и прижато к правому краю, остальное не перехватывает клики. -->
     <Panel class="VoteRoot" hittest="false">
-        <Panel id="VotePanel" class="OSCSurface OSCChaos" hittest="true">
+        <Panel id="VotePanel" hittest="true">
             <!-- Клик по заголовку сворачивает окно, если оно что-то закрывает -->
             <Button id="VoteHeader" onactivate="OSC.Vote.ToggleCollapsed()">
                 <Label id="VoteTitle" class="OSCTextBody OSCCaps OSCBold OSCChaosText"
