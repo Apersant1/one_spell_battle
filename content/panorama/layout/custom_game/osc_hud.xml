@@ -116,36 +116,65 @@
         </Panel>
 
         <Panel id="CasinoPanel" hittest="true">
-            <Panel id="CasinoWindow" class="OSCSurface OSCChaos" hittest="true">
-                <Label id="CasinoTitle" class="OSCTextTitle OSCGold" text="#osc_casino_title" />
-                <Label id="CasinoDescription" class="OSCTextSmall OSCMuted" text="" />
-                <Label id="CasinoBalance" class="OSCTextBody OSCBold OSCGold" text="" />
-                <Panel id="CasinoStakeRow">
-                    <Label id="CasinoStakeLabel" class="OSCTextBody" text="#osc_casino_stake_label" />
-                    <TextEntry id="CasinoStake" text="250" maxchars="8" />
-                    <Label id="CasinoStakeLimit" class="OSCTextSmall OSCMuted" text="" />
-                </Panel>
-                <!-- Ставка предметом: заполняется из osc_casino.js -->
-                <Panel id="CasinoItemsRow" class="Hidden">
-                    <Label id="CasinoItemsLabel" class="OSCTextSmall OSCMuted"
-                        text="#osc_casino_items_label" />
-                    <Panel id="CasinoItems" />
-                    <Label id="CasinoItemsEmpty" class="OSCTextSmall OSCMuted Hidden"
-                        text="#osc_casino_items_empty" />
+            <Panel id="CasinoWindow" hittest="true">
+                <Button id="CasinoCloseButton" class="OSCButton" onactivate="OSC.Casino.Close()">
+                    <Label text="#osc_casino_btn_close" />
+                </Button>
+                <!-- Лента-заголовок; при джекпоте поверх проявляется огненная -->
+                <Panel id="CasinoTitlePlaque" hittest="false">
+                    <Panel id="CasinoTitleJackpot" hittest="false" />
+                    <!-- Буквы заголовка по дуге собирает osc_casino.js (BuildTitle) -->
+                    <Panel id="CasinoTitle" hittest="false" />
                 </Panel>
                 <Panel id="CasinoReels">
-                    <Label id="CasinoReel1" class="CasinoReel" text="7" />
-                    <Label id="CasinoReel2" class="CasinoReel" text="★" />
-                    <Label id="CasinoReel3" class="CasinoReel" text="♦" />
+                    <!-- Окошко барабанов: обрезает ленты по краю рамки -->
+                    <Panel id="CasinoReelsWindow">
+                        <!-- Символ — класс Sym_<ключ> (osc_casino.js); при вращении видна лента -->
+                        <Panel id="CasinoReel1" class="CasinoReel Sym_seven">
+                            <Panel class="CasinoReelStrip" />
+                        </Panel>
+                        <Panel id="CasinoReel2" class="CasinoReel Sym_star">
+                            <Panel class="CasinoReelStrip" />
+                        </Panel>
+                        <Panel id="CasinoReel3" class="CasinoReel Sym_diamond">
+                            <Panel class="CasinoReelStrip" />
+                        </Panel>
+                    </Panel>
                 </Panel>
                 <Label id="CasinoResult" class="OSCTextBody" text="#osc_casino_idle" />
+                <!-- Таблица выплат: ячейки из исходов сервера (osc_casino.js) -->
+                <Panel id="CasinoPaytable" />
+                <Label id="CasinoBalance" class="OSCTextBody OSCBold OSCGold" text="" />
+                <!-- Ставка либо золотом, либо предметами: переключатель с иконками,
+                     ползунок под активной (osc_casino.js) -->
+                <Panel id="CasinoModeTabs">
+                    <Button id="CasinoModeSwitch" onactivate="OSC.Casino.ToggleMode()">
+                        <Panel id="CasinoModeKnob" hittest="false" />
+                        <Panel id="CasinoModeGoldIcon" class="CasinoModeIcon" hittest="false" />
+                        <DOTAItemImage id="CasinoModeItemsIcon" class="CasinoModeIcon"
+                            itemname="item_broadsword" hittest="false" />
+                    </Button>
+                </Panel>
+                <!-- Режим «Предметы»: шесть слотов инвентаря и сумма ставки -->
+                <Panel id="CasinoItemsRow">
+                    <Panel id="CasinoItems" />
+                    <Label id="CasinoItemsTotal" text="0" />
+                </Panel>
+                <Panel id="CasinoStakeRow">
+                    <Button id="CasinoStakeMinus" class="CasinoStakeStep"
+                        onactivate="OSC.Casino.StepStake(-1)">
+                        <Label text="#osc_casino_stake_minus" />
+                    </Button>
+                    <TextEntry id="CasinoStake" text="250" maxchars="8" />
+                    <Button id="CasinoStakePlus" class="CasinoStakeStep"
+                        onactivate="OSC.Casino.StepStake(1)">
+                        <Label text="#osc_casino_stake_plus" />
+                    </Button>
+                </Panel>
                 <Panel id="CasinoButtons">
                     <Button id="CasinoSpinButton" class="OSCButton OSCButtonPrimary"
                         onactivate="OSC.Casino.Spin()">
                         <Label text="#osc_casino_btn_spin" />
-                    </Button>
-                    <Button id="CasinoCloseButton" class="OSCButton" onactivate="OSC.Casino.Close()">
-                        <Label text="#osc_casino_btn_close" />
                     </Button>
                 </Panel>
             </Panel>

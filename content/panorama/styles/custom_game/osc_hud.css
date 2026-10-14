@@ -337,23 +337,55 @@
 }
 
 #CrtCornerTL {
-  background-color: gradient(radial, 100% 100%, 0% 0%, 100% 100%, from(#00000000), color-stop(0.96, #00000000), to(#000000ff));
+  background-color: gradient(
+    radial,
+    100% 100%,
+    0% 0%,
+    100% 100%,
+    from(#00000000),
+    color-stop(0.96, #00000000),
+    to(#000000ff)
+  );
 }
 
 #CrtCornerTR {
   horizontal-align: right;
-  background-color: gradient(radial, 0% 100%, 0% 0%, 100% 100%, from(#00000000), color-stop(0.96, #00000000), to(#000000ff));
+  background-color: gradient(
+    radial,
+    0% 100%,
+    0% 0%,
+    100% 100%,
+    from(#00000000),
+    color-stop(0.96, #00000000),
+    to(#000000ff)
+  );
 }
 
 #CrtCornerBL {
   vertical-align: bottom;
-  background-color: gradient(radial, 100% 0%, 0% 0%, 100% 100%, from(#00000000), color-stop(0.96, #00000000), to(#000000ff));
+  background-color: gradient(
+    radial,
+    100% 0%,
+    0% 0%,
+    100% 100%,
+    from(#00000000),
+    color-stop(0.96, #00000000),
+    to(#000000ff)
+  );
 }
 
 #CrtCornerBR {
   horizontal-align: right;
   vertical-align: bottom;
-  background-color: gradient(radial, 0% 0%, 0% 0%, 100% 100%, from(#00000000), color-stop(0.96, #00000000), to(#000000ff));
+  background-color: gradient(
+    radial,
+    0% 0%,
+    0% 0%,
+    100% 100%,
+    from(#00000000),
+    color-stop(0.96, #00000000),
+    to(#000000ff)
+  );
 }
 
 /* Экранная надпись видеомагнитофона */
@@ -473,7 +505,14 @@
   margin: -300px 0px 0px -250px;
   animation-name: OSCOilDriftA;
   animation-duration: 13s;
-  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#ff00b4cc), to(#ff00b400));
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#ff00b4cc),
+    to(#ff00b400)
+  );
 }
 
 #OilBlob2 {
@@ -481,7 +520,14 @@
   margin: -200px -300px 0px 0px;
   animation-name: OSCOilDriftB;
   animation-duration: 11s;
-  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#ffe600cc), to(#ffe60000));
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#ffe600cc),
+    to(#ffe60000)
+  );
 }
 
 #OilBlob3 {
@@ -489,7 +535,14 @@
   margin: 0px 0px -350px -150px;
   animation-name: OSCOilDriftB;
   animation-duration: 15s;
-  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#00ff88cc), to(#00ff8800));
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#00ff88cc),
+    to(#00ff8800)
+  );
 }
 
 #OilBlob4 {
@@ -498,7 +551,14 @@
   margin: 0px -250px -300px 0px;
   animation-name: OSCOilDriftA;
   animation-duration: 12s;
-  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#00b4ffcc), to(#00b4ff00));
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#00b4ffcc),
+    to(#00b4ff00)
+  );
 }
 
 #OilBlob5 {
@@ -506,7 +566,14 @@
   vertical-align: center;
   animation-name: OSCOilDriftA;
   animation-duration: 17s;
-  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#9a00ffaa), to(#9a00ff00));
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#9a00ffaa),
+    to(#9a00ff00)
+  );
 }
 
 #OilBlob6 {
@@ -515,7 +582,14 @@
   margin-top: -450px;
   animation-name: OSCOilDriftB;
   animation-duration: 10s;
-  background-color: gradient(radial, 50% 50%, 0% 0%, 50% 50%, from(#ff5a00aa), to(#ff5a0000));
+  background-color: gradient(
+    radial,
+    50% 50%,
+    0% 0%,
+    50% 50%,
+    from(#ff5a00aa),
+    to(#ff5a0000)
+  );
 }
 
 #VegasTint {
@@ -538,13 +612,25 @@
 
 #VegasFringeLeft {
   horizontal-align: left;
-  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ff1a3a73), to(#ff1a3a00));
+  background-color: gradient(
+    linear,
+    0% 0%,
+    100% 0%,
+    from(#ff1a3a73),
+    to(#ff1a3a00)
+  );
 }
 
 #VegasFringeRight {
   horizontal-align: right;
   animation-delay: 0.85s;
-  background-color: gradient(linear, 100% 0%, 0% 0%, from(#1ae0ff73), to(#1ae0ff00));
+  background-color: gradient(
+    linear,
+    100% 0%,
+    0% 0%,
+    from(#1ae0ff73),
+    to(#1ae0ff00)
+  );
 }
 
 /* ---------- Таймер ротации: кольцо ---------- */
@@ -657,7 +743,7 @@
   max-width: 250px;
   vertical-align: center;
   font-size: 15px;
-  text-shadow: #000000 1px 1px 3px 1.0;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
 /* ---------- Якорь у таймера ---------- */
@@ -967,7 +1053,7 @@
 }
 
 #ChaosRoundPanel Label {
-  text-shadow: #000000 1px 1px 3px 1.0;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
 #ChaosRoundTitle,
@@ -1071,37 +1157,167 @@
   visibility: visible;
 }
 
+/* casino_bg_hud 710x907 (tools/hud_assets.py) в масштабе 0.85: автомат с лампочками
+   и запечённой тенью; padding — камень внутри лампочек */
 #CasinoWindow {
-  width: 520px;
-  padding: 24px;
+  width: 604px;
+  min-height: 771px;
+  padding: 119px 91px 106px 90px;
   horizontal-align: center;
   vertical-align: center;
   flow-children: down;
-  transition-property: box-shadow, transform, border;
+  background-image: url("file://{images}/custom_game/hud/casino_bg_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition-property: transform;
   transition-duration: 0.3s;
+}
+
+/* casino_title_hud 430x121 при ширине 300: середина ленты по центру панели.
+   Отрицательные отступы подтягивают ленту к лампочкам сверху и к барабанам снизу */
+#CasinoTitlePlaque {
+  width: 300px;
+  height: 84px;
+  margin-top: -22px;
+  margin-bottom: -11px;
+  horizontal-align: center;
+  background-image: url("file://{images}/custom_game/hud/casino_title_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+#CasinoTitleJackpot {
+  width: 100%;
+  height: 100%;
+  background-image: url("file://{images}/custom_game/hud/casino_title_jackpot_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: 0.4s;
+}
+
+#CasinoWindow.Jackpot #CasinoTitleJackpot {
+  opacity: 1;
 }
 
 #CasinoTitle {
   horizontal-align: center;
+  vertical-align: center;
+  flow-children: right;
 }
 
-#CasinoDescription,
+#CasinoTitle Label {
+  transition-property: color;
+  transition-duration: 0.4s;
+}
+
+.CasinoTitleSpace {
+  width: 7px;
+}
+
+/* на золотой огненной ленте золотой текст не читается */
+#CasinoWindow.Jackpot #CasinoTitle Label {
+  color: #4a1c00;
+  text-shadow: #ffe9a0 0px 0px 4px 1;
+}
+
+/* Таблица выплат: [три символа / ×N шанс] — тёмный камень с бронзовым кантом, самая
+   дорогая тройка золотая, выигравшая подсвечивается после спина */
+#CasinoPaytable {
+  margin-top: 6px;
+  horizontal-align: center;
+  flow-children: right;
+}
+
+.CasinoPayCell {
+  margin: 0px 3px;
+  padding: 4px 6px 3px 6px;
+  flow-children: down;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#1d1324),
+    to(#0b0810)
+  );
+  border: 1px solid #8a6a3a;
+  border-radius: 3px;
+  transition-property: border, box-shadow, background-color;
+  transition-duration: 0.25s;
+}
+
+.CasinoPayCell.Top {
+  border: 1px solid #ffd36a;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#3a2a0c),
+    to(#140d04)
+  );
+}
+
+.CasinoPayCell.Hit {
+  border: 1px solid #fff09a;
+  box-shadow: #ffcf35aa 0px 0px 12px 0px;
+}
+
+.CasinoPayIcons {
+  horizontal-align: center;
+  flow-children: right;
+}
+
+.CasinoPayIcon {
+  width: 22px;
+  height: 22px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.CasinoPayText {
+  horizontal-align: center;
+  flow-children: right;
+}
+
+.CasinoPayMult {
+  font-size: 15px;
+  font-weight: bold;
+  color: #ffe89a;
+}
+
+#CasinoWindow .CasinoPayCell.Top .CasinoPayMult {
+  color: #ffcf35;
+  text-shadow: #ff9d22 0px 0px 6px 1;
+}
+
+.CasinoPayChance {
+  margin-left: 5px;
+  vertical-align: center;
+  font-size: 12px;
+  color: #b9aebe;
+}
+
 #CasinoBalance,
 #CasinoResult {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 8px;
   text-align: center;
 }
 
+#CasinoWindow Label {
+  text-shadow: #000000 1px 1px 3px 1;
+}
+
 #CasinoResult {
-  min-height: 48px;
+  min-height: 40px;
   color: #bfe7ff;
   transition-property: color, text-shadow;
   transition-duration: 0.25s;
 }
 
 #CasinoStakeRow {
-  margin-top: 12px;
+  margin-top: 8px;
   horizontal-align: center;
   flow-children: right;
 }
@@ -1110,98 +1326,318 @@
   vertical-align: center;
 }
 
-#CasinoStake {
-  width: 120px;
-  height: 36px;
-  margin: 0px 8px;
-  padding: 4px 8px;
-  font-size: 18px;
+/* −/+ у поля ставки: круглые кнопки из камня с бронзовым кантом */
+.CasinoStakeStep {
+  width: 32px;
+  height: 32px;
+  vertical-align: center;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#1d1324),
+    to(#0b0810)
+  );
+  border: 1px solid #8a6a3a;
+  border-radius: 16px;
+  transition-property: border, opacity;
+  transition-duration: 0.12s;
+}
+.CasinoStakeStep:hover {
+  border: 1px solid #ffd36a;
+}
+.CasinoStakeStep:disabled {
+  opacity: 0.35;
+}
+.CasinoStakeStep Label {
+  horizontal-align: center;
+  vertical-align: center;
+  margin-top: -2px;
+  font-size: 22px;
+  font-weight: bold;
   color: #ffe89a;
-  text-align: center;
-  background-color: #08070b;
-  border: 1px solid #e8b84f80;
 }
 
-#CasinoItemsRow {
-  margin-top: 10px;
-  horizontal-align: center;
-  flow-children: down;
+/* casino_stake_hud 437x145: слева монета — текст правее неё */
+#CasinoStake {
+  width: 139px;
+  height: 46px;
+  margin: 0px 8px;
+  /* по вертикали — отступом сверху; по горизонтали центрирует osc_casino.js
+     (CenterStakeText): text-align у TextEntry не действует */
+  padding: 11px 10px 0px 26px;
+  font-size: 18px;
+  color: #ffe89a;
+  background-color: #00000000;
+  border: 0px solid #00000000;
+  background-image: url("file://{images}/custom_game/hud/casino_stake_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
-#CasinoItemsRow.Hidden {
+
+/* Переключатель режима ставки: пилюля из камня с бронзовым кантом, золотой
+   ползунок переезжает под активную иконку (монета — золото, меч — предметы) */
+#CasinoModeTabs {
+  margin-top: 8px;
+  horizontal-align: center;
+}
+#CasinoModeTabs.Hidden {
   visibility: collapse;
 }
-#CasinoItemsLabel {
+#CasinoModeSwitch {
+  width: 96px;
+  height: 36px;
+  padding: 2px;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#0b0810),
+    to(#1d1324)
+  );
+  border: 1px solid #8a6a3a;
+  border-radius: 18px;
+  transition-property: border;
+  transition-duration: 0.12s;
+}
+#CasinoModeSwitch:hover {
+  border: 1px solid #c9a15a;
+}
+#CasinoModeKnob {
+  width: 46px;
+  height: 100%;
+  border-radius: 16px;
+  border: 1px solid #ffd36a;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#5a3f12),
+    to(#2a1c06)
+  );
+  box-shadow: #ffc23a66 0px 0px 8px 0px;
+  transform: translateX(0px);
+  transition-property: transform;
+  transition-duration: 0.18s;
+  transition-timing-function: ease-in-out;
+}
+#CasinoWindow.ModeItems #CasinoModeKnob {
+  transform: translateX(46px);
+}
+.CasinoModeIcon {
+  width: 24px;
+  height: 24px;
+  vertical-align: center;
+  opacity: 0.45;
+  transition-property: opacity;
+  transition-duration: 0.18s;
+}
+#CasinoModeGoldIcon {
+  margin-left: 11px;
+  background-image: url("file://{images}/custom_game/hud/casino_coin_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 1;
+}
+#CasinoModeItemsIcon {
+  horizontal-align: right;
+  margin-right: 11px;
+  border-radius: 4px;
+}
+#CasinoWindow.ModeItems #CasinoModeGoldIcon {
+  opacity: 0.45;
+}
+#CasinoWindow.ModeItems #CasinoModeItemsIcon {
+  opacity: 1;
+}
+/* ставить нечего — иконка предметов совсем тусклая */
+#CasinoModeSwitch.ItemsUnavailable #CasinoModeItemsIcon {
+  opacity: 0.2;
+}
+
+/* Видна одна из двух: поле золота или слоты предметов */
+#CasinoWindow.ModeItems #CasinoStakeRow {
+  visibility: collapse;
+}
+/* Сумма под слотами: в один ряд с шестью ячейками не помещается в окно */
+#CasinoItemsRow {
+  margin-top: 8px;
   horizontal-align: center;
-  margin-bottom: 4px;
+  flow-children: down;
+  visibility: collapse;
+}
+#CasinoWindow.ModeItems #CasinoItemsRow {
+  visibility: visible;
 }
 #CasinoItems {
   horizontal-align: center;
   flow-children: right;
 }
-#CasinoItemsEmpty {
+#CasinoItemsTotal {
+  margin-top: 4px;
+  padding-left: 22px;
   horizontal-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffe89a;
+  background-image: url("file://{images}/custom_game/hud/casino_coin_hud.png");
+  background-size: 18px 18px;
+  background-position: 0px 50%;
+  background-repeat: no-repeat;
 }
-#CasinoItemsEmpty.Hidden {
-  visibility: collapse;
+#CasinoItemsTotal.Low {
+  color: #ff6b6b;
 }
+/* Ячейки ставки предметом — как таблица выплат: тёмный камень с бронзовым кантом,
+   выбранная — золото со свечением; цена с монеткой из поля ставки */
 .CasinoItem {
   width: 60px;
-  margin: 0px 3px;
-  padding: 3px;
+  height: 64px;
+  margin: 0px 2px;
+  padding: 3px 3px 2px 3px;
   flow-children: down;
-  border: 1px solid #e8b84f30;
-  background-color: #08070b;
-  transition-property: border, background-color;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#1d1324),
+    to(#0b0810)
+  );
+  border: 1px solid #8a6a3a;
+  border-radius: 3px;
+  transition-property: border, background-color, box-shadow;
   transition-duration: 0.12s;
 }
 .CasinoItem:hover {
-  border: 1px solid #e8b84f90;
+  border: 1px solid #c9a15a;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#2e1d38),
+    to(#140d1a)
+  );
 }
 .CasinoItem.Selected {
-  border: 2px solid #ffe89a;
-  background-color: #3a2c0a;
+  border: 1px solid #ffd36a;
+  background-color: gradient(
+    linear,
+    0% 0%,
+    0% 100%,
+    from(#5a3f12),
+    to(#2a1c06)
+  );
+  box-shadow: #ffc23a88 0px 0px 10px 0px;
+}
+.CasinoItem.Empty,
+.CasinoItem.Locked {
+  opacity: 0.4;
+}
+.CasinoItem.Empty:hover,
+.CasinoItem.Locked:hover {
+  border: 1px solid #8a6a3a;
 }
 .CasinoItem DOTAItemImage {
   width: 52px;
   height: 38px;
   horizontal-align: center;
+  border: 1px solid #00000099;
 }
 .CasinoItemPrice {
+  margin-top: 2px;
+  padding-left: 15px;
   horizontal-align: center;
   font-size: 13px;
+  font-weight: bold;
   color: #ffe89a;
+  background-image: url("file://{images}/custom_game/hud/casino_coin_hud.png");
+  background-size: 13px 13px;
+  background-position: 0px 50%;
+  background-repeat: no-repeat;
 }
 
 #CasinoStake:focus {
-  border: 1px solid #e8b84f;
+  brightness: 1.25;
 }
 
+/* casino_reels_hud 452x344 при ширине 330: padding — три барабана внутри рамки,
+   символы встают на золотую линию выигрыша */
 #CasinoReels {
-  width: 300px;
-  height: 76px;
-  margin-top: 12px;
+  width: 330px;
+  height: 251px;
+  margin-top: 8px;
+  padding: 25px 32px 32px 31px;
   horizontal-align: center;
+  background-image: url("file://{images}/custom_game/hud/casino_reels_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+#CasinoReelsWindow {
+  width: 100%;
+  height: 100%;
   flow-children: right;
   overflow: clip;
-  background-color: #08070bdc;
-  border: 2px solid #e8b84f80;
 }
 
 .CasinoReel {
   width: fill-parent-flow(1);
   height: 100%;
-  vertical-align: center;
-  font-family: defaultFont;
-  font-size: 48px;
-  font-weight: bold;
-  text-align: center;
-  color: #ffe89a;
-  text-shadow: #ffbb38 0px 0px 8px 0px;
+  margin: 0px 1px;
+  /* лента выше барабана: не сжимать (по умолчанию squish), обрезает окошко */
+  overflow: noclip;
+  background-size: 72px 72px;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+}
+
+/* Лента casino_reel_strip_hud: 8 ячеек по 96px (два круга по 4 символа); сдвиг на
+   один круг (384px) повторяется без шва */
+@keyframes 'OSCReelSpin' {
+  0% {
+    transform: translateY(-384px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.CasinoReelStrip {
+  width: 100%;
+  height: 768px;
+  background-image: url("file://{images}/custom_game/hud/casino_reel_strip_hud.png");
+  background-size: 72px 768px;
+  background-position: 50% 0px;
+  background-repeat: no-repeat;
+  visibility: collapse;
 }
 
 .CasinoReel.Spinning {
-  color: #ffffff;
-  text-shadow: #d98bff 0px 0px 14px 0px;
+  background-image: none;
+}
+
+.CasinoReel.Spinning .CasinoReelStrip {
+  visibility: visible;
+  animation-name: OSCReelSpin;
+  animation-duration: 0.32s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.Sym_circle {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_circle_hud.png");
+}
+
+.Sym_diamond {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_diamond_hud.png");
+}
+
+.Sym_star {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_star_hud.png");
+}
+
+.Sym_seven {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_seven_hud.png");
 }
 
 .CasinoReel.Stopped {
@@ -1210,33 +1646,89 @@
   animation-timing-function: ease-out;
 }
 
-#CasinoWindow.Win {
-  box-shadow: #e8b84f 0px 0px 28px 0px;
+/* Свечение — на окошке барабанов: у окна фигурная рамка, а box-shadow прямоугольный */
+/* Выигрыш — рамка барабанов с лампочками и символы пульсируют яркостью
+   (box-shadow дал бы прямоугольный ореол шире рамки) */
+@keyframes 'OSCReelsWin' {
+  0% {
+    brightness: 1;
+  }
+  50% {
+    brightness: 1.35;
+  }
+  100% {
+    brightness: 1;
+  }
+}
+
+@keyframes 'OSCReelsJackpot' {
+  0% {
+    brightness: 1;
+  }
+  50% {
+    brightness: 1.7;
+  }
+  100% {
+    brightness: 1;
+  }
+}
+
+#CasinoWindow.Win #CasinoReels {
+  animation-name: OSCReelsWin;
+  animation-duration: 0.9s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
 }
 
 #CasinoWindow.Jackpot {
-  border: 2px solid #fff09a;
-  box-shadow: #ffcf35 0px 0px 48px 0px;
   transform: scale3d(1.06, 1.06, 1);
 }
 
+#CasinoWindow.Jackpot #CasinoReels {
+  animation-name: OSCReelsJackpot;
+  animation-duration: 0.5s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
 #CasinoWindow.Win #CasinoResult,
-#CasinoWindow.Win .CasinoReel,
-#CasinoWindow.Jackpot #CasinoResult,
-#CasinoWindow.Jackpot .CasinoReel {
+#CasinoWindow.Jackpot #CasinoResult {
   color: #ffe46b;
   text-shadow: #ff9d22 0px 0px 14px 0px;
 }
 
 #CasinoButtons {
   width: 100%;
-  margin-top: 16px;
+  margin-top: 8px;
   flow-children: right;
   horizontal-align: center;
 }
 
-#CasinoButtons Button {
-  margin: 0px 8px;
+/* casino_spin_*_hud 416x160; пока крутится или ставка недоступна — выключенная */
+#CasinoSpinButton {
+  width: 182px;
+  height: 70px;
+  min-width: 0px;
+  min-height: 0px;
+  padding: 0px;
+  horizontal-align: center;
+  background-color: #00000000;
+  border: 0px solid #00000000;
+  background-image: url("file://{images}/custom_game/hud/casino_spin_on_hud.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+#CasinoSpinButton:hover {
+  brightness: 1.2;
+}
+
+#CasinoSpinButton:disabled {
+  background-image: url("file://{images}/custom_game/hud/casino_spin_off_hud.png");
+}
+
+#CasinoSpinButton:disabled Label {
+  color: #b9aebe;
 }
 
 #CasinoFx {
@@ -1314,7 +1806,8 @@
 #ChaosShopPanel,
 #HelpPanel,
 #TimerPanel,
-#ChaosRoundPanel {
+#ChaosRoundPanel,
+#CasinoWindow {
   background-color: #00000000;
   border: 0px solid #00000000;
   border-radius: 0px;
@@ -1348,7 +1841,7 @@
 }
 
 .ChaosShopInfo {
-  width: fill-parent-flow(1.0);
+  width: fill-parent-flow(1);
   margin: 0px 10px;
   vertical-align: center;
   flow-children: down;
@@ -1380,11 +1873,11 @@
 .ChaosShopBuy Label {
   font-size: 14px;
   color: #efc96c;
-  text-shadow: #000000 1px 1px 3px 1.0;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
 .ChaosShopInfo Label {
-  text-shadow: #000000 1px 1px 3px 1.0;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
 /* ================= Справка ================= */
@@ -1428,7 +1921,7 @@
 
 #HelpSections {
   width: 100%;
-  height: fill-parent-flow(1.0);
+  height: fill-parent-flow(1);
   margin: 12px 0px;
   flow-children: down;
   overflow: squish scroll;
@@ -1444,15 +1937,16 @@
   width: 100%;
   margin-top: 2px;
   color: #c9bdd3;
-  text-shadow: #000000 1px 1px 3px 1.0;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
 /* Крестик в правом верхнем углу рамки: первый в потоке панели, отрицательный
    margin-bottom возвращает заголовок на место (absolute в Panorama нет) */
 #HelpClose,
-#ChaosShopClose {
-  width: 32px;
-  height: 32px;
+#ChaosShopClose,
+#CasinoCloseButton {
+  width: 42px;
+  height: 42px;
   min-width: 0px;
   min-height: 0px;
   padding: 0px;
@@ -1469,14 +1963,21 @@
   margin-right: -8px;
 }
 
+#CasinoCloseButton {
+  margin-top: 10px;
+  margin-right: -1px;
+}
+
 #HelpClose Label,
-#ChaosShopClose Label {
-  font-size: 28px;
+#ChaosShopClose Label,
+#CasinoCloseButton Label {
+  font-size: 40px;
   color: #efc96c;
-  text-shadow: #000000 1px 1px 3px 1.0;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
 #HelpClose:hover Label,
-#ChaosShopClose:hover Label {
+#ChaosShopClose:hover Label,
+#CasinoCloseButton:hover Label {
   color: #ffffff;
 }
