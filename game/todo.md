@@ -25,6 +25,17 @@
 - Таланты ссылаются на родные способности героя, часть дерева пустеет; Scepter и Shard работают не у всех способностей пула. Решить, нужны ли универсальные таланты.
 - Ультимейт с 6-го уровня встаёт в первый свободный слот, а не обязательно на R: SetAbilityIndex в игре не переставляет способности. Закрепить слот можно скрытыми способностями-заглушками.
 
+Кандидаты в пул — на проверку
+- ancient_apparition_ice_blast — парная активация с ancient_apparition_ice_blast_release: оформить linked и проверить в игре.
+- naga_siren_song_of_the_siren — отмена отдельной способностью naga_siren_song_of_the_siren_cancel: проверить linked.
+- keeper_of_the_light_illuminate — ченнел с отдельным завершением keeper_of_the_light_illuminate_end.
+- alchemist_unstable_concoction — бросок отдельной способностью alchemist_unstable_concoction_throw.
+- primal_beast_onslaught — разгон с отдельным отпусканием.
+- tiny_toss, hoodwink_bushwhack — зависят от окружения (юнит рядом, деревья): проверить, не бесполезны ли.
+- warlock_rain_of_chaos, dark_seer_wall_of_replica — управляемые голем и иллюзии.
+- Время загрузки после расширения пула (прекэш героев целиком): если выросло заметно — прекэшить только частицы и звуки способностей.
+- Не взяты в 1.3 из списка спека (слабее остальных или малоинтересны в соло-слоте): lich_frost_shield, legion_commander_press_the_attack, templar_assassin_refraction, treant_leech_seed, abyssal_underlord_pit_of_malice, dark_willow_bramble_maze, void_spirit_aether_remnant, spectre_spectral_dagger, weaver_shukuchi, ancient_apparition_cold_feet, ursa_enrage, razor_eye_of_the_storm, grimstroke_soul_chain.
+
 Финальная проверка после каждого этапа
 - Workshop Tools с ботами при DEVELOPMENT_MODE = true; ошибки в консоли VScript и в логе мода.
 - Смерть и респавн во время события, иллюзии (Manta, Phantom Lancer), переподключение игрока (HUD восстанавливается из net tables), матч длиннее 30 минут на утечки таймеров.
