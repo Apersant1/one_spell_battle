@@ -45,10 +45,10 @@ OSC_CONFIG = {
     SUMMARY_TITLE_TIES = "none",
     SUMMARY_TITLES = { "gambler", "lucky", "chaos_master", "collector", "storm_chaser" },
     SUMMARY_TITLE_MIN = {
-        gambler = 1,
+        gambler = 100, -- не за одну мелкую ставку
         lucky = 1,
         chaos_master = 1,
-        collector = 1,
+        collector = 4, -- стартовая + ещё три разных (ротации и ультимейты с предмета)
         storm_chaser = 1,
     },
     -- Голосование в лобби (выбор героев и стратегия). Вопросы и варианты по

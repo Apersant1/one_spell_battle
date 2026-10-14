@@ -69,7 +69,7 @@ return {
         OSC_Summary.Publish({
             [0] = stats({ casino_net = -300, abilities = { "a", "b", "a" }, chaos_damage = 10 }),
             [1] = stats({ casino_net = 500, kill_abilities = { a = 1, b = 1 }, chaos_damage = 900 }),
-            [2] = stats({ casino_net = -50, abilities = { "a", "b", "c" }, kill_abilities = { a = 5 } }),
+            [2] = stats({ casino_net = -50, abilities = { "a", "b", "c", "d" }, kill_abilities = { a = 5 } }),
         })
 
         local titles = titlesById()
@@ -79,7 +79,7 @@ return {
         H.eq(titles.chaos_master.player_id, 1, "most distinct kill abilities")
         H.eq(titles.chaos_master.value, 2, "chaos master value")
         H.eq(titles.collector.player_id, 2, "most distinct received abilities")
-        H.eq(titles.collector.value, 3, "collector value")
+        H.eq(titles.collector.value, 4, "collector value")
         H.eq(titles.storm_chaser.player_id, 1, "most chaos damage")
         H.eq(H.netTables.summary.titles[1].id, "gambler", "order from config")
     end,
