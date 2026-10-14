@@ -30,4 +30,23 @@
 		"ItemStackable"             "0"
 		"ItemShareability"          "ITEM_NOT_SHAREABLE"
 	}
+
+	// Сфера хаоса: падает с Рошана (osc/systems/chaos_sphere.lua), не продаётся.
+	// При использовании открывает выбор режима, расходуется после выбора
+	"item_osc_chaos_sphere"
+	{
+		"BaseClass"                 "item_lua"
+		"ScriptFile"                "scripts/vscripts/osc/items/item_chaos_sphere.lua"
+		"AbilityTextureName"        "item_ultimate_orb"
+		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityCooldown"           "0"
+		"ItemCost"                  "0"
+		"ItemPurchasable"           "0"
+		"ItemSellable"              "0"
+		"ItemDroppable"             "0"
+		"ItemKillable"              "0"
+		"ItemInitialCharges"        "1"
+		"ItemStackable"             "0"
+		"ItemShareability"          "ITEM_NOT_SHAREABLE"
+	}
 }

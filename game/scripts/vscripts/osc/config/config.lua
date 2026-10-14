@@ -44,6 +44,13 @@ OSC_CONFIG = {
         { name = "item_osc_ultimate_reroll", team_stock = 5 }, -- 5 на команду за матч
         { name = "item_osc_anchor" },                          -- без лимита
     },
+    -- Сфера хаоса (osc/systems/chaos_sphere.lua): падает с Рошана, владелец
+    -- выбирает легендарный ультимейт (из CHAOS_SPHERE_ULTIMATE_CHOICES) или
+    -- новую случайную способность всем врагам
+    CHAOS_SPHERE_ENABLED = true,
+    CHAOS_SPHERE_ULTIMATE_CHOICES = 3,
+    CHAOS_SPHERE_MIN_LEVEL = 6,       -- для варианта «ультимейт»
+    CHAOS_SPHERE_DROP_OFFSET = 150,   -- на сколько от Рошана падает сфера
     -- Статистика матча по игрокам (osc/systems/stats.lua)
     STATS_ENABLED = true,
     -- Итоги матча на POST_GAME (нужна и статистика). Титулы выдаются по
