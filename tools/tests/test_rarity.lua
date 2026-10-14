@@ -68,4 +68,79 @@ return {
         H.eq(countLogs("ABILITY_RARITY_WEIGHT.rare"), 1, "rare error logged once")
         H.eq(countLogs("ABILITY_RARITY_WEIGHT.legendary"), 1, "legendary error logged once")
     end,
+
+    validate_removes_invalid_rarity = function()
+        setup()
+        OSC_ABILITY_POOL = {
+            entry("test_ok", "rare"), entry("test_plain", "common"), entry("test_epic", "epic"),
+        }
+        H.DefineAbility("test_ult", { ultimate = true })
+        OSC_ULTIMATE_POOL = { { name = "test_ult", hero = "npc_dota_hero_axe", label = "U", tags = { "damage" } } }
+
+        local removed = OSC_AbilitySelection.ValidatePools()
+
+        H.eq(removed, 1, "only the bad rarity removed")
+        H.eq(#OSC_ABILITY_POOL, 2, "rare and explicit common kept")
+        H.truthy(H.logged("test_epic (invalid rarity epic)"), "reason logged")
+    end,
+
+    rarity_filter_returns_only_that_rarity = function()
+        setup()
+        OSC_ABILITY_POOL = {
+            entry("test_c1"), entry("test_c2"), entry("test_c3"),
+            entry("test_l1", "legendary"), entry("test_l2", "legendary"), entry("test_l3", "legendary"),
+        }
+        local hero = heroWith("test_c1")
+        for _ = 1, 20 do
+            local picked = OSC_AbilitySelection.PickCandidates(hero, "ability", 3, { rarity = "legendary" })
+            H.eq(#picked, 3, "three candidates")
+            for _, item in ipairs(picked) do
+                H.eq(item.rarity, "legendary", "only legendary " .. item.name)
+            end
+        end
+    end,
+
+    rarity_filter_fills_without_duplicates = function()
+        setup()
+        OSC_ABILITY_POOL = {
+            entry("test_c1"), entry("test_c2"), entry("test_c3"), entry("test_c4"),
+            entry("test_l1", "legendary"),
+        }
+        local hero = heroWith("test_c1")
+        for _ = 1, 20 do
+            local picked = OSC_AbilitySelection.PickCandidates(hero, "ability", 3, { rarity = "legendary" })
+            H.eq(#picked, 3, "filled up to count")
+            H.eq(picked[1].name, "test_l1", "legendary first")
+            local seen = {}
+            for _, item in ipairs(picked) do
+                H.eq(seen[item.name], nil, "no duplicates: " .. item.name)
+                H.truthy(item.name ~= "test_c1", "current ability not offered")
+                seen[item.name] = true
+            end
+        end
+    end,
+
+    rarity_filter_without_matches_still_picks = function()
+        setup()
+        OSC_CONFIG.ABILITY_RARITY_ENABLED = false -- все записи считаются обычными
+        OSC_ABILITY_POOL = {
+            entry("test_c1"), entry("test_c2"), entry("test_c3"), entry("test_l1", "legendary"),
+        }
+        local hero = heroWith("test_c1")
+        local picked = OSC_AbilitySelection.PickCandidates(hero, "ability", 3, { rarity = "legendary" })
+        H.eq(#picked, 3, "picked from the whole pool without error")
+    end,
+
+    rarity_filter_never_offers_current = function()
+        setup()
+        OSC_ABILITY_POOL = { entry("test_l1", "legendary"), entry("test_c1"), entry("test_c2") }
+        local hero = heroWith("test_l1")
+        for _ = 1, 20 do
+            local picked = OSC_AbilitySelection.PickCandidates(hero, "ability", 3, { rarity = "legendary" })
+            H.eq(#picked, 2, "only the other entries")
+            for _, item in ipairs(picked) do
+                H.truthy(item.name ~= "test_l1", "current legendary not offered")
+            end
+        end
+    end,
 }

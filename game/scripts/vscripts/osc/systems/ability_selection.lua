@@ -43,6 +43,14 @@ local function KnownTags()
     return known
 end
 
+local function KnownRarities()
+    local known = {}
+    for _, rarity in ipairs(OSC_ABILITY_RARITIES or {}) do
+        known[rarity] = true
+    end
+    return known
+end
+
 -- Причина, по которой теги записи неверны, или nil
 local function InvalidTagsReason(entry, known)
     local tags = entry.tags
@@ -114,8 +122,9 @@ end
 -- ================= Проверка пулов =================
 
 -- Убирает из пулов способности, которых нет в KV (например, после патча Dota),
--- с неверным весом или тегами (нет тегов, тег не из OSC_ABILITY_TAGS,
--- повтор), а из linked — отсутствующие подспособности.
+-- с неверным весом, тегами (нет тегов, тег не из OSC_ABILITY_TAGS,
+-- повтор) или редкостью (не из OSC_ABILITY_RARITIES), а из linked —
+-- отсутствующие подспособности.
 -- Возвращает, сколько записей и подспособностей убрано.
 function OSC_AbilitySelection.ValidatePools()
     local removed = 0
@@ -125,6 +134,7 @@ function OSC_AbilitySelection.ValidatePools()
     }
 
     local knownTags = KnownTags()
+    local knownRarities = KnownRarities()
 
     for _, pool in ipairs(pools) do
         local reasons, invalidCount = {}, 0
@@ -136,6 +146,8 @@ function OSC_AbilitySelection.ValidatePools()
                 reasons[index] = "invalid weight " .. tostring(entry.weight)
             elseif tagsReason then
                 reasons[index] = "invalid tags: " .. tagsReason
+            elseif entry.rarity ~= nil and not knownRarities[entry.rarity] then
+                reasons[index] = "invalid rarity " .. tostring(entry.rarity)
             end
             if reasons[index] then
                 invalidCount = invalidCount + 1
@@ -340,28 +352,21 @@ local function PickWeighted(candidates)
     end
 end
 
--- До count разных записей пула для слота героя ("ability" или "ultimate")
--- по правилам режима, взвешенный выбор без повторов. Сначала берутся
--- кандидаты самой строгой ступени, недостающие — из следующих: так
--- ослабляется правило серии тегов. opts.exclude — имена, которые не
--- предлагать (например, уже показанные игроку).
--- Ошибка, если не нашлось ни одной записи.
-function OSC_AbilitySelection.PickCandidates(hero, slot, count, opts)
-    opts = opts or {}
+-- До count записей пула по ступеням отбора (см. BuildTiers), взвешенный
+-- выбор без повторов. filter(entry) — дополнительное условие или nil; с
+-- фильтром ступень «весь пул» не используется: иначе единственная запись
+-- нужной редкости вернула бы текущую способность при живых кандидатах.
+local function Collect(hero, slot, count, exclude, filter)
     local pool = OSC_AbilitySelection.GetPool(slot)
-    local exclude = {}
-    for _, name in ipairs(opts.exclude or {}) do
-        exclude[name] = true
-    end
-
     local chosen, chosenNames = {}, {}
     for tierIndex, tier in ipairs(BuildTiers(hero, slot, exclude)) do
-        if #chosen >= count or (tier.only_if_empty and #chosen > 0) then
+        if #chosen >= count or (tier.only_if_empty and (#chosen > 0 or filter)) then
             break
         end
         local candidates = {}
         for _, entry in ipairs(pool) do
-            if not chosenNames[entry.name] and tier.accepts(entry) then
+            if not chosenNames[entry.name] and tier.accepts(entry)
+                and (filter == nil or filter(entry)) then
                 table.insert(candidates, entry)
             end
         end
@@ -378,6 +383,40 @@ function OSC_AbilitySelection.PickCandidates(hero, slot, count, opts)
             chosenNames[entry.name] = true
             table.insert(chosen, entry)
         end
+    end
+    return chosen
+end
+
+-- До count разных записей пула для слота героя ("ability" или "ultimate")
+-- по правилам режима, взвешенный выбор без повторов. Сначала берутся
+-- кандидаты самой строгой ступени, недостающие — из следующих: так
+-- ослабляется правило серии тегов. opts.exclude — имена, которые не
+-- предлагать (например, уже показанные игроку). opts.rarity — только
+-- записи этой редкости (GetRarity); если их меньше count, недостающие
+-- добираются без фильтра редкости тем же выбором, без повторов.
+-- Ошибка, если не нашлось ни одной записи.
+function OSC_AbilitySelection.PickCandidates(hero, slot, count, opts)
+    opts = opts or {}
+    local exclude = {}
+    for _, name in ipairs(opts.exclude or {}) do
+        exclude[name] = true
+    end
+
+    local chosen
+    if opts.rarity then
+        chosen = Collect(hero, slot, count, exclude, function(entry)
+            return OSC_AbilitySelection.GetRarity(entry) == opts.rarity
+        end)
+        if #chosen < count then
+            for _, entry in ipairs(chosen) do
+                exclude[entry.name] = true
+            end
+            for _, entry in ipairs(Collect(hero, slot, count - #chosen, exclude)) do
+                table.insert(chosen, entry)
+            end
+        end
+    else
+        chosen = Collect(hero, slot, count, exclude)
     end
 
     if #chosen == 0 then
