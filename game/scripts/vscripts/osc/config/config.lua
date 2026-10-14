@@ -29,11 +29,17 @@ OSC_CONFIG = {
     -- Отказы на команды клиента (выбор из трёх, голосование) пишутся в лог
     -- не чаще раза в столько секунд на игрока и канал
     CLIENT_REFUSAL_LOG_INTERVAL = 5,
-    -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшую ротацию.
-    -- ANCHOR_COST должен совпадать с ItemCost в npc_items_custom.txt
-    -- (это проверяет tools/tests/run_tests.py)
+    -- Предмет «Якорь» (item_osc_anchor): пропустить ближайшую ротацию
     ANCHOR_ENABLED = true,
-    ANCHOR_COST = 400,
+    -- Хаос-лавка (osc/systems/chaos_shop.lua): предметы режима продаются в
+    -- своей панели HUD, а не в стандартном магазине. Цена — ItemCost в
+    -- npc_items_custom.txt; team_stock — сколько штук команда может купить
+    -- за матч, без него — без лимита. «Якорь» выключается и ANCHOR_ENABLED.
+    CHAOS_SHOP_ENABLED = true,
+    CHAOS_SHOP_ITEMS = {
+        { name = "item_osc_ultimate_reroll", team_stock = 5 }, -- 5 на команду за матч
+        { name = "item_osc_anchor" },                          -- без лимита
+    },
     -- Статистика матча по игрокам (osc/systems/stats.lua)
     STATS_ENABLED = true,
     -- Итоги матча на POST_GAME (нужна и статистика). Титулы выдаются по

@@ -1,5 +1,7 @@
 "DOTAAbilities"
 {
+	// Реролл ультимейта. Продаётся только в Хаос-лавке (osc/systems/chaos_shop.lua),
+	// лимит на команду — CHAOS_SHOP_ITEMS в config.lua
 	"item_osc_ultimate_reroll"
 	{
 		"BaseClass"                 "item_lua"
@@ -8,15 +10,13 @@
 		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
 		"AbilityCooldown"           "0"
 		"ItemCost"                  "3500"
-		"ItemPurchasable"           "1"
+		"ItemPurchasable"           "0"
 		"ItemInitialCharges"        "1"
 		"ItemStackable"             "0"
-		"ItemStockMax"              "5"
-		"ItemStockTime"             "0"
 		"ItemShareability"          "ITEM_SHAREABLE"
 	}
 
-	// «Якорь»: пропустить ближайшую ротацию. Цена = OSC_CONFIG.ANCHOR_COST
+	// «Якорь»: пропустить ближайшую ротацию. Продаётся только в Хаос-лавке
 	"item_osc_anchor"
 	{
 		"BaseClass"                 "item_lua"
@@ -25,7 +25,7 @@
 		"AbilityBehavior"           "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
 		"AbilityCooldown"           "0"
 		"ItemCost"                  "400"
-		"ItemPurchasable"           "1"
+		"ItemPurchasable"           "0"
 		"ItemInitialCharges"        "1"
 		"ItemStackable"             "0"
 		"ItemShareability"          "ITEM_NOT_SHAREABLE"
