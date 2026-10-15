@@ -116,7 +116,7 @@ OSC_CONFIG = {
         },
     },
     CHAT_MESSAGES = true,
-    DEVELOPMENT_MODE = true,
+    DEVELOPMENT_MODE = false,
     MAX_DUPLICATE_ULTIMATES_PER_TEAM = 2,
     CHAOS_ROUNDS = {
         INTERVAL                = 200,
