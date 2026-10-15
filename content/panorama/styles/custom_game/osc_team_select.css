@@ -11,8 +11,7 @@
 #LBRoot {
   width: 100%;
   height: 100%;
-  background-image: url("file://{images}/custom_game/team_select/bg_space.png");
-  background-size: cover;
+  background-color: #05060c;
 }
 
 /* Центральная колонка */
@@ -27,6 +26,56 @@
 #Stars {
   width: 100%;
   height: 100%;
+}
+
+/* Картинка космоса чуть больше экрана — запас под медленный дрейф */
+#SpaceImage {
+  width: 112%;
+  height: 112%;
+  horizontal-align: center;
+  vertical-align: center;
+  background-image: url("file://{images}/custom_game/team_select/bg_space.png");
+  background-size: cover;
+  animation-name: SpaceDrift;
+  animation-duration: 80s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Звёзды дрейфуют в своём темпе — выходит параллакс */
+#Stars {
+  animation-name: StarsDrift;
+  animation-duration: 120s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Падающие звёзды: голова слева, хвост гаснет вправо. Пролёт — первые 7%
+   цикла, остальное время метеор невидим; длительности разные, чтобы не
+   было заметного ритма */
+.Meteor {
+  width: 170px;
+  height: 2px;
+  opacity: 0;
+  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffffee), to(#ffffff00));
+  animation-name: MeteorFly;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.MeteorA {
+  position: 72% 10% 0px;
+  animation-duration: 11s;
+  animation-delay: 2s;
+}
+.MeteorB {
+  position: 46% 4% 0px;
+  animation-duration: 17s;
+  animation-delay: 7s;
+}
+.MeteorC {
+  position: 88% 24% 0px;
+  animation-duration: 23s;
+  animation-delay: 13s;
 }
 
 .Nebula {
@@ -750,6 +799,47 @@
   }
   100% {
     opacity: 0.6;
+  }
+}
+@keyframes 'SpaceDrift' {
+  0% {
+    transform: scale3d(1, 1, 1) translate3d(0px, 0px, 0px);
+  }
+  50% {
+    transform: scale3d(1.05, 1.05, 1) translate3d(-28px, -14px, 0px);
+  }
+  100% {
+    transform: scale3d(1, 1, 1) translate3d(0px, 0px, 0px);
+  }
+}
+@keyframes 'StarsDrift' {
+  0% {
+    transform: translate3d(0px, 0px, 0px);
+  }
+  50% {
+    transform: translate3d(-40px, 18px, 0px);
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0px);
+  }
+}
+/* наклон -25deg совпадает с направлением полёта (-520, 240) */
+@keyframes 'MeteorFly' {
+  0% {
+    opacity: 0;
+    transform: translate3d(0px, 0px, 0px) rotateZ(-25deg);
+  }
+  1% {
+    opacity: 1;
+    transform: translate3d(-74px, 34px, 0px) rotateZ(-25deg);
+  }
+  7% {
+    opacity: 0;
+    transform: translate3d(-520px, 240px, 0px) rotateZ(-25deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-520px, 240px, 0px) rotateZ(-25deg);
   }
 }
 @keyframes 'Twinkle' {

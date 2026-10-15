@@ -130,13 +130,19 @@ namespace OSC.TeamSelect {
     );
   }
 
+  // Космос живёт сам, на CSS-анимациях: картинка медленно дрейфует, звёзды —
+  // в своём темпе, туманности пульсируют, изредка пролетают метеоры
   function Backdrop() {
     return (
       <Panel id="Backdrop" hittest={false}>
+        <Panel id="SpaceImage" hittest={false} />
         <Panel className="Nebula NebulaCenter" hittest={false} />
         <Panel className="Nebula NebulaLeft" hittest={false} />
         <Panel className="Nebula NebulaRight" hittest={false} />
         <Stars />
+        <Panel className="Meteor MeteorA" hittest={false} />
+        <Panel className="Meteor MeteorB" hittest={false} />
+        <Panel className="Meteor MeteorC" hittest={false} />
         <Panel className="Vignette" hittest={false} />
       </Panel>
     );
