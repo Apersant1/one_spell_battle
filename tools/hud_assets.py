@@ -9,7 +9,7 @@
 import os
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 
 HUD = os.path.join(
     os.path.dirname(__file__), "..", "content", "panorama", "images", "custom_game", "hud"
@@ -123,6 +123,33 @@ save(
     "shop_bg_shadow.png",
     stretch(help_bg, (1040, 620), 0.6, xzones=[(280, 370), (765, 855)], yzones=[(285, 495), (720, 930)]),
 )
+# Справка с вкладками: та же рамка в полный размер (углы и камни как у
+# прежней справки), растянутая до 1280x800 на экране. Растянутые по зонам
+# полосы фона дают швы, поэтому внутрь кладём фон, растянутый равномерно;
+# маска (координаты helpdesk_bg_shadow) обходит плашку, камни и углы.
+def help_wide(size):
+    xz, yz = [(280, 370), (765, 855)], [(285, 495), (720, 930)]
+    frame = stretch(help_bg, size, 1.0, xzones=xz, yzones=yz)
+    h, w = help_bg.shape[:2]
+    # Чистый фон без орнамента растягиваем равномерно на всю область маски
+    # (до зон и после них масштаб 1, поэтому её края в результате известны)
+    l, t, r, b = 200, 175, 935, 1040
+    inner = frame.copy()
+    inner[t : size[1] - (h - b), l : size[0] - (w - r)] = stretch(
+        help_bg[265:985, 262:873], (size[0] - (w - r) - l, size[1] - (h - b) - t), 1.0
+    )
+    mask = Image.new("L", (w, h), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rectangle((200, 175, 935, 1040), fill=255)
+    for box in [(360, 0, 775, 265), (480, 990, 650, h), (0, 0, 260, 240), (875, 0, w, 240),
+                (0, 985, 260, h), (875, 985, w, h), (0, 520, 220, 700), (915, 520, w, 700)]:
+        draw.rectangle(box, fill=0)
+    mask = np.asarray(mask.filter(ImageFilter.GaussianBlur(14)), np.float64)[:, :, None] / 255
+    m = stretch(np.concatenate([np.ones((h, w, 3)), mask], 2), size, 1.0, xzones=xz, yzones=yz)[:, :, 3:]
+    return frame * (1 - m) + inner * m
+
+
+save("help_wide_shadow.png", help_wide((2560, 1600)))
 
 # Плашка таймера: зоны — участки рамки между гнездом, центральным камнем и правым концом
 for src_name, zones in [

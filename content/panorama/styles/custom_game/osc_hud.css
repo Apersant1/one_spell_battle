@@ -1897,13 +1897,14 @@
   text-shadow: #000000 1px 1px 3px 0px;
 }
 
-/* helpdesk_bg_shadow 1136x1225 в 2x: рамка + запечённая тень по контуру (поля 24px);
-   box-shadow в Panorama только прямоугольный. padding — внутренняя область рамки */
+/* help_wide_shadow 2560x1600 в 2x (tools/hud_assets.py): рамка справки в
+   полный размер, растянутая по гладким участкам, с запечённой тенью (поля
+   24px). padding — внутренняя область рамки, как у прежней справки */
 #HelpPanel {
-  width: 568px;
-  height: 612px;
+  width: 1280px;
+  height: 800px;
   padding: 124px 116px 94px 116px;
-  background-image: url("file://{images}/custom_game/hud/helpdesk_bg_shadow.png");
+  background-image: url("file://{images}/custom_game/hud/help_wide_shadow.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   horizontal-align: center;
@@ -1920,25 +1921,503 @@
   horizontal-align: center;
 }
 
-#HelpSections {
+#HelpBody {
   width: 100%;
   height: fill-parent-flow(1);
-  margin: 12px 0px;
+  margin-top: 12px;
+  flow-children: right;
+}
+
+/* ---------- Вкладки ---------- */
+
+#HelpTabs {
+  width: 230px;
+  height: 100%;
+  flow-children: down;
+}
+
+.HelpTab {
+  width: 100%;
+  height: 46px;
+  margin-bottom: 5px;
+  padding: 0px 10px;
+  flow-children: right;
+  border-radius: 4px;
+  border: 1px solid #00000000;
+  background-color: #0000004d;
+}
+
+.HelpTab:hover {
+  background-color: #ffffff14;
+}
+
+.HelpTab.Selected {
+  border: 1px solid #efc96c99;
+  background-color: #efc96c26;
+}
+
+/* 88:64, как иконки предметов */
+.HelpTabIcon {
+  width: 44px;
+  height: 32px;
+  vertical-align: center;
+}
+
+.HelpTab Label {
+  margin-left: 12px;
+  vertical-align: center;
+  font-size: 16px;
+  color: #d5c9df;
+  text-shadow: #000000 1px 1px 3px 1;
+}
+
+.HelpTab.Selected Label {
+  color: #efc96c;
+  font-weight: bold;
+}
+
+/* ---------- Страница ---------- */
+
+/* Скролл только на случай, если текст перевода не влезет */
+#HelpPage {
+  width: fill-parent-flow(1);
+  height: 100%;
+  margin-left: 24px;
   flow-children: down;
   overflow: squish scroll;
 }
 
-.HelpHeading {
+.HelpPageHeader {
   width: 100%;
-  margin-top: 10px;
+  margin-bottom: 10px;
+  flow-children: right;
+}
+
+.HelpPageIcon {
+  width: 55px;
+  height: 40px;
+  vertical-align: center;
+  border: 1px solid #efc96c88;
+}
+
+.HelpPageTitle {
+  margin-left: 14px;
+  vertical-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #efc96c;
   text-shadow: #000000 1px 1px 4px 1.5;
 }
 
 .HelpText {
   width: 100%;
-  margin-top: 2px;
+  margin-bottom: 8px;
+  font-size: 15px;
   color: #c9bdd3;
   text-shadow: #000000 1px 1px 3px 1;
+}
+
+.HelpSubheading {
+  margin: 4px 0px 6px 0px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1;
+}
+
+/* Числа матча: плитки «значение + подпись» */
+.HelpFacts {
+  width: 100%;
+  margin-bottom: 10px;
+  flow-children: right-wrap;
+}
+
+.HelpFact {
+  width: 185px;
+  margin: 0px 10px 8px 0px;
+  padding: 8px 12px;
+  flow-children: down;
+  border-radius: 4px;
+  border: 1px solid #efc96c40;
+  background-color: #00000066;
+}
+
+.HelpFactHead {
+  flow-children: right;
+}
+
+.HelpFactIcon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  vertical-align: center;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.HelpFactValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1;
+}
+
+/* Значение-слово («Казино Огра») мельче числа, чтобы влезло в плитку */
+.HelpFactValue.Text {
+  font-size: 18px;
+}
+
+.HelpFactCaption {
+  width: 100%;
+  font-size: 13px;
+  color: #b9aebe;
+}
+
+/* Таблицы: ячейки делят строку поровну */
+.HelpTable {
+  width: 100%;
+  margin-bottom: 10px;
+  flow-children: down;
+}
+
+.HelpRow {
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 2px;
+  padding: 4px 10px;
+  flow-children: right;
+  background-color: #00000059;
+}
+
+.HelpRow.Header {
+  min-height: 30px;
+  background-color: #efc96c24;
+}
+
+.HelpRow.Header .HelpCell {
+  width: fill-parent-flow(1);
+  font-weight: bold;
+  color: #efc96c;
+}
+
+.HelpCellBox {
+  width: fill-parent-flow(1);
+  vertical-align: center;
+  flow-children: right;
+}
+
+.HelpCell {
+  vertical-align: center;
+  font-size: 15px;
+  color: #d5c9df;
+}
+
+.HelpCellIcon {
+  width: 44px;
+  height: 32px;
+  margin-right: 10px;
+  vertical-align: center;
+}
+
+/* Карточки в 2 или 3 колонки (ширина страницы ~794px) */
+.HelpCards {
+  width: 100%;
+  margin-bottom: 8px;
+  flow-children: right-wrap;
+}
+
+.HelpCard {
+  margin: 0px 8px 8px 0px;
+  padding: 8px 12px;
+  flow-children: down;
+  border-radius: 4px;
+  background-color: #00000066;
+}
+
+.Columns2 .HelpCard {
+  width: 385px;
+}
+
+.Columns3 .HelpCard {
+  width: 254px;
+}
+
+.HelpCardHead {
+  width: 100%;
+  margin-bottom: 4px;
+  flow-children: right;
+}
+
+.HelpCardIcon {
+  width: 44px;
+  height: 32px;
+  margin-right: 10px;
+  vertical-align: center;
+}
+
+.HelpCardTitle {
+  vertical-align: center;
+  font-size: 15px;
+  font-weight: bold;
+  color: #efc96c;
+}
+
+.HelpCardText {
+  width: 100%;
+  font-size: 13px;
+  color: #c9bdd3;
+}
+
+/* Длительность и перезарядка под описанием, как в подсказке способности */
+.HelpStats {
+  margin-top: 6px;
+  flow-children: right;
+}
+
+.HelpStat {
+  margin-right: 18px;
+  flow-children: right;
+}
+
+.HelpStatIcon {
+  width: 18px;
+  height: 18px;
+  vertical-align: center;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Значки самой Dota (pak01): часы и перезарядка из подсказок способностей */
+.HelpStatDuration,
+.HelpStatCooldown {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.HelpStatDuration {
+  background-image: url("s2r://panorama/images/control_icons/clock_psd.vtex");
+}
+
+.HelpStatCooldown {
+  background-image: url("s2r://panorama/images/hud/facets/icons/cooldown_png.vtex");
+}
+
+.HelpStat Label {
+  margin-left: 5px;
+  vertical-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Цикл ротации шагами на вкладке «Ротация» */
+.HelpSteps {
+  width: 100%;
+  margin: 2px 0px 14px 0px;
+  flow-children: right;
+}
+
+.HelpStep {
+  width: fill-parent-flow(1);
+  padding: 10px 12px;
+  flow-children: down;
+  border-radius: 4px;
+  border: 1px solid #efc96c40;
+  background-color: #00000066;
+}
+
+.HelpStepArrow {
+  width: 34px;
+  vertical-align: center;
+  text-align: center;
+  font-size: 26px;
+  color: #efc96c;
+}
+
+.HelpStepHead {
+  width: 100%;
+  height: 30px;
+  margin-bottom: 4px;
+  flow-children: right;
+}
+
+/* Номер шага в золотом кружке */
+.HelpStepNumber {
+  width: 24px;
+  height: 24px;
+  vertical-align: center;
+  border-radius: 50%;
+  background-color: #efc96c;
+  text-align: center;
+  font-size: 15px;
+  font-weight: bold;
+  color: #2a1a10;
+}
+
+.HelpStepValue {
+  margin-left: 10px;
+  vertical-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.HelpStepIcon {
+  width: 24px;
+  height: 24px;
+  margin-left: 10px;
+  vertical-align: center;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.HelpStepTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #efc96c;
+}
+
+.HelpStepCaption {
+  width: 100%;
+  font-size: 13px;
+  color: #b9aebe;
+}
+
+/* Значки аспектов Dota (pak01) для карточек правил, в золото рамки */
+.HelpFacetDice,
+.HelpFacetVortex,
+.HelpFacetItem,
+.HelpFacetAghs,
+.HelpFacetArrows,
+.HelpFacetSpin {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  wash-color: #efc96c;
+}
+
+.HelpFacetDice {
+  background-image: url("s2r://panorama/images/hud/facets/icons/rng_png.vtex");
+}
+
+.HelpFacetVortex {
+  background-image: url("s2r://panorama/images/hud/facets/icons/vortex_in_png.vtex");
+}
+
+.HelpFacetItem {
+  background-image: url("s2r://panorama/images/hud/facets/icons/item_png.vtex");
+}
+
+.HelpFacetAghs {
+  background-image: url("s2r://panorama/images/hud/facets/icons/aghs_png.vtex");
+}
+
+.HelpFacetArrows {
+  background-image: url("s2r://panorama/images/hud/facets/icons/multi_arrow_png.vtex");
+}
+
+.HelpFacetSpin {
+  background-image: url("s2r://panorama/images/hud/facets/icons/spinning_png.vtex");
+}
+
+/* Слоты героя на вкладке «Обзор»: рамка редкости 72px, значок по центру,
+   как у карточек выбора (рамка ~1.6 значка) */
+.HelpSlots {
+  width: 100%;
+  margin: 2px 0px 12px 0px;
+  flow-children: right;
+}
+
+.HelpSlot {
+  width: fill-parent-flow(1);
+  margin-right: 8px;
+  padding: 8px 12px;
+  flow-children: right;
+  border-radius: 4px;
+  background-color: #00000066;
+}
+
+.HelpSlotFrame {
+  width: 72px;
+  height: 72px;
+  vertical-align: center;
+}
+
+.HelpSlotIcon {
+  width: 44px;
+  height: 44px;
+  horizontal-align: center;
+  vertical-align: center;
+}
+
+.HelpSlotInfo {
+  width: fill-parent-flow(1);
+  margin-left: 12px;
+  vertical-align: center;
+  flow-children: down;
+}
+
+.HelpFootnote {
+  horizontal-align: right;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #8a7f92;
+}
+
+/* Картинки иконок справки (только из CSS: так их собирает компилятор) */
+.HelpImgChaos {
+  background-image: url("file://{images}/custom_game/hud/chaos_round_icon_hud.png");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.HelpImgCommon,
+.HelpImgRare,
+.HelpImgLegendary {
+  background-color: #1a1220;
+  background-size: 100% 100%;
+}
+
+.HelpImgCommon {
+  background-image: url("file://{images}/custom_game/hud/ability_border_common.png");
+}
+
+.HelpImgRare {
+  background-image: url("file://{images}/custom_game/hud/ability_border_rare.png");
+}
+
+.HelpImgLegendary {
+  background-image: url("file://{images}/custom_game/hud/ability_border_legendary.png");
+}
+
+.HelpImgCircle,
+.HelpImgDiamond,
+.HelpImgStar,
+.HelpImgSeven {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.HelpImgCircle {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_circle_hud.png");
+}
+
+.HelpImgDiamond {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_diamond_hud.png");
+}
+
+.HelpImgStar {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_star_hud.png");
+}
+
+.HelpImgSeven {
+  background-image: url("file://{images}/custom_game/hud/casino_sym_seven_hud.png");
 }
 
 /* Крестик в правом верхнем углу рамки: первый в потоке панели, отрицательный

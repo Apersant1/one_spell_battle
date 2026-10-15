@@ -17,7 +17,9 @@ require("osc/core/game_events")
 
 OSC_Anchor = OSC_Anchor or {}
 
+-- Уровень N пропускает N ротаций (AbilityValues rotations в KV)
 local LEVELS = { "item_osc_anchor", "item_osc_anchor_2", "item_osc_anchor_3" }
+OSC_Anchor.LEVELS = LEVELS
 local BACKPACK_LAST_SLOT = 8 -- 0-5 инвентарь, 6-8 рюкзак; тайник не сливаем
 
 function OSC_Anchor.IsEnabled()

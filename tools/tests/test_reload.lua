@@ -26,6 +26,7 @@ local MODULES = {
     { file = "osc/systems/chaos_rounds", global = "OSC_ChaosRounds" },
     { file = "osc/systems/stats", global = "OSC_Stats" },
     { file = "osc/systems/summary", global = "OSC_Summary" },
+    { file = "osc/systems/help", global = "OSC_Help" },
 }
 
 return {

@@ -190,21 +190,10 @@
                 <Label text="#osc_hud_help_close" />
             </Button>
             <Label id="HelpTitle" class="OSCTextTitle OSCChaosText" text="#osc_hud_help_title" />
-            <Panel id="HelpSections">
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_rotation_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_rotation_text" />
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_anchor_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_anchor_text" />
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_rarity_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_rarity_text" />
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_chaos_rounds_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_chaos_rounds_text" />
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_chaos_shop_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_chaos_shop_text" />
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_casino_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_casino_text" />
-                <Label class="HelpHeading OSCTextBody OSCBold OSCGold" text="#osc_hud_help_chaos_sphere_title" />
-                <Label class="HelpText OSCTextSmall" text="#osc_hud_help_chaos_sphere_text" />
+            <!-- Вкладки и страница строятся из osc_help.js -->
+            <Panel id="HelpBody">
+                <Panel id="HelpTabs" />
+                <Panel id="HelpPage" />
             </Panel>
         </Panel>
 
