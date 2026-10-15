@@ -9,6 +9,7 @@
         <!-- React (UMD, кладёт npm run build) — до модулей на React -->
         <include src="file://{resources}/scripts/custom_game/libraries/react.js" />
         <include src="file://{resources}/scripts/custom_game/libraries/react-panorama.js" />
+        <include src="file://{resources}/scripts/custom_game/shared/osc_components.js" />
         <include src="file://{resources}/scripts/custom_game/end_screen/osc_summary.js" />
     </scripts>
 

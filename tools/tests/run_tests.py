@@ -131,6 +131,40 @@ def check_contract():
     return errors
 
 
+def check_layout_includes():
+    """Скрипты Panorama — глобальные, tsc не видит, подключён ли в разметке файл,
+    который определяет OSC.<имя> (или член OSC.<ns> из соседнего файла)."""
+    sources = [*PANORAMA_SRC.rglob("*.ts"), *PANORAMA_SRC.rglob("*.tsx")]
+    defines = {}  # файл -> {"OSC.Util", "OSC.Help", "OSC.Help.L", ...}
+    for path in sources:
+        text = read_text(path)
+        names = set()
+        for ns, body in re.findall(r"^namespace (OSC(?:\.\w+)?) \{\n(.*?)^\}", text, re.S | re.M):
+            if ns != "OSC":
+                names.add(ns)
+            names |= {f"{ns}.{n}" for n in re.findall(r"^  export (?:function|const|var|type) (\w+)", body, re.M)}
+        defines[path] = names
+    errors = []
+    for layout in sorted((PANORAMA / "layout" / "custom_game").glob("*.xml")):
+        included = re.findall(r"scripts/custom_game/([\w/-]+)\.js", read_text(layout))
+        files = [p for p in sources if p.relative_to(PANORAMA_SRC).with_suffix("").as_posix() in included]
+        available = set().union(*(defines[p] for p in files)) if files else set()
+        for path in files:
+            text = read_text(path)
+            rel = path.relative_to(PANORAMA_SRC).as_posix()
+            used = {"OSC." + n for n in re.findall(r"\bOSC\.(\w+)", text)}
+            for ns in re.findall(r"^namespace (OSC\.\w+) \{", text, re.M):
+                # члены своего пространства имён из соседних файлов — без префикса
+                used |= {n for p in sources if p != path for n in defines[p]
+                         if n.startswith(ns + ".") and re.search(rf"\b{n.split('.')[-1]}\b", text)}
+            for name in sorted(used - available):
+                if any(name in defines[p] for p in sources):
+                    errors.append(f"{layout.name}: {rel} uses {name}, its file is not included")
+            if path.suffix == ".tsx" and not {"libraries/react", "libraries/react-panorama"} <= set(included):
+                errors.append(f"{layout.name}: {rel} needs libraries/react.js and react-panorama.js")
+    return errors
+
+
 def localization_keys(path):
     return set(re.findall(r'^\s*"([^"]+)"\s+"', read_text(path), re.M))
 
@@ -218,6 +252,7 @@ def main():
         ("Panorama types", check_ts_types),
         ("Localization", check_localization),
         ("Client-server contract", check_contract),
+        ("Layout includes", check_layout_includes),
         ("Config reads", check_config_reads),
     ):
         errors = check()
