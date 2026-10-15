@@ -24,11 +24,11 @@ return {
         H.eq(OSC_HeroState.Get(hero), state, "same table on repeat")
         H.eq(state.initialized, false, "initialized default")
         H.eq(state.init_attempts, 0, "attempts default")
-        H.eq(state.anchored, false, "anchor default")
+        H.eq(state.anchor_rotations, 0, "anchor default")
         H.eq(state.pending_choices, nil, "no choices yet")
         local names = {}
         for _, field in ipairs(OSC_HeroState.Fields()) do names[field.name] = true end
-        for _, required in ipairs({ "ability", "ultimate", "anchored", "pending_choices" }) do
+        for _, required in ipairs({ "ability", "ultimate", "anchor_rotations", "pending_choices" }) do
             H.truthy(names[required], "field described: " .. required)
         end
     end,
@@ -46,7 +46,7 @@ return {
         local text = table.concat(OSC_HeroState.Describe(hero), "\n")
 
         H.truthy(string.find(text, "ability = test_b", 1, true), "current ability shown")
-        H.truthy(string.find(text, "anchored = false", 1, true), "every field shown")
+        H.truthy(string.find(text, "anchor_rotations = 0", 1, true), "every field shown")
         H.truthy(string.find(text, "pending_choices = nil", 1, true), "nil fields shown too")
         H.truthy(string.find(text, "abilities: 2 (hidden 1, retired 1)", 1, true),
             "retired hidden ability counted: " .. text)

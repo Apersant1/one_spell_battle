@@ -176,6 +176,7 @@ function ExecuteOrderFromTable(order) H.lastOrder = order end
 function CreateUnitByName() return nil end
 function CreateItem(name) return H.NewItem(name) end
 function GetItemCost(name) return H.itemCosts[name] or 0 end
+function IsValidEntity(entity) return entity ~= nil and not entity:IsNull() end
 
 -- Индексы предметов не пересекаются с юнитами, которые тесты кладут в
 -- H.entities руками (там малые числа)
@@ -186,8 +187,12 @@ function H.NewItem(name)
     local item = {
         name = name,
         index = itemCounter,
-        IsNull = function() return false end,
+        charges = 1,
+        IsNull = function(self) return self._removed == true end,
         GetAbilityName = function(self) return self.name end,
+        GetCurrentCharges = function(self) return self.charges end,
+        SetCurrentCharges = function(self, value) self.charges = value end,
+        GetPurchaser = function() return nil end,
         entindex = function(self) return self.index end,
     }
     H.entities[item.index] = item

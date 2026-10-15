@@ -55,14 +55,14 @@ return {
         local hero = H.NewHero({})
         local state = OSC_HeroState.Get(hero)
         state.ability = "test_a"
-        state.anchored = nil -- как будто поле добавили после создания состояния
+        state.anchor_rotations = nil -- как будто поле добавили после создания состояния
 
         package.loaded["osc/core/hero_state"] = nil
         require("osc/core/hero_state")
 
         H.eq(OSC_HeroState.Get(hero), state, "same state table")
         H.eq(state.ability, "test_a", "values kept")
-        H.eq(state.anchored, false, "new field filled with its default")
+        H.eq(state.anchor_rotations, 0, "new field filled with its default")
     end,
 
     rotation_state_survives_reload = function()

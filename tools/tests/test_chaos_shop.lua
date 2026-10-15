@@ -187,4 +187,33 @@ return {
         H.eq(H.players[0].gold, 5000, "gold returned")
         H.eq(shopItem(DOTA_TEAM_GOODGUYS, REROLL).stock, 5, "stock untouched")
     end,
+
+    stacked_anchor_counts_as_bought = function()
+        local hero = setup()
+        OSC_ChaosShop.Init()
+        local held = H.NewItem(ANCHOR)
+        hero.items[2] = held
+        -- Как Dota со стакающимся предметом: заряд вливается в лежащий
+        hero.AddItem = function(_, item)
+            held.charges = held.charges + item.charges
+            item._removed = true
+        end
+
+        buy(ANCHOR)
+
+        H.eq(held.charges, 2, "charge added to the stack")
+        H.eq(H.players[0].gold, 4600, "charged, not refunded")
+        H.eq(H.lastEvent("osc_shop_result").data.ok, 1, "success result")
+    end,
+
+    every_anchor_level_is_sold = function()
+        setup()
+        OSC_ChaosShop.Init()
+        for _, name in ipairs({ "item_osc_anchor_2", "item_osc_anchor_3" }) do
+            H.truthy(shopItem(DOTA_TEAM_GOODGUYS, name), name .. " in the shop")
+        end
+        OSC_CONFIG.ANCHOR_ENABLED = false
+        OSC_ChaosShop.Publish(DOTA_TEAM_GOODGUYS)
+        H.eq(shopItem(DOTA_TEAM_GOODGUYS, "item_osc_anchor_3"), nil, "flag hides every level")
+    end,
 }

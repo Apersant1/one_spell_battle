@@ -256,7 +256,7 @@ return {
     anchored_hero_gets_no_offer = function()
         setup()
         local hero = addHero(0, "test_a")
-        OSC_HeroState.Get(hero).anchored = true
+        OSC_HeroState.Get(hero).anchor_rotations = 1
 
         warn()
 

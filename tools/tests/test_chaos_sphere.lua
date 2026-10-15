@@ -35,7 +35,7 @@ local function addHero(playerID, team, opts)
     local state = OSC_HeroState.Get(hero)
     state.ability = "test_q1"
     state.initialized = true
-    state.anchored = opts.anchored == true
+    state.anchor_rotations = opts.anchored and 1 or 0
     return hero
 end
 
@@ -216,7 +216,7 @@ return {
 
         H.truthy(OSC_HeroState.Get(enemy).ability ~= "test_q1", "enemy got a new ability")
         H.eq(OSC_HeroState.Get(anchored).ability, "test_q1", "anchored enemy untouched")
-        H.eq(OSC_HeroState.Get(anchored).anchored, true, "anchor not spent")
+        H.eq(OSC_HeroState.Get(anchored).anchor_rotations, 1, "anchor not spent")
         H.eq(OSC_HeroState.Get(ally).ability, "test_q1", "ally untouched")
         H.eq(OSC_HeroState.Get(owner).ability, "test_q1", "owner untouched")
         H.eq(item._removed, true, "sphere consumed")
