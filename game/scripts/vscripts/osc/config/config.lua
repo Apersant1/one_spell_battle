@@ -1,5 +1,5 @@
 OSC_CONFIG = {
-    VERSION = "1.4.0",
+    VERSION = "1.5.0",
     ROTATION_INTERVAL = 60,
     WARNING_TIME = 10,
     -- Сколько секунд снятая активная способность живёт скрытой, чтобы её
