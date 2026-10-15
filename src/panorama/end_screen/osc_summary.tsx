@@ -127,6 +127,7 @@ namespace OSC {
                 key={card.key}
                 className={OSC.Util.Classes(
                   "SummaryTitleCard",
+                  (TEAMS[Players.GetTeam(card.playerId)] || { className: "" }).className,
                   card.playerId === Players.GetLocalPlayer() && "Local",
                 )}
                 hittest={false}
@@ -134,10 +135,7 @@ namespace OSC {
                 <Podium hero={hero} />
                 <Label className="SummaryTitleName" hittest={false} text={card.name} />
                 <Label
-                  className={OSC.Util.Classes(
-                    "SummaryTitlePlayer",
-                    (TEAMS[Players.GetTeam(card.playerId)] || { className: "" }).className,
-                  )}
+                  className="SummaryTitlePlayer"
                   hittest={false}
                   text={PlayerName(card.playerId, hero)}
                 />
@@ -304,30 +302,31 @@ namespace OSC {
         <>
           <Panel
             id="SummaryPanel"
-            className={OSC.Util.Classes("OSCSurface OSCChaos", ready && !closed && "Visible")}
+            className={OSC.Util.Classes(ready && !closed && "Visible")}
             hittest={true}
           >
-            <Panel id="SummaryHeader" hittest={false}>
-              <Label
-                id="SummaryTitle"
-                className="OSCTextTitle OSCGold"
-                text={$.Localize("#osc_hud_summary_title")}
-              />
-              <Button
-                id="SummaryClose"
-                onactivate={function () {
-                  setClosed(true);
-                }}
-              >
-                <Label text={$.Localize("#osc_hud_summary_close")} />
-              </Button>
+            {/* Как в справке: крестик в углу рамки, заголовок по центру */}
+            <Button
+              id="SummaryClose"
+              onactivate={function () {
+                setClosed(true);
+              }}
+            >
+              <Label text={$.Localize("#osc_hud_summary_close")} />
+            </Button>
+            <Label
+              id="SummaryTitle"
+              className="OSCTextTitle OSCGold"
+              text={$.Localize("#osc_hud_summary_title")}
+            />
+            <Panel id="SummaryBody" hittest={false}>
+              {ready && <Podiums data={data!} />}
+              {ready && <Table data={data!} />}
             </Panel>
-            {ready && <Podiums data={data!} />}
-            {ready && <Table data={data!} />}
           </Panel>
           <Button
             id="SummaryReopen"
-            className={OSC.Util.Classes("OSCSurface OSCChaos", ready && closed && "Visible")}
+            className={OSC.Util.Classes(ready && closed && "Visible")}
             onactivate={function () {
               setClosed(false);
             }}

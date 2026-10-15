@@ -174,7 +174,7 @@
 		"osc_hud_vote_opt_casino_on"		"Да"
 		"osc_hud_vote_opt_casino_off"		"Нет"
 		"osc_hud_summary_title"		"Итоги матча"
-		"osc_hud_summary_close"		"Закрыть"
+		"osc_hud_summary_close"		"×"
 		"osc_hud_summary_show"		"Итоги матча"
 		"osc_hud_summary_col_player"		"Игрок"
 		"osc_hud_summary_col_rotations"		"Ротации"

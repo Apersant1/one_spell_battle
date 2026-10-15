@@ -169,7 +169,7 @@
 			"osc_hud_vote_opt_casino_on"		"On"
 			"osc_hud_vote_opt_casino_off"		"Off"
 			"osc_hud_summary_title"		"Match summary"
-			"osc_hud_summary_close"		"Close"
+			"osc_hud_summary_close"		"×"
 			"osc_hud_summary_show"		"Match summary"
 			"osc_hud_summary_col_player"		"Player"
 			"osc_hud_summary_col_rotations"		"Rotations"
