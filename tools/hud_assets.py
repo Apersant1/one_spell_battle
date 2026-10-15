@@ -290,3 +290,30 @@ for name, center in [("casino_title_hud.png", 155), ("casino_title_jackpot_hud.p
     save(name, ribbon)
 icon = Image.fromarray((load("chaos_round_icon.png") * 255).astype(np.uint8)).resize((64, 64), Image.LANCZOS)
 save("chaos_round_icon_hud.png", np.asarray(icon, np.float64) / 255)
+
+
+# Метеор для фона выбора команд (team_select/meteor.png, 2x от 256x24 на экране):
+# голова слева — яркое ядро со свечением, хвост вправо сужается и гаснет.
+# Рисуется с нуля, без исходника
+def meteor(w, h):
+    y = np.abs(np.arange(h)[:, None] - (h - 1) / 2)
+    head = 10  # центр головы от левого края, px
+    fade = np.clip(1 - (np.arange(w)[None, :] - head) / (w - head), 0, 1)
+    half = 0.4 + 3.6 * fade**1.3  # полутолщина хвоста
+    core = np.clip(half - y + 0.5, 0, 1) * fade**1.8
+    core[:, :head] = 0
+    r2 = (np.arange(w)[None, :] - head) ** 2 + y**2
+    core = np.maximum(core, np.exp(-r2 / (2 * 3.5**2)))  # круглая голова
+    k = np.exp(-0.5 * (np.arange(-18, 19) / 6) ** 2)
+    k /= k.sum()
+    glow = np.apply_along_axis(lambda v: np.convolve(v, k, "same"), 0, core)
+    glow = np.apply_along_axis(lambda v: np.convolve(v, k, "same"), 1, glow)
+    alpha = np.clip(core + glow * 1.4, 0, 1)
+    white = np.clip(core / np.maximum(alpha, 1e-6), 0, 1)[..., None]
+    rgb = white * np.array([1.0, 1.0, 1.0]) + (1 - white) * np.array([0.62, 0.84, 1.0])
+    return np.concatenate([rgb, alpha[..., None]], 2)
+
+
+TEAM_SELECT = os.path.join(HUD, "..", "team_select")
+Image.fromarray((meteor(512, 48) * 255 + 0.5).astype(np.uint8)).save(os.path.join(TEAM_SELECT, "meteor.png"))
+print("meteor.png 512 x 48")

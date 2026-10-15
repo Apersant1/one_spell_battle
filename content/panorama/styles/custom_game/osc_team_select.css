@@ -53,12 +53,13 @@
 /* Падающие звёзды: голова слева, хвост гаснет вправо. Пролёт — первые 8%
    цикла, остальное время метеор невидим; длительности разные, чтобы не
    было заметного ритма. Летят по боковым полосам — мимо заголовка и карточек */
+/* meteor.png рисует tools/hud_assets.py: голова, сужающийся гаснущий хвост */
 .Meteor {
-  width: 240px;
-  height: 3px;
+  width: 256px;
+  height: 24px;
   opacity: 0;
-  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff), to(#ffffff00));
-  box-shadow: #bfe4ff66 0px 0px 6px 0px;
+  background-image: url("file://{images}/custom_game/team_select/meteor.png");
+  background-size: 100% 100%;
   animation-name: MeteorFly;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
