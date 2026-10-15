@@ -499,7 +499,10 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
   `OSC.Net`, звуки, ошибки HUD), `osc_components.tsx` (общие React-хелперы и
   карточка способности), `osc_types.d.ts` (контракт с сервером — net table
   `osc_state` и кастомные события);
-- `hud/` — модули `osc_hud.xml`, точка входа `osc_hud.ts`;
+- `hud/` — модули `osc_hud.xml`: в корне точка входа `osc_hud.ts`, метка
+  версии и лента уведомлений; по папке на фичу, как системы в
+  `osc/systems/`: `rotation/` (таймер, «Якорь», попап новой способности, выбор
+  из трёх), `chaos/` (хаос-раунды, сфера хаоса, Хаос-лавка), `casino/`, `help/`;
 - `vote/`, `team_select/`, `end_screen/` — окна `osc_vote.xml`,
   `osc_team_select.xml`, `osc_end_screen.xml` (одномодульные, инициализируются сами).
 
@@ -568,7 +571,7 @@ Panorama отправляет серверу действия пользоват
 │   └── particles/                   # Исходные частицы
 ├── src/panorama/                     # Исходники Panorama на TypeScript (+ tsconfig.json)
 │   ├── shared/                       # Ядро OSC, общие React-хелперы, контракт с сервером
-│   ├── hud/                          # Модули HUD (osc_hud.xml)
+│   ├── hud/                          # Модули HUD (osc_hud.xml): rotation/, chaos/, casino/, help/
 │   └── vote/, team_select/, end_screen/  # Окна выбора героев, команд и конца игры
 └── game/
     ├── addoninfo.txt                 # Настройки custom game

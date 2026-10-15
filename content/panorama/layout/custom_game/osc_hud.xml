@@ -5,22 +5,23 @@
         <include src="file://{resources}/styles/custom_game/osc_hud.css" />
     </styles>
     <scripts>
+        <!-- Порядок: ядро, React и общие компоненты, модули (только объявляют себя),
+             последней — точка входа osc_hud.js, она вызывает их Init() -->
         <include src="file://{resources}/scripts/custom_game/shared/osc_core.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_version.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_timer.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_chaos_round.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_ability_popup.js" />
-        <!-- React (UMD, кладёт npm run build) — до модулей на React -->
         <include src="file://{resources}/scripts/custom_game/libraries/react.js" />
         <include src="file://{resources}/scripts/custom_game/libraries/react-panorama.js" />
         <include src="file://{resources}/scripts/custom_game/shared/osc_components.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_rotation_choice.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_chaos_sphere.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_anchor.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_casino.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_chaos_shop.js" />
-        <include src="file://{resources}/scripts/custom_game/hud/osc_help.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/osc_version.js" />
         <include src="file://{resources}/scripts/custom_game/hud/osc_notification_feed.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/rotation/osc_timer.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/rotation/osc_anchor.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/rotation/osc_ability_popup.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/rotation/osc_rotation_choice.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/chaos/osc_chaos_round.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/chaos/osc_chaos_sphere.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/chaos/osc_chaos_shop.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/casino/osc_casino.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/help/osc_help.js" />
         <include src="file://{resources}/scripts/custom_game/hud/osc_hud.js" />
     </scripts>
 
