@@ -207,7 +207,7 @@ function OSC_Casino.DebugForceSymbol(symbol)
 end
 
 -- Клиент показывает исход после остановки барабанов: последний встаёт через
--- REEL_STOP_DELAYS[2] + REEL_BOUNCE_TIME (osc_casino.ts) после ответа сервера
+-- REEL_STOP_DELAYS[2] + REEL_BOUNCE_TIME (hud/casino/osc_casino.tsx) после ответа сервера
 local WIN_EFFECTS_DELAY = 1.4
 
 -- Вспышка и звук на автомате при выигрыше; джекпот — эффект побольше
@@ -382,6 +382,76 @@ local function ParseItemIndices(event)
     return result
 end
 
+-- Ставка из события: золото (stake) или предметы (item_entindices); предметы
+-- оцениваются по стоимости продажи и складываются. Возвращает ставку и
+-- предметы (пустой список для золота) или nil, nil и ответ клиенту с ошибкой
+local function ParseStake(hero, event)
+    local minStake = OSC_Config.Get("CASINO_MIN_SPIN_COST")
+    local itemIndices = ParseItemIndices(event)
+    if #itemIndices == 0 then
+        local stake = event and tonumber(event.stake)
+        if not stake or stake ~= math.floor(stake) or stake < minStake or stake > hero:GetGold() then
+            return nil, nil, { error = "osc_casino_err_stake", min_stake = minStake, gold = hero:GetGold() }
+        end
+        return stake, {}
+    end
+
+    if #itemIndices > 6 then
+        return nil, nil, { error = "osc_casino_err_bad_item", gold = hero:GetGold() }
+    end
+    local stake, items = 0, {}
+    for _, itemIndex in ipairs(itemIndices) do
+        local item, itemError = ValidateStakeItem(hero, itemIndex)
+        if not item then
+            return nil, nil, { error = itemError, gold = hero:GetGold() }
+        end
+        table.insert(items, item)
+        stake = stake + GetItemStakeValue(item)
+    end
+    if stake < minStake then
+        return nil, nil, { error = "osc_casino_err_item_cheap", gold = hero:GetGold() }
+    end
+    return stake, items
+end
+
+-- Забирает предметы-ставку из инвентаря; до расчёта они хранятся «в автомате».
+-- Если какой-то не забрался — возвращает уже взятые и отдаёт nil
+local function TakeStakeItems(hero, items)
+    local taken = {}
+    for _, item in ipairs(items) do
+        local removed = hero:TakeItem(item)
+        if not removed then
+            for _, back in ipairs(taken) do
+                hero:AddItem(back)
+            end
+            return nil
+        end
+        table.insert(taken, removed)
+    end
+    return taken
+end
+
+local function RandomSymbol()
+    return SYMBOLS[RandomInt(1, #SYMBOLS)]
+end
+
+-- Исход спина. roll — случайное 1..100, раскладывается по шансам outcomes;
+-- forced — символ, подкрученный командой -casino (режим разработки), или nil.
+-- Возвращает барабаны и множитель; 0 — проигрыш, три символа не совпадают
+function OSC_Casino.Roll(outcomes, roll, forced)
+    for _, outcome in ipairs(outcomes) do
+        if (forced and outcome.symbol == forced) or (not forced and roll <= outcome.chance) then
+            return { outcome.symbol, outcome.symbol, outcome.symbol }, outcome.multiplier
+        end
+        roll = roll - outcome.chance
+    end
+    local first, second, third = RandomSymbol(), RandomSymbol(), RandomSymbol()
+    while first == second and second == third do
+        third = RandomSymbol()
+    end
+    return { first, second, third }, 0
+end
+
 function OSC_Casino.OnSpin(sourceIndex, event)
     local ok, cmd, refusal = OSC_ClientCommands.Check(sourceIndex, event, {
         hero = true,
@@ -419,42 +489,10 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         return
     end
 
-    -- Ставка золотом или предметами (item_entindices), предметы оцениваются
-    -- по стоимости продажи и складываются
-    local stake
-    local stakeItems = {}
-    local itemIndices = ParseItemIndices(event)
-    if #itemIndices > 0 then
-        if #itemIndices > 6 then
-            SendResult({ error = "osc_casino_err_bad_item", gold = hero:GetGold() })
-            return
-        end
-        stake = 0
-        for _, itemIndex in ipairs(itemIndices) do
-            local item, itemError = ValidateStakeItem(hero, itemIndex)
-            if not item then
-                SendResult({ error = itemError, gold = hero:GetGold() })
-                return
-            end
-            table.insert(stakeItems, item)
-            stake = stake + GetItemStakeValue(item)
-        end
-        if stake < OSC_Config.Get("CASINO_MIN_SPIN_COST") then
-            SendResult({ error = "osc_casino_err_item_cheap", gold = hero:GetGold() })
-            return
-        end
-    else
-        stake = event and tonumber(event.stake)
-        if not stake or stake ~= math.floor(stake)
-            or stake < OSC_Config.Get("CASINO_MIN_SPIN_COST")
-            or stake > hero:GetGold() then
-            SendResult({
-                error = "osc_casino_err_stake",
-                min_stake = OSC_Config.Get("CASINO_MIN_SPIN_COST"),
-                gold = hero:GetGold(),
-            })
-            return
-        end
+    local stake, stakeItems, stakeError = ParseStake(hero, event)
+    if not stake then
+        SendResult(stakeError)
+        return
     end
     local stakeItemNames = {}
     for _, item in ipairs(stakeItems) do
@@ -465,21 +503,11 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     local spent = stake
     local reliableSpent = 0
     if isItemStake then
-        -- Забираем предметы из инвентаря; до расчёта они хранятся «в автомате».
-        -- Если какой-то не забрался — возвращаем уже взятые и отменяем спин.
-        local taken = {}
-        for _, item in ipairs(stakeItems) do
-            local removed = hero:TakeItem(item)
-            if not removed then
-                for _, back in ipairs(taken) do
-                    hero:AddItem(back)
-                end
-                SendResult({ error = "osc_casino_err_not_charged", gold = hero:GetGold() })
-                return
-            end
-            table.insert(taken, removed)
+        stakeItems = TakeStakeItems(hero, stakeItems)
+        if not stakeItems then
+            SendResult({ error = "osc_casino_err_not_charged", gold = hero:GetGold() })
+            return
         end
-        stakeItems = taken
     else
         spent, reliableSpent = OSC_Gold.Spend(playerID, stake)
     end
@@ -560,32 +588,9 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         end
     end
 
-    local roll = RandomInt(1, 100)
-    local payout = 0
-    local multiplier = 0
-    local reels
-    local forced = OSC_Casino.debug_forced_symbol
-    for _, outcome in ipairs(OSC_Config.Get("CASINO_OUTCOMES")) do
-        -- Режим разработки: команда -casino <символ> подкручивает результат
-        if (forced and outcome.symbol == forced)
-            or (not forced and roll <= outcome.chance) then
-            reels = { outcome.symbol, outcome.symbol, outcome.symbol }
-            payout = stake * outcome.multiplier
-            multiplier = outcome.multiplier
-            break
-        end
-        roll = roll - outcome.chance
-    end
-
-    if not reels then
-        local first = SYMBOLS[RandomInt(1, #SYMBOLS)]
-        local second = SYMBOLS[RandomInt(1, #SYMBOLS)]
-        local third = SYMBOLS[RandomInt(1, #SYMBOLS)]
-        while first == second and second == third do
-            third = SYMBOLS[RandomInt(1, #SYMBOLS)]
-        end
-        reels = { first, second, third }
-    end
+    local reels, multiplier = OSC_Casino.Roll(
+        OSC_Config.Get("CASINO_OUTCOMES"), RandomInt(1, 100), OSC_Casino.debug_forced_symbol)
+    local payout = stake * multiplier
 
     GameRules:GetGameModeEntity():SetContextThink(
         "osc_casino_settle_" .. machine:entindex(),
