@@ -11,7 +11,7 @@ namespace OSC {
     function Flash() {
       var flash = $("#PopupFlash");
       flash.AddClass("Flash");
-      if (flashHandle !== null) $.CancelScheduled(flashHandle);
+      OSC.Util.Unschedule(flashHandle);
       flashHandle = $.Schedule(FLASH_HOLD, function () {
         flashHandle = null;
         flash.RemoveClass("Flash");
@@ -29,7 +29,7 @@ namespace OSC {
       popup.AddClass("Visible");
       card.AddClass("FlipHidden"); // старая иконка уходит ребром
 
-      if (flipHandle !== null) $.CancelScheduled(flipHandle);
+      OSC.Util.Unschedule(flipHandle);
       flipHandle = $.Schedule(FLIP_DURATION, function () {
         flipHandle = null;
         ($("#PopupIcon") as AbilityImage).abilityname = event.ability;
@@ -44,7 +44,7 @@ namespace OSC {
         );
       });
 
-      if (hideHandle !== null) $.CancelScheduled(hideHandle);
+      OSC.Util.Unschedule(hideHandle);
       hideHandle = $.Schedule(SHOW_DURATION, function () {
         hideHandle = null;
         popup.RemoveClass("Visible");

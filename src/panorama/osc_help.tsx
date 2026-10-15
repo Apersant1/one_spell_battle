@@ -100,7 +100,7 @@ namespace OSC {
                 <Panel className="HelpFactHead">
                   {fact.icon && <Panel className={"HelpFactIcon " + fact.icon} />}
                   <Label
-                    className={"HelpFactValue" + (fact.text ? " Text" : "")}
+                    className={OSC.Util.Classes("HelpFactValue", fact.text && "Text")}
                     text={String(fact.value)}
                   />
                 </Panel>
@@ -171,12 +171,9 @@ namespace OSC {
               <Panel
                 key={stat.icon}
                 className="HelpStat"
-                onmouseover={function (box) {
-                  $.DispatchEvent("DOTAShowTextTooltip", box, stat.tooltip);
-                }}
-                onmouseout={function (box) {
-                  $.DispatchEvent("DOTAHideTextTooltip", box);
-                }}
+                {...OSC.TextTooltip(function () {
+                  return stat.tooltip;
+                })}
               >
                 <Panel className={"HelpStatIcon " + stat.icon} />
                 <Label text={String(stat.value)} />
@@ -637,7 +634,7 @@ namespace OSC {
           >
             <Label text={$.Localize("#osc_hud_help_button")} />
           </Button>
-          <Panel id="HelpPanel" className={open ? "Visible" : ""} hittest={true}>
+          <Panel id="HelpPanel" className={OSC.Util.Classes(open && "Visible")} hittest={true}>
             <Button
               id="HelpClose"
               className="OSCButton"
@@ -658,7 +655,7 @@ namespace OSC {
                   return (
                     <Button
                       key={t.id}
-                      className={"HelpTab" + (t.id === topic.id ? " Selected" : "")}
+                      className={OSC.Util.Classes("HelpTab", t.id === topic.id && "Selected")}
                       onactivate={function () {
                         setCurrent(t.id);
                       }}

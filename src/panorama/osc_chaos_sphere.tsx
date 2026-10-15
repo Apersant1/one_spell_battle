@@ -46,12 +46,16 @@ namespace OSC {
         $.DispatchEvent("DOTAHideAbilityTooltip", $("#ChaosSpherePanel"));
       }
 
-      var classes: string[] = ["OSCSurface", "OSCChaos"];
-      if (visible) classes.push("Visible");
-      if (cards) classes.push("Cards");
-
       return (
-        <Panel id="ChaosSpherePanel" className={classes.join(" ")} hittest={true}>
+        <Panel
+          id="ChaosSpherePanel"
+          className={OSC.Util.Classes(
+            "OSCSurface OSCChaos",
+            visible && "Visible",
+            cards && "Cards",
+          )}
+          hittest={true}
+        >
           <Label
             id="ChaosSphereTitle"
             className="OSCTextTitle OSCGold"
@@ -81,7 +85,7 @@ namespace OSC {
           </Panel>
           <Label
             id="ChaosSphereLevelHint"
-            className={"OSCTextSmall OSCMuted" + (offer.levelOk ? " Hidden" : "")}
+            className={OSC.Util.Classes("OSCTextSmall OSCMuted", offer.levelOk && "Hidden")}
             text={OSC.Localized("osc_sphere_level_hint", { level: offer.minLevel })}
           />
           <Label

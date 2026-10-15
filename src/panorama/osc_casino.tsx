@@ -84,14 +84,8 @@ namespace OSC {
     }
 
     function CancelTimers() {
-      if (responseTimeoutHandle !== null) {
-        $.CancelScheduled(responseTimeoutHandle);
-        responseTimeoutHandle = null;
-      }
-      if (minSpinHandle !== null) {
-        $.CancelScheduled(minSpinHandle);
-        minSpinHandle = null;
-      }
+      responseTimeoutHandle = OSC.Util.Unschedule(responseTimeoutHandle);
+      minSpinHandle = OSC.Util.Unschedule(minSpinHandle);
     }
 
     function SetResult(token: string, vars?: Record<string, unknown>) {
@@ -448,10 +442,7 @@ namespace OSC {
     }
 
     function OnResult(event: NetworkedData<CustomGameEventDeclarations["osc_casino_result"]>) {
-      if (responseTimeoutHandle !== null) {
-        $.CancelScheduled(responseTimeoutHandle);
-        responseTimeoutHandle = null;
-      }
+      responseTimeoutHandle = OSC.Util.Unschedule(responseTimeoutHandle);
       waiting = false;
 
       // Баланс после выигрыша покажем, когда барабаны остановятся (FinishSpin),
@@ -589,18 +580,6 @@ namespace OSC {
 
     // ================= Окно =================
 
-    function Tooltip(getText: () => string) {
-      return {
-        onmouseover: function (panel: Panel) {
-          var text = getText();
-          if (text) $.DispatchEvent("DOTAShowTextTooltip", panel, text);
-        },
-        onmouseout: function (panel: Panel) {
-          $.DispatchEvent("DOTAHideTextTooltip", panel);
-        },
-      };
-    }
-
     // Panorama не пускает текст по кривой — заголовок собран из букв: каждая
     // опущена по параболе и повёрнута по касательной к ней
     function Title() {
@@ -642,11 +621,15 @@ namespace OSC {
       return (
         <Panel id="CasinoPaytable">
           {payouts.map(function (o) {
-            var classes = ["CasinoPayCell"];
-            if (o.multiplier === top) classes.push("Top");
-            if (o.symbol === hitSymbol) classes.push("Hit");
             return (
-              <Panel key={o.symbol} className={classes.join(" ")}>
+              <Panel
+                key={o.symbol}
+                className={OSC.Util.Classes(
+                  "CasinoPayCell",
+                  o.multiplier === top && "Top",
+                  o.symbol === hitSymbol && "Hit",
+                )}
+              >
                 <Panel className="CasinoPayIcons">
                   {[0, 1, 2].map(function (i) {
                     return <Panel key={i} className={"CasinoPayIcon Sym_" + o.symbol} />;
@@ -674,7 +657,7 @@ namespace OSC {
         return (
           <Button
             className="CasinoItem Locked"
-            {...Tooltip(function () {
+            {...OSC.TextTooltip(function () {
               return $.Localize("#" + slot.reason);
             })}
           >
@@ -684,7 +667,7 @@ namespace OSC {
       }
       return (
         <Button
-          className={"CasinoItem" + (selectedItems.indexOf(item) >= 0 ? " Selected" : "")}
+          className={OSC.Util.Classes("CasinoItem", selectedItems.indexOf(item) >= 0 && "Selected")}
           onactivate={function () {
             SelectItem(item);
           }}
@@ -696,10 +679,7 @@ namespace OSC {
     }
 
     function CasinoWindow() {
-      var [, bump] = React.useReducer(function (n: number) {
-        return n + 1;
-      }, 0);
-      Render = bump;
+      Render = OSC.useRerender();
 
       var stake = parseInt(stakeText, 10);
       var busy = machine < 0 || waiting || animating;
@@ -718,14 +698,17 @@ namespace OSC {
       // сменится, подобрать STAKE_DIGIT_WIDTH заново
       var free = STAKE_TEXT_AREA - stakeText.length * STAKE_DIGIT_WIDTH;
 
-      var windowClasses: string[] = [];
-      if (windowSpinning) windowClasses.push("Spinning");
-      if (windowWin) windowClasses.push(windowWin);
-      if (stakeMode === "items") windowClasses.push("ModeItems");
-
       return (
-        <Panel id="CasinoPanel" className={visible ? "Visible" : ""} hittest={true}>
-          <Panel id="CasinoWindow" className={windowClasses.join(" ")} hittest={true}>
+        <Panel id="CasinoPanel" className={OSC.Util.Classes(visible && "Visible")} hittest={true}>
+          <Panel
+            id="CasinoWindow"
+            className={OSC.Util.Classes(
+              windowSpinning && "Spinning",
+              windowWin,
+              stakeMode === "items" && "ModeItems",
+            )}
+            hittest={true}
+          >
             <Button id="CasinoCloseButton" className="OSCButton" onactivate={Close}>
               <Label text={$.Localize("#osc_casino_btn_close")} />
             </Button>
@@ -738,11 +721,17 @@ namespace OSC {
               {/* Окошко барабанов: обрезает ленты по краю рамки */}
               <Panel id="CasinoReelsWindow">
                 {reels.map(function (reel, i) {
-                  var classes = ["CasinoReel", "Sym_" + reel.symbol];
-                  if (reel.spinning) classes.push("Spinning");
-                  if (reel.stopped) classes.push("Stopped");
                   return (
-                    <Panel key={i} id={"CasinoReel" + (i + 1)} className={classes.join(" ")}>
+                    <Panel
+                      key={i}
+                      id={"CasinoReel" + (i + 1)}
+                      className={OSC.Util.Classes(
+                        "CasinoReel",
+                        "Sym_" + reel.symbol,
+                        reel.spinning && "Spinning",
+                        reel.stopped && "Stopped",
+                      )}
+                    >
                       <Panel className="CasinoReelStrip" />
                     </Panel>
                   );
@@ -764,12 +753,12 @@ namespace OSC {
             />
             {/* Ставка либо золотом, либо предметами: переключатель с иконками,
                 ползунок под активной */}
-            <Panel id="CasinoModeTabs" className={itemBets ? "" : "Hidden"}>
+            <Panel id="CasinoModeTabs" className={OSC.Util.Classes(!itemBets && "Hidden")}>
               <Button
                 id="CasinoModeSwitch"
-                className={itemsUnavailable ? "ItemsUnavailable" : ""}
+                className={OSC.Util.Classes(itemsUnavailable && "ItemsUnavailable")}
                 onactivate={ToggleMode}
-                {...Tooltip(function () {
+                {...OSC.TextTooltip(function () {
                   if (stakeMode === "gold" && itemsUnavailable) {
                     return $.Localize("#osc_casino_items_empty");
                   }
@@ -798,9 +787,11 @@ namespace OSC {
               </Panel>
               <Label
                 id="CasinoItemsTotal"
-                className={selectedItems.length > 0 && selectedValue < stakeMinimum ? "Low" : ""}
+                className={OSC.Util.Classes(
+                  selectedItems.length > 0 && selectedValue < stakeMinimum && "Low",
+                )}
                 text={String(selectedValue)}
-                {...Tooltip(function () {
+                {...OSC.TextTooltip(function () {
                   return OSC.Localized("osc_casino_items_hint", { min: stakeMinimum })(
                     $("#CasinoItemsTotal") as LabelPanel,
                   );

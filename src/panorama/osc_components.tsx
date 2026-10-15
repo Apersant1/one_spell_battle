@@ -1,6 +1,6 @@
 namespace OSC {
-  // Общие React-компоненты HUD. Файл подключается после библиотек React и до
-  // модулей, которые их используют.
+  // Общие React-хелперы и компоненты. Файл подключается после библиотек React и
+  // до модулей, которые их используют.
 
   // Текст Label из resource/addon_<язык>.txt: значение для text={...}.
   // vars подставляются в {d:...} (числа) и {s:...} (строки) как dialog variables
@@ -19,6 +19,69 @@ namespace OSC {
     };
   }
 
+  // Подсказка Dota с текстом при наведении: {...OSC.TextTooltip(() => текст)}.
+  // Текст читается в момент наведения; пустой — без подсказки
+  export function TextTooltip(getText: () => string) {
+    return {
+      onmouseover: function (panel: Panel) {
+        var text = getText();
+        if (text) $.DispatchEvent("DOTAShowTextTooltip", panel, text);
+      },
+      onmouseout: function (panel: Panel) {
+        $.DispatchEvent("DOTAHideTextTooltip", panel);
+      },
+    };
+  }
+
+  // Подсказка способности или предмета Dota при наведении: {...OSC.AbilityTooltip(имя)}
+  export function AbilityTooltip(name: string) {
+    return {
+      onmouseover: function (panel: Panel) {
+        $.DispatchEvent("DOTAShowAbilityTooltip", panel, name);
+      },
+      onmouseout: function (panel: Panel) {
+        $.DispatchEvent("DOTAHideAbilityTooltip", panel);
+      },
+    };
+  }
+
+  // Значение read(), перечитываемое раз в interval секунд, пока active.
+  // done(значение) === true останавливает опрос насовсем (стадия игры не вернётся)
+  export function usePolled<T>(
+    read: () => T,
+    interval: number,
+    active?: boolean,
+    done?: (value: T) => boolean,
+  ) {
+    var [value, setValue] = React.useState(read);
+    React.useEffect(
+      function () {
+        if (active === false) return;
+        var stopped = false;
+        OSC.Util.Loop(interval, function () {
+          if (stopped) return false;
+          var next = read();
+          setValue(next);
+          if (done && done(next)) return false;
+        });
+        return function () {
+          stopped = true;
+        };
+      },
+      [active],
+    );
+    return value;
+  }
+
+  // Для окон, чьё состояние — переменные модуля (казино, выбор из трёх):
+  // функция перерисовки компонента
+  export function useRerender() {
+    var [, bump] = React.useReducer(function (n: number) {
+      return n + 1;
+    }, 0);
+    return bump as () => void;
+  }
+
   // Карточка способности (выбор из трёх, сфера хаоса): иконка, имя, рамка
   // редкости (osc_hud.css: обычная — без рамки), подсказка способности Dota
   export function AbilityCard(props: {
@@ -27,20 +90,16 @@ namespace OSC {
     onactivate: () => void;
   }) {
     var option = props.option;
-    var classes = ["ChoiceCard"];
-    if (option.rarity === "rare") classes.push("RarityRare");
-    if (option.rarity === "legendary") classes.push("RarityLegendary");
-    if (props.className) classes.push(props.className);
     return (
       <Button
-        className={classes.join(" ")}
+        className={OSC.Util.Classes(
+          "ChoiceCard",
+          option.rarity === "rare" && "RarityRare",
+          option.rarity === "legendary" && "RarityLegendary",
+          props.className,
+        )}
         onactivate={props.onactivate}
-        onmouseover={function (card) {
-          $.DispatchEvent("DOTAShowAbilityTooltip", card, option.name);
-        }}
-        onmouseout={function (card) {
-          $.DispatchEvent("DOTAHideAbilityTooltip", card);
-        }}
+        {...OSC.AbilityTooltip(option.name)}
       >
         <DOTAAbilityImage className="ChoiceIcon" abilityname={option.name} hittest={false} />
         <Label

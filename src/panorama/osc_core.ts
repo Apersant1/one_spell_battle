@@ -71,12 +71,29 @@ namespace OSC {
         });
     },
 
+    // Текст ключа локализации (token с "#"); если ключа нет — fallback.
+    // panel — откуда брать dialog variables ({d:...}, {s:...})
+    LocalizeOr: function (token: string, fallback: string, panel?: PanelBase) {
+      var text = panel ? $.Localize(token, panel) : $.Localize(token);
+      return text && text !== token ? text : fallback;
+    },
+
     // Имя способности из локализации Dota; если ключа нет — подпись из пула
     AbilityName: function (name: string, label: string) {
-      var token = "#DOTA_Tooltip_Ability_" + name;
-      var localized = $.Localize(token);
-      if (localized && localized !== token) return localized;
-      return label || name;
+      return Util.LocalizeOr("#DOTA_Tooltip_Ability_" + name, label || name);
+    },
+
+    // Строка CSS-классов из частей; ложные части пропускаются:
+    // Classes("Card", picked && "Picked") -> "Card" | "Card Picked"
+    Classes: function (...parts: (string | false | null | undefined)[]) {
+      return parts.filter(Boolean).join(" ");
+    },
+
+    // Отменяет отложенный вызов, если он есть; возвращает null для сброса
+    // переменной: handle = OSC.Util.Unschedule(handle)
+    Unschedule: function (handle: ScheduleID | null): null {
+      if (handle !== null) $.CancelScheduled(handle);
+      return null;
     },
   };
 

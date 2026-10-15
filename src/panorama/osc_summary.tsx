@@ -9,7 +9,6 @@ namespace OSC {
   export const Summary = (function () {
     // Ключи титулов собираются из id с сервера:
     // osc_hud_title_<id> и osc_hud_title_<id>_desc (с {d:value})
-    var HUD_KEY = "osc_hud";
     var POLL = 0.5;
     var TEAM_CLASSES: Record<number, string> = {};
     TEAM_CLASSES[DOTATeam_t.DOTA_TEAM_GOODGUYS] = "Radiant";
@@ -21,12 +20,6 @@ namespace OSC {
       { key: "osc_hud_summary_col_casino", field: "casino_net", signed: true },
       { key: "osc_hud_summary_col_chaos_damage", field: "chaos_damage" },
     ];
-
-    function LocalizeOr(suffix: string, fallback: string, panel?: Panel) {
-      var token = "#" + HUD_KEY + "_" + suffix;
-      var text = panel ? $.Localize(token, panel) : $.Localize(token);
-      return text && text !== token ? text : fallback;
-    }
 
     // Данные с сервера — пропускаем только имя юнита
     function SafeHeroName(value: string | undefined) {
@@ -76,16 +69,21 @@ namespace OSC {
         return title && title.id;
       });
       return (
-        <Panel id="SummaryTitles" className={titles.length === 0 ? "Hidden" : ""} hittest={false}>
+        <Panel
+          id="SummaryTitles"
+          className={OSC.Util.Classes(titles.length === 0 && "Hidden")}
+          hittest={false}
+        >
           {titles.map(function (title) {
             var playerId = Number(title.player_id) as PlayerID;
             var hero = PlayerHero(playerId, data.players[String(playerId)]);
             return (
               <Panel
                 key={title.id}
-                className={
-                  "SummaryTitleCard" + (playerId === Players.GetLocalPlayer() ? " Local" : "")
-                }
+                className={OSC.Util.Classes(
+                  "SummaryTitleCard",
+                  playerId === Players.GetLocalPlayer() && "Local",
+                )}
                 hittest={false}
               >
                 <Podium hero={hero} />
@@ -93,7 +91,7 @@ namespace OSC {
                   <Label
                     className="SummaryTitleName"
                     hittest={false}
-                    text={LocalizeOr("title_" + title.id, String(title.id))}
+                    text={OSC.Util.LocalizeOr("#osc_hud_title_" + title.id, String(title.id))}
                   />
                   <Label
                     className="SummaryTitlePlayer"
@@ -105,7 +103,7 @@ namespace OSC {
                     hittest={false}
                     text={function (desc) {
                       desc.SetDialogVariableInt("value", Math.round(Number(title.value) || 0));
-                      return LocalizeOr("title_" + title.id + "_desc", "", desc);
+                      return OSC.Util.LocalizeOr("#osc_hud_title_" + title.id + "_desc", "", desc);
                     }}
                   />
                 </Panel>
@@ -152,7 +150,10 @@ namespace OSC {
             return (
               <Panel
                 key={playerId}
-                className={"SummaryRow" + (playerId === Players.GetLocalPlayer() ? " Local" : "")}
+                className={OSC.Util.Classes(
+                  "SummaryRow",
+                  playerId === Players.GetLocalPlayer() && "Local",
+                )}
                 hittest={false}
               >
                 <Panel className="SummaryCellPlayer" hittest={false}>
@@ -164,20 +165,21 @@ namespace OSC {
                     hittest={false}
                   />
                   <Label
-                    className={"SummaryPlayerName" + (teamClass ? " " + teamClass : "")}
+                    className={OSC.Util.Classes("SummaryPlayerName", teamClass)}
                     hittest={false}
                     text={PlayerName(playerId, hero)}
                   />
                 </Panel>
                 {COLUMNS.map(function (column) {
                   var value = Number(stats[column.field]) || 0;
-                  var classes = ["SummaryCell"];
-                  if (column.signed && value > 0) classes.push("Positive");
-                  if (column.signed && value < 0) classes.push("Negative");
                   return (
                     <Label
                       key={column.key}
-                      className={classes.join(" ")}
+                      className={OSC.Util.Classes(
+                        "SummaryCell",
+                        column.signed && value > 0 && "Positive",
+                        column.signed && value < 0 && "Negative",
+                      )}
                       hittest={false}
                       text={column.signed ? SignedNumber(value) : String(Math.round(value))}
                     />
@@ -191,27 +193,12 @@ namespace OSC {
     }
 
     // ================= Окно =================
-    // Ждём POST_GAME: net table может обновиться раньше смены стадии
-    function usePostGame() {
-      var [postGame, setPostGame] = React.useState(OSC.Util.IsPostGame);
-      React.useEffect(function () {
-        var stopped = false;
-        OSC.Util.Loop(POLL, function () {
-          if (stopped) return false;
-          if (!OSC.Util.IsPostGame()) return;
-          setPostGame(true);
-          return false;
-        });
-        return function () {
-          stopped = true;
-        };
-      }, []);
-      return postGame;
-    }
-
     function SummaryWindow() {
       var data = ReactPanorama.useNetTableKey("osc_state", "summary");
-      var postGame = usePostGame();
+      // Ждём POST_GAME: net table может обновиться раньше смены стадии
+      var postGame = OSC.usePolled(OSC.Util.IsPostGame, POLL, true, function (post) {
+        return post;
+      });
       var [closed, setClosed] = React.useState(false);
       // Итог может прийти с задержкой — до него окна нет
       var ready = postGame && !!data && !!data.players;
@@ -220,7 +207,7 @@ namespace OSC {
         <>
           <Panel
             id="SummaryPanel"
-            className={"OSCSurface OSCChaos" + (ready && !closed ? " Visible" : "")}
+            className={OSC.Util.Classes("OSCSurface OSCChaos", ready && !closed && "Visible")}
             hittest={true}
           >
             <Panel id="SummaryHeader" hittest={false}>
@@ -243,7 +230,7 @@ namespace OSC {
           </Panel>
           <Button
             id="SummaryReopen"
-            className={"OSCSurface OSCChaos" + (ready && closed ? " Visible" : "")}
+            className={OSC.Util.Classes("OSCSurface OSCChaos", ready && closed && "Visible")}
             onactivate={function () {
               setClosed(false);
             }}

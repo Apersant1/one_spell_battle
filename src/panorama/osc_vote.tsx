@@ -10,18 +10,11 @@ namespace OSC {
   export const Vote = (function () {
     // Ключи вопросов и вариантов собираются из id с сервера:
     // osc_hud_vote_q_<question>, osc_hud_vote_opt_<question>_<option>
-    var HUD_KEY = "osc_hud";
     var CONFIRM_TIMEOUT = 1.0; // ждём подтверждения голоса в vote_<playerID>
     var STATE_POLL = 0.25;
 
     function MyVotesKey(): `vote_${number}` {
       return `vote_${Players.GetLocalPlayer()}`;
-    }
-
-    function LocalizeOr(suffix: string, fallback: string) {
-      var token = "#" + HUD_KEY + "_" + suffix;
-      var text = $.Localize(token);
-      return text && text !== token ? text : fallback;
     }
 
     function Questions(vote: NetworkedData<OSCVoteState> | null): VoteQuestion[] {
@@ -51,24 +44,6 @@ namespace OSC {
       return Game.GetState() < DOTA_GameState.DOTA_GAMERULES_STATE_PRE_GAME;
     }
 
-    // Опрос стадии игры, пока не наступит PRE_GAME
-    function useBeforePreGame() {
-      var [before, setBefore] = React.useState(IsBeforePreGame);
-      React.useEffect(function () {
-        var stopped = false;
-        OSC.Util.Loop(STATE_POLL, function () {
-          if (stopped) return false;
-          var now = IsBeforePreGame();
-          setBefore(now);
-          if (!now) return false;
-        });
-        return function () {
-          stopped = true;
-        };
-      }, []);
-      return before;
-    }
-
     function VoteWindow() {
       var vote = ReactPanorama.useNetTableKey("osc_state", "vote");
       var myVotes = ReactPanorama.useNetTableKey("osc_state", MyVotesKey());
@@ -76,7 +51,10 @@ namespace OSC {
       var [local, setLocal] = React.useState<LocalVotes>({});
       var [collapsed, setCollapsed] = React.useState(false);
       var timers = React.useRef<Record<string, ScheduleID>>({});
-      var beforePreGame = useBeforePreGame();
+      // Опрос стадии игры, пока не наступит PRE_GAME
+      var beforePreGame = OSC.usePolled(IsBeforePreGame, STATE_POLL, true, function (before) {
+        return !before;
+      });
       var visible = !!vote && Number(vote.open) === 1 && beforePreGame;
 
       function ServerVote(question: string) {
@@ -129,12 +107,13 @@ namespace OSC {
       }
 
       var counts: Record<string, Record<string, number>> = (vote && vote.counts) || {};
-      var classes: string[] = [];
-      if (visible) classes.push("Visible");
-      if (collapsed) classes.push("Collapsed");
 
       return (
-        <Panel id="VotePanel" className={classes.join(" ")} hittest={true}>
+        <Panel
+          id="VotePanel"
+          className={OSC.Util.Classes(visible && "Visible", collapsed && "Collapsed")}
+          hittest={true}
+        >
           {/* Клик по заголовку сворачивает окно, если оно что-то закрывает */}
           <Button
             id="VoteHeader"
@@ -164,14 +143,14 @@ namespace OSC {
                   <Label
                     className="VoteQuestionTitle OSCTextSmall OSCBold"
                     hittest={false}
-                    text={LocalizeOr("vote_q_" + question.id, question.id)}
+                    text={OSC.Util.LocalizeOr("#osc_hud_vote_q_" + question.id, question.id)}
                   />
                   <Panel className="VoteOptions" hittest={false}>
                     {question.options.map(function (option) {
                       return (
                         <Button
                           key={option}
-                          className={"VoteOption" + (picked === option ? " Picked" : "")}
+                          className={OSC.Util.Classes("VoteOption", picked === option && "Picked")}
                           onactivate={function () {
                             Cast(question.id, option);
                           }}
@@ -179,7 +158,10 @@ namespace OSC {
                           <Label
                             className="VoteOptionName"
                             hittest={false}
-                            text={LocalizeOr("vote_opt_" + question.id + "_" + option, option)}
+                            text={OSC.Util.LocalizeOr(
+                              "#osc_hud_vote_opt_" + question.id + "_" + option,
+                              option,
+                            )}
                           />
                           {option === question.def && (
                             <Panel className="VoteDefaultMark" hittest={false} />

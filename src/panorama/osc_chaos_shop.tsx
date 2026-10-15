@@ -11,24 +11,8 @@ namespace OSC {
       return `shop_${Players.GetTeam(Players.GetLocalPlayer())}`;
     }
 
-    // Золото игрока; пока active — опрос раз в GOLD_POLL
-    function useGold(active: boolean) {
-      var [gold, setGold] = React.useState(0);
-      React.useEffect(
-        function () {
-          if (!active) return;
-          var stopped = false;
-          OSC.Util.Loop(GOLD_POLL, function () {
-            if (stopped || OSC.Util.IsPostGame()) return false;
-            setGold(Players.GetGold(Players.GetLocalPlayer()));
-          });
-          return function () {
-            stopped = true;
-          };
-        },
-        [active],
-      );
-      return gold;
+    function LocalGold() {
+      return Players.GetGold(Players.GetLocalPlayer());
     }
 
     // Плитка как в стандартном магазине: иконка, остаток в углу, цена под
@@ -37,9 +21,6 @@ namespace OSC {
     // недоступному товару вернёт его ошибку
     function Tile(props: { item: NetworkedData<OSCShopItem>; gold: number }) {
       var item = props.item;
-      var classes = ["ChaosShopTile"];
-      if (props.gold < Number(item.cost)) classes.push("Unaffordable");
-      if (Number(item.stock) === 0) classes.push("SoldOut");
 
       function Buy() {
         GameEvents.SendCustomGameEventToServer("osc_shop_buy", { item: item.name });
@@ -47,15 +28,14 @@ namespace OSC {
 
       return (
         <Button
-          className={classes.join(" ")}
+          className={OSC.Util.Classes(
+            "ChaosShopTile",
+            props.gold < Number(item.cost) && "Unaffordable",
+            Number(item.stock) === 0 && "SoldOut",
+          )}
           onactivate={Buy}
           oncontextmenu={Buy}
-          onmouseover={function (tile) {
-            $.DispatchEvent("DOTAShowAbilityTooltip", tile, item.name);
-          }}
-          onmouseout={function (tile) {
-            $.DispatchEvent("DOTAHideAbilityTooltip", tile);
-          }}
+          {...OSC.AbilityTooltip(item.name)}
         >
           <Panel className="ChaosShopIcon">
             <DOTAItemImage itemname={item.name} hittest={false} />
@@ -77,7 +57,7 @@ namespace OSC {
       );
       var data = ReactPanorama.useNetTableKey("osc_state", NetTableKey());
       var shown = open && enabled;
-      var gold = useGold(shown);
+      var gold = OSC.usePolled(LocalGold, GOLD_POLL, shown);
 
       React.useEffect(
         function () {
@@ -97,14 +77,18 @@ namespace OSC {
         <>
           <Button
             id="ChaosShopButton"
-            className={"OSCButton OSCButtonPrimary" + (enabled ? "" : " Hidden")}
+            className={OSC.Util.Classes("OSCButton OSCButtonPrimary", !enabled && "Hidden")}
             onactivate={function () {
               setOpen(!open);
             }}
           >
             <Label text={$.Localize("#osc_shop_button")} />
           </Button>
-          <Panel id="ChaosShopPanel" className={shown ? "Visible" : ""} hittest={true}>
+          <Panel
+            id="ChaosShopPanel"
+            className={OSC.Util.Classes(shown && "Visible")}
+            hittest={true}
+          >
             <Button
               id="ChaosShopClose"
               className="OSCButton"

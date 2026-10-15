@@ -37,10 +37,7 @@ namespace OSC {
     }
 
     function CancelHide() {
-      if (hideHandle !== null) {
-        $.CancelScheduled(hideHandle);
-        hideHandle = null;
-      }
+      hideHandle = OSC.Util.Unschedule(hideHandle);
     }
 
     function SetVisible(show: boolean) {
@@ -53,10 +50,7 @@ namespace OSC {
     }
 
     function CancelConfirm() {
-      if (confirmHandle !== null) {
-        $.CancelScheduled(confirmHandle);
-        confirmHandle = null;
-      }
+      confirmHandle = OSC.Util.Unschedule(confirmHandle);
     }
 
     function ResetLocalPick() {
@@ -223,22 +217,24 @@ namespace OSC {
     }
 
     function ChoiceWindow() {
-      var [, bump] = React.useReducer(function (n: number) {
-        return n + 1;
-      }, 0);
-      Render = bump;
+      Render = OSC.useRerender();
 
       var left = Math.max(0, deadline - Game.GetGameTime());
       var progress = duration > 0 ? Math.min(1, left / duration) : 0;
       var picked = chosen || localPick || serverPick;
-      var classes = ["OSCSurface", "OSCChaos"];
-      if (visible) classes.push("Visible");
-      if (closing) classes.push("Closing");
-      if (visible && left <= URGENT_AT) classes.push("Urgent");
 
       // Кликабельны только карточки
       return (
-        <Panel id="ChoicePanel" className={classes.join(" ")} hittest={false}>
+        <Panel
+          id="ChoicePanel"
+          className={OSC.Util.Classes(
+            "OSCSurface OSCChaos",
+            visible && "Visible",
+            closing && "Closing",
+            visible && left <= URGENT_AT && "Urgent",
+          )}
+          hittest={false}
+        >
           <Panel id="ChoiceHeaderRow" hittest={false}>
             <Label
               id="ChoiceHeader"
@@ -257,14 +253,14 @@ namespace OSC {
           </Panel>
           <Panel id="ChoiceCards" hittest={false}>
             {options.map(function (option) {
-              var state: string[] = [];
-              if (option.name === picked) state.push("Picked");
-              if (chosen && option.name === chosen) state.push("Chosen");
               return (
                 <OSC.AbilityCard
                   key={round + ":" + option.name}
                   option={option}
-                  className={state.join(" ")}
+                  className={OSC.Util.Classes(
+                    option.name === picked && "Picked",
+                    !!chosen && option.name === chosen && "Chosen",
+                  )}
                   onactivate={function () {
                     Pick(option.name);
                   }}
