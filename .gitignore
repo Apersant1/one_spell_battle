@@ -7,3 +7,4 @@ graphify-out/
 node_modules/
 # Собирается из src/panorama и node_modules (npm run build)
 content/panorama/scripts/
+__pycache__/
