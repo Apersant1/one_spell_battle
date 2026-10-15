@@ -468,8 +468,10 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
 - `osc/config/` — игровые параметры, пулы способностей и конфиг уведомлений.
 - `osc/core/` — запуск режима, команды, логирование, уведомления, общие
   сервисы героев (`heroes.lua`), состояния героя (`hero_state.lua`),
-  событий матча (`game_events.lua`) и проверки команд клиента
-  (`client_commands.lua`).
+  событий матча (`game_events.lua`), проверки команд клиента
+  (`client_commands.lua`), списание и возврат золота (`gold.lua`) и мелкие
+  помощники `OSC_Util` (`util.lua`). Проверка «сущность жива» — встроенная
+  `IsValidEntity`; красная подсказка HUD — `OSC_Notifications.HudError`.
 - `osc/systems/` — игровая логика способностей, героев, ротации,
   хаос-раундов, курьеров и казино. Способности разделены на выбор
   (`ability_selection.lua`: пулы, их проверка, случайный выбор) и выдачу
@@ -587,7 +589,7 @@ Panorama отправляет серверу действия пользоват
     │       ├── addon_init.lua        # Регистрация Lua-модификаторов
     │       └── osc/
     │           ├── config/          # config.lua, ability_pools.lua, notifications.lua
-    │           ├── core/            # game_mode, commands, logger, notifications, heroes, hero_state, game_events, client_commands
+    │           ├── core/            # game_mode, commands, logger, notifications, heroes, hero_state, game_events, client_commands, gold, util
     │           ├── heroes/          # Пользовательские способности героев
     │           ├── items/           # Пользовательские предметы
     │           ├── modifiers/       # Серверные модификаторы
@@ -605,7 +607,8 @@ Panorama отправляет серверу действия пользоват
 `OSC_Config.Get("ПУТЬ")` (`osc/core/runtime_config.lua`, путь через точку:
 `"CHAOS_ROUNDS.INTERVAL"`) в момент использования — копировать значения в
 локальные переменные при загрузке модулей нельзя, это проверяет
-`run_tests.py`. `OSC_Config.SetOverride(путь, значение)` задаёт рантайм-
+`run_tests.py`. Он же проверяет, что каждый путь из `OSC_Config.Get` есть в
+конфиге, поэтому значения по умолчанию в коде (`Get(...) or 450`) не нужны. `OSC_Config.SetOverride(путь, значение)` задаёт рантайм-
 переопределение на матч (итоги голосования): исходный `OSC_CONFIG` не
 меняется, переопределения переживают `script_reload`, путь и тип значения
 проверяются. Значения хаос-событий (вес, тик, длительность, параметры
