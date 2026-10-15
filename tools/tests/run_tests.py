@@ -3,6 +3,8 @@
 1. Синтаксис всех .lua в game/scripts/vscripts (компиляция LuaJIT).
 2. Типы и синтаксис Panorama TS в src/panorama (tsc --noEmit).
 3. Локализация: ключи из кода есть в обоих addon_*.txt, наборы ключей совпадают.
+3a. Контракт клиент–сервер: события и ключи osc_state из src/panorama/osc_types.d.ts
+    совпадают с тем, что шлёт и слушает Lua.
 4. Тесты tools/tests/test_*.lua с моками Dota API (каждый тест в свежем рантайме).
 
 Запуск: pip install lupa && python tools/tests/run_tests.py
@@ -38,8 +40,6 @@ LOC_PREFIXES = (
     "osc_notify_",
     "osc_ts_",
 )
-# Имена событий с теми же префиксами — не ключи локализации
-NOT_LOC_KEYS = {"osc_hud_error", "osc_shop_buy", "osc_shop_result", "osc_sphere_offer", "osc_sphere_pick"}
 
 
 def read_text(path):
@@ -98,6 +98,39 @@ def check_ts_types():
     return result.stdout.strip().splitlines() if result.returncode != 0 else []
 
 
+def declared_contract():
+    """События и ключи osc_state из src/panorama/osc_types.d.ts: (события, ключи, префиксы ключей)."""
+    text = read_text(PANORAMA_SRC / "osc_types.d.ts")
+    events = re.search(r"^interface CustomGameEventDeclarations \{(.*?)^\}", text, re.S | re.M).group(1)
+    state = re.search(r"^  osc_state: \{(.*?)^  \};", text, re.S | re.M).group(1)
+    return (
+        set(re.findall(r"^  (osc_[a-z0-9_]+)\??:", events, re.M)),
+        set(re.findall(r"^    ([a-z0-9_]+)\??:", state, re.M)),
+        set(re.findall(r"^    \[key: `([a-z0-9_]+)\$\{number\}`\]", state, re.M)),
+    )
+
+
+def check_contract():
+    events, keys, prefixes = declared_contract()
+    lua = "\n".join(read_text(p) for p in VSCRIPTS.rglob("*.lua"))
+    ts = "\n".join(read_text(p) for p in PANORAMA_SRC.glob("*.ts"))
+    lua_strings = set(re.findall(r'"([a-z0-9_]+)"', lua))
+    errors = []
+    for name in sorted(set(re.findall(r'GameEvents\.Subscribe\(\s*"(osc_[a-z0-9_]+)"', ts)) - events):
+        errors.append(f"panorama subscribes to {name}, not declared in osc_types.d.ts")
+    for name in sorted(set(re.findall(r'RegisterListener\(\s*"([a-z0-9_]+)"', lua)) - events):
+        errors.append(f"Lua listens for {name}, not declared in osc_types.d.ts")
+    # Имя может прийти и через переменную (FEED_EVENT, settings.event) — ищем любой литерал
+    for name in sorted(events - lua_strings):
+        errors.append(f"event {name} declared in osc_types.d.ts but never used in Lua")
+    for key, concat in re.findall(r'SetTableValue\(\s*"osc_state"\s*,\s*"([a-z0-9_]+)"(\s*\.\.)?', lua):
+        if key not in (prefixes if concat else keys):
+            errors.append(f"Lua writes osc_state/{key}{'<id>' if concat else ''}, not declared in osc_types.d.ts")
+    for key in sorted((keys | prefixes) - lua_strings):
+        errors.append(f"osc_state/{key} declared in osc_types.d.ts but never written by Lua")
+    return errors
+
+
 def localization_keys(path):
     return set(re.findall(r'^\s*"([^"]+)"\s+"', read_text(path), re.M))
 
@@ -130,10 +163,11 @@ def check_localization():
 
     sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA_SRC.rglob("*.ts")) + list(PANORAMA.rglob("*.xml"))
     used = set()
+    not_loc_keys = declared_contract()[0]  # имена событий с теми же префиксами
     for path in sources:
         for key in re.findall(r'["#](osc_[a-z0-9_]+)', read_text(path)):
             # "osc_notify_vote_" и т. п. — префикс ключа, собираемого в коде
-            if key.startswith(LOC_PREFIXES) and key not in NOT_LOC_KEYS and not key.endswith("_"):
+            if key.startswith(LOC_PREFIXES) and key not in not_loc_keys and not key.endswith("_"):
                 used.add(key)
     used |= dynamic_localization_keys()
     for key in sorted(used):
@@ -183,6 +217,7 @@ def main():
         ("Lua syntax", check_lua_syntax),
         ("Panorama types", check_ts_types),
         ("Localization", check_localization),
+        ("Client-server contract", check_contract),
         ("Config reads", check_config_reads),
     ):
         errors = check()
