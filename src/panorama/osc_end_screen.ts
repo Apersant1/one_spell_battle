@@ -1,3 +1,0 @@
-(function () {
-  OSC.Summary.Init();
-})();

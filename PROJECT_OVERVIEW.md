@@ -493,16 +493,24 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
 
 ### Клиент: Panorama
 
-Клиентский код написан на TypeScript: исходники — `src/panorama/*.ts`
-(типы Panorama API из `@moddota/panorama-types`, контракт с сервером — net
-table `osc_state` и кастомные события — в `src/panorama/osc_types.d.ts`).
-`npm install`, затем `npm run build` (или `npm run dev` — пересборка при
-сохранении) компилирует их в `content/panorama/scripts/custom_game/*.js`;
-собранные `.js` в git не хранятся. Модули — глобальные скрипты без
-import/export: каждый файл кладёт свой компонент в `namespace OSC`.
+Клиентский код написан на TypeScript в `src/panorama/`, по папке на разметку:
+
+- `shared/` — то, что подключают несколько разметок: `osc_core.ts` (`OSC.Util`,
+  `OSC.Net`, звуки, ошибки HUD), `osc_components.tsx` (общие React-хелперы и
+  карточка способности), `osc_types.d.ts` (контракт с сервером — net table
+  `osc_state` и кастомные события);
+- `hud/` — модули `osc_hud.xml`, точка входа `osc_hud.ts`;
+- `vote/`, `team_select/`, `end_screen/` — окна `osc_vote.xml`,
+  `osc_team_select.xml`, `osc_end_screen.xml` (одномодульные, инициализируются сами).
+
+Типы Panorama API — из `@moddota/panorama-types`. `npm install`, затем
+`npm run build` (или `npm run dev` — пересборка при сохранении) компилирует их
+в `content/panorama/scripts/custom_game/<папка>/*.js`; собранное в git не
+хранится. Модули — глобальные скрипты без import/export: каждый файл кладёт
+свой компонент в `namespace OSC`.
 
 Модули `.tsx` написаны на React (выбор из трёх, сфера хаоса, казино, Хаос-лавка,
-справка, голосование, итоги матча; общие компоненты — `osc_components.tsx`): `react@17` и
+справка, голосование, итоги матча): `react@17` и
 `@demon673/react-panorama` (форк react-panorama без `new Function`, который
 Panorama запрещает) подключаются UMD-сборками (`npm run build` копирует их в
 `scripts/custom_game/libraries/`, `osc_hud.xml`, `osc_vote.xml` и `osc_end_screen.xml` включают их перед модулями на
@@ -515,10 +523,10 @@ Dota нужно перезапустить: горячая перезагруз�
 `osc_hud.xml`. Порядок `<include>` (собранных `.js`) в его блоке `scripts`
 важен:
 
-1. `osc_core.ts` создаёт общий объект `OSC` и утилиты.
+1. `shared/osc_core.ts` создаёт общий объект `OSC` и утилиты.
 2. Модули версии, таймера, хаос-раунда, попапа, казино и ленты добавляют
    компоненты к `OSC`.
-3. `osc_hud.ts` вызывает `Init()` этих компонентов.
+3. `hud/osc_hud.ts` вызывает `Init()` этих компонентов.
 
 Клиент обновляет визуальное состояние по данным сервера и событиям игры.
 Panorama отправляет серверу действия пользователя казино и перемешивания
@@ -559,6 +567,9 @@ Panorama отправляет серверу действия пользоват
 │   │   └── styles/custom_game/       # Тема и стили HUD
 │   └── particles/                   # Исходные частицы
 ├── src/panorama/                     # Исходники Panorama на TypeScript (+ tsconfig.json)
+│   ├── shared/                       # Ядро OSC, общие React-хелперы, контракт с сервером
+│   ├── hud/                          # Модули HUD (osc_hud.xml)
+│   └── vote/, team_select/, end_screen/  # Окна выбора героев, команд и конца игры
 └── game/
     ├── addoninfo.txt                 # Настройки custom game
     ├── resource/                     # Локализация
@@ -672,7 +683,7 @@ Panorama отправляет серверу действия пользоват
 - Хаос-лавка: `osc/systems/chaos_shop.lua`.
 - HUD: `content/panorama/layout/custom_game/osc_hud.xml` и
   `src/panorama/` (TypeScript).
-- Контракт клиент–сервер (net table, события): `src/panorama/osc_types.d.ts`.
+- Контракт клиент–сервер (net table, события): `src/panorama/shared/osc_types.d.ts`.
 - Внешний вид HUD: `content/panorama/styles/custom_game/`.
 
 Редактируйте исходники в `content/`, `game/scripts/` и `src/panorama/`.

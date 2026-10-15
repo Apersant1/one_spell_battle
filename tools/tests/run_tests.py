@@ -3,7 +3,7 @@
 1. Синтаксис всех .lua в game/scripts/vscripts (компиляция LuaJIT).
 2. Типы и синтаксис Panorama TS в src/panorama (tsc --noEmit).
 3. Локализация: ключи из кода есть в обоих addon_*.txt, наборы ключей совпадают.
-3a. Контракт клиент–сервер: события и ключи osc_state из src/panorama/osc_types.d.ts
+3a. Контракт клиент–сервер: события и ключи osc_state из src/panorama/shared/osc_types.d.ts
     совпадают с тем, что шлёт и слушает Lua.
 4. Тесты tools/tests/test_*.lua с моками Dota API (каждый тест в свежем рантайме).
 
@@ -99,8 +99,8 @@ def check_ts_types():
 
 
 def declared_contract():
-    """События и ключи osc_state из src/panorama/osc_types.d.ts: (события, ключи, префиксы ключей)."""
-    text = read_text(PANORAMA_SRC / "osc_types.d.ts")
+    """События и ключи osc_state из src/panorama/shared/osc_types.d.ts: (события, ключи, префиксы ключей)."""
+    text = read_text(PANORAMA_SRC / "shared" / "osc_types.d.ts")
     events = re.search(r"^interface CustomGameEventDeclarations \{(.*?)^\}", text, re.S | re.M).group(1)
     state = re.search(r"^  osc_state: \{(.*?)^  \};", text, re.S | re.M).group(1)
     return (
@@ -113,7 +113,7 @@ def declared_contract():
 def check_contract():
     events, keys, prefixes = declared_contract()
     lua = "\n".join(read_text(p) for p in VSCRIPTS.rglob("*.lua"))
-    ts = "\n".join(read_text(p) for p in [*PANORAMA_SRC.glob("*.ts"), *PANORAMA_SRC.glob("*.tsx")])
+    ts = "\n".join(read_text(p) for p in [*PANORAMA_SRC.rglob("*.ts"), *PANORAMA_SRC.rglob("*.tsx")])
     lua_strings = set(re.findall(r'"([a-z0-9_]+)"', lua))
     errors = []
     for name in sorted(set(re.findall(r'GameEvents\.Subscribe\(\s*"(osc_[a-z0-9_]+)"', ts)) - events):

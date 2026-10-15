@@ -249,3 +249,5 @@ namespace OSC {
     return { Init: Init };
   })();
 }
+
+OSC.Summary.Init();
