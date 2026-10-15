@@ -502,10 +502,10 @@ table `osc_state` и кастомные события — в `src/panorama/osc_
 import/export: каждый файл кладёт свой компонент в `namespace OSC`.
 
 Модули `.tsx` написаны на React (выбор из трёх, сфера хаоса, казино, Хаос-лавка,
-справка, голосование; общие компоненты — `osc_components.tsx`): `react@17` и
+справка, голосование, итоги матча; общие компоненты — `osc_components.tsx`): `react@17` и
 `@demon673/react-panorama` (форк react-panorama без `new Function`, который
 Panorama запрещает) подключаются UMD-сборками (`npm run build` копирует их в
-`scripts/custom_game/libraries/`, `osc_hud.xml` и `osc_vote.xml` включают их перед модулями на
+`scripts/custom_game/libraries/`, `osc_hud.xml`, `osc_vote.xml` и `osc_end_screen.xml` включают их перед модулями на
 React), JSX компилирует тот же `tsc`. Компонент рисуется
 `ReactPanorama.render(...)` в пустую панель-контейнер из разметки; данные —
 хуки `useNetTableKey` и `useGameEvent`. После добавления новых `<include>`
