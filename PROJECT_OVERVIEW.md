@@ -501,7 +501,7 @@ table `osc_state` и кастомные события — в `src/panorama/osc_
 собранные `.js` в git не хранятся. Модули — глобальные скрипты без
 import/export: каждый файл кладёт свой компонент в `namespace OSC`.
 
-Модули `.tsx` написаны на React (Хаос-лавка, справка, голосование): `react@17` и
+Модули `.tsx` написаны на React (казино, Хаос-лавка, справка, голосование): `react@17` и
 `@demon673/react-panorama` (форк react-panorama без `new Function`, который
 Panorama запрещает) подключаются UMD-сборками (`npm run build` копирует их в
 `scripts/custom_game/libraries/`, `osc_hud.xml` и `osc_vote.xml` включают их перед модулями на

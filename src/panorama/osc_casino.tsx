@@ -1,7 +1,12 @@
 namespace OSC {
   type CasinoOutcome = NetworkedData<OSCCasinoResult>;
   type InventorySlot = { item: ItemEntityIndex | -1; reason: string };
+  type ReelView = { symbol: string; spinning: boolean; stopped: boolean };
 
+  // Окно автомата (React). Состояние спина — переменные модуля, как и раньше:
+  // их меняют события сервера и таймеры анимации, после чего Render()
+  // перерисовывает окно. Зона действия по Alt и повторное открытие по
+  // выделению автомата — без React.
   export const Casino = (function () {
     // ================= Настройки =================
     var MACHINE_UNIT_NAME = "npc_osc_casino_test_object";
@@ -36,7 +41,6 @@ namespace OSC {
     var minSpinDone = false;
     var outcome: CasinoOutcome | null = null;
     var spinToken = 0; // меняется при каждом спине и закрытии
-    var payCells: Record<string, Panel> = {}; // символ → ячейка таблицы выплат
     var responseTimeoutHandle: ScheduleID | null = null;
     var minSpinHandle: ScheduleID | null = null;
     var stakeMinimum = DEFAULT_STAKE_MINIMUM;
@@ -45,9 +49,27 @@ namespace OSC {
     var itemValueFactor = 0.5; // предмет стоит эту долю цены (как при продаже)
     var stakeMode = "gold"; // "gold" | "items": ставка либо золотом, либо предметами
     var selectedItems: ItemEntityIndex[] = []; // предметы, выбранные ставкой (можно несколько)
-    var itemsSignature = ""; // чтобы не перестраивать ряд предметов без нужды
+    var itemsSignature = ""; // чтобы не перерисовывать ряд предметов без нужды
     var lastSelectedMachine: EntityIndex | -1 = -1;
     var selectionSuppressed = false;
+
+    // То, что раньше писалось прямо в панели, — теперь рисует CasinoWindow
+    var visible = false;
+    var reels: ReelView[] = [
+      { symbol: "seven", spinning: false, stopped: false },
+      { symbol: "star", spinning: false, stopped: false },
+      { symbol: "diamond", spinning: false, stopped: false },
+    ];
+    var windowSpinning = false;
+    var windowWin = ""; // "" | "Win" | "Jackpot"
+    var hitSymbol: string | null = null; // подсвеченная ячейка таблицы выплат
+    var payouts: NetworkedData<OSCCasinoOutcome>[] = [];
+    var result: { token: string; vars?: Record<string, unknown> } = { token: "osc_casino_idle" };
+    var stakeText = "250";
+    var slots: InventorySlot[] = [];
+    var itemsUnavailable = false; // ставить нечего — вкладка «Предметы» серая
+
+    var Render = function () {}; // перерисовка окна; задаёт CasinoWindow
 
     // ================= Вспомогательное =================
     // Автомат, который игрок сейчас выбрал кликом, или -1.
@@ -57,16 +79,6 @@ namespace OSC {
       var unit = Players.GetLocalPlayerPortraitUnit();
       if (unit === undefined || unit === -1) return -1;
       return Entities.GetUnitName(unit) === MACHINE_UNIT_NAME ? unit : -1;
-    }
-
-    function Reel(index: number) {
-      return $("#CasinoReel" + (index + 1));
-    }
-
-    function ShowSymbol(reel: Panel, symbol: string) {
-      SYMBOL_KEYS.forEach(function (key) {
-        reel.SetHasClass("Sym_" + key, key === symbol);
-      });
     }
 
     function CancelTimers() {
@@ -81,159 +93,49 @@ namespace OSC {
     }
 
     // Текст из resource/addon_<язык>.txt; vars подставляются в {d:...} и {s:...}
-    function SetLocalized(panel: LabelPanel, token: string, vars?: Record<string, unknown>) {
-      for (var key in vars || {}) {
-        var value = vars![key];
-        if (typeof value === "number") {
-          panel.SetDialogVariableInt(key, value);
-        } else {
-          panel.SetDialogVariable(key, String(value));
+    function Localized(token: string, vars?: Record<string, unknown>) {
+      return function (panel: LabelPanel) {
+        for (var key in vars || {}) {
+          var value = vars![key];
+          if (typeof value === "number") {
+            panel.SetDialogVariableInt(key, value);
+          } else {
+            panel.SetDialogVariable(key, String(value));
+          }
         }
-      }
-      panel.text = $.Localize("#" + token, panel);
+        return $.Localize("#" + token, panel);
+      };
     }
 
     function SetResult(token: string, vars?: Record<string, unknown>) {
-      SetLocalized($("#CasinoResult") as LabelPanel, token, vars);
+      result = { token: token, vars: vars };
+      Render();
     }
 
     function SetBalance(gold: number) {
       currentGold = gold;
-      SetLocalized($("#CasinoBalance") as LabelPanel, "osc_casino_balance", { gold: gold });
-    }
-
-    function AddPayLabel(parent: Panel, className: string, text: string) {
-      var label = $.CreatePanel("Label", parent, "");
-      label.AddClass(className);
-      label.text = text;
-    }
-
-    // Таблица выплат собирается из исходов, которые прислал сервер: по ячейке на
-    // тройку (три символа, под ними множитель и шанс); самая дорогая подсвечена
-    function SetRules(outcomes: { [key: number]: NetworkedData<OSCCasinoOutcome> } | undefined) {
-      var table = $("#CasinoPaytable");
-      table.RemoveAndDeleteChildren();
-      payCells = {};
-      var list = Object.keys(outcomes || {})
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          return outcomes![Number(key)];
-        });
-      var top = Math.max.apply(
-        null,
-        list.map(function (o) {
-          return o.multiplier;
-        }),
-      );
-      list.forEach(function (o) {
-        var cell = $.CreatePanel("Panel", table, "");
-        cell.AddClass("CasinoPayCell");
-        cell.SetHasClass("Top", o.multiplier === top);
-        var icons = $.CreatePanel("Panel", cell, "");
-        icons.AddClass("CasinoPayIcons");
-        for (var i = 0; i < 3; i++) {
-          var icon = $.CreatePanel("Panel", icons, "");
-          icon.AddClass("CasinoPayIcon");
-          icon.AddClass("Sym_" + o.symbol);
-        }
-        var text = $.CreatePanel("Panel", cell, "");
-        text.AddClass("CasinoPayText");
-        AddPayLabel(text, "CasinoPayMult", "×" + o.multiplier);
-        AddPayLabel(text, "CasinoPayChance", o.chance + "%");
-        payCells[o.symbol] = cell;
-      });
-    }
-
-    function MarkPayCell(symbol: string | null | undefined) {
-      for (var key in payCells) payCells[key].SetHasClass("Hit", key === symbol);
-    }
-
-    function UpdateSpinButton() {
-      var stakeEntry = $("#CasinoStake") as TextEntry;
-      var spinButton = $("#CasinoSpinButton");
-      // При горячей перезагрузке разметки панели на миг пропадают
-      if (!stakeEntry || !spinButton) return;
-
-      if (stakeMode === "items") {
-        spinButton.enabled =
-          machine >= 0 &&
-          !waiting &&
-          !animating &&
-          selectedItems.length > 0 &&
-          GetSelectedValue() >= stakeMinimum;
-        return;
-      }
-
-      CenterStakeText();
-      var stake = parseInt(stakeEntry.text, 10);
-      var gold = currentGold;
-      var busy = machine < 0 || waiting || animating;
-      spinButton.enabled =
-        !busy && !isNaN(stake) && stake >= stakeMinimum && !isNaN(gold) && stake <= gold;
-      // −/+ гаснут на краях диапазона
-      var minus = $("#CasinoStakeMinus");
-      var plus = $("#CasinoStakePlus");
-      if (minus) minus.enabled = !busy && (isNaN(stake) || stake > stakeMinimum);
-      if (plus) plus.enabled = !busy && (isNaN(stake) || isNaN(gold) || stake < gold);
-    }
-
-    // TextEntry не центрирует текст (text-align не действует) — сдвигаем его
-    // отступом слева по числу символов.
-    // shortcut: ширина цифры подобрана на глаз (~10px при 18px); если шрифт поля
-    // сменится, подобрать STAKE_DIGIT_WIDTH заново
-    function CenterStakeText() {
-      var entry = $("#CasinoStake") as TextEntry;
-      if (!entry) return;
-      var free = STAKE_TEXT_AREA - entry.text.length * STAKE_DIGIT_WIDTH;
-      entry.style.paddingLeft = STAKE_COIN_WIDTH + Math.max(0, Math.floor(free / 2)) + "px";
-    }
-
-    // Panorama не пускает текст по кривой — заголовок собран из букв: каждая
-    // опущена по параболе и повёрнута по касательной к ней
-    function BuildTitle() {
-      var title = $("#CasinoTitle");
-      if (!title) return;
-      title.RemoveAndDeleteChildren();
-      var letters = $.Localize("#osc_casino_title").split("");
-      var half = Math.max(1, (letters.length - 1) / 2);
-      var halfWidth = half * TITLE_LETTER_WIDTH;
-      letters.forEach(function (letter, i) {
-        if (letter === " ") {
-          $.CreatePanel("Panel", title, "").AddClass("CasinoTitleSpace");
-          return;
-        }
-        var t = (i - half) / half; // -1 … 1 слева направо
-        var y = TITLE_ARC * t * t;
-        var angle = (Math.atan((2 * TITLE_ARC * t) / halfWidth) * 180) / Math.PI;
-        var label = $.CreatePanel("Label", title, "");
-        label.AddClass("OSCTextTitle");
-        label.AddClass("OSCGold");
-        label.text = letter;
-        label.style.transform =
-          "translateY(" + y.toFixed(1) + "px) rotateZ(" + angle.toFixed(1) + "deg)";
-      });
+      Render();
     }
 
     // −/+ у поля ставки: шаг STAKE_STEP в пределах от минимума до запаса золота
     function StepStake(direction: number) {
       if (machine < 0 || waiting || animating) return;
-      var entry = $("#CasinoStake") as TextEntry;
-      var stake = parseInt(entry.text, 10);
+      var stake = parseInt(stakeText, 10);
       stake = isNaN(stake) ? stakeMinimum : stake + direction * STAKE_STEP;
       if (!isNaN(currentGold)) stake = Math.min(stake, currentGold);
-      entry.text = String(Math.max(stakeMinimum, stake));
-      UpdateSpinButton();
+      stakeText = String(Math.max(stakeMinimum, stake));
+      Render();
     }
 
     // ================= Анимация барабанов =================
     // Пока у барабана класс Spinning, CSS прокручивает ленту символов (OSCReelSpin)
     function StopReel(index: number, symbol: string | null, bounce: boolean) {
-      var reel = Reel(index);
-      if (symbol) ShowSymbol(reel, symbol);
-      reel.RemoveClass("Spinning");
-      reel.SetHasClass("Stopped", bounce);
+      reels[index] = {
+        symbol: symbol || reels[index].symbol,
+        spinning: false,
+        stopped: bounce,
+      };
+      Render();
     }
 
     function ScheduleReelStop(token: number, index: number, symbol: string, delay: number) {
@@ -282,17 +184,17 @@ namespace OSC {
     // Шесть слотов основного инвентаря: { item, reason }; item -1 — слот пуст
     function GetInventorySlots() {
       var hero = GetLocalHero();
-      var slots: InventorySlot[] = [];
+      var result: InventorySlot[] = [];
       for (var slot = 0; slot < 6; slot++) {
         var item: ItemEntityIndex | -1 =
           hero === undefined || hero === -1 ? -1 : Entities.GetItemInSlot(hero, slot);
         if (item === undefined) item = -1;
-        slots.push({
+        result.push({
           item: item,
           reason: item === -1 ? "" : GetItemRejectReason(item, hero),
         });
       }
-      return slots;
+      return result;
     }
 
     // Предметы основного инвентаря, которые можно поставить
@@ -315,37 +217,14 @@ namespace OSC {
       return total;
     }
 
-    // Сумма выбранных предметов (красная, если меньше минимума)
-    function UpdateStakeLabel() {
-      var total = $("#CasinoItemsTotal") as LabelPanel;
-      if (total) {
-        var value = GetSelectedValue();
-        total.text = String(value);
-        total.SetHasClass("Low", selectedItems.length > 0 && value < stakeMinimum);
-      }
-    }
-
-    function ShowTooltipOnHover(panel: Panel, getText: () => string) {
-      // при горячей перезагрузке JS может прийти раньше разметки — не роняем Init
-      if (!panel) return;
-      panel.SetPanelEvent("onmouseover", function () {
-        var text = getText();
-        if (text) $.DispatchEvent("DOTAShowTextTooltip", panel, text);
-      });
-      panel.SetPanelEvent("onmouseout", function () {
-        $.DispatchEvent("DOTAHideTextTooltip", panel);
-      });
-    }
-
     // Режим ставки. В «Предметы» нельзя, если ставить нечего
     function SetMode(mode: string) {
       if (waiting || animating) return;
       if (mode === "items" && GetStakeableItems().length === 0) return;
       stakeMode = mode;
       if (mode === "gold") selectedItems = [];
-      $("#CasinoWindow").SetHasClass("ModeItems", mode === "items");
       RefreshItems(true);
-      UpdateSpinButton();
+      Render();
     }
 
     function ToggleMode() {
@@ -361,20 +240,12 @@ namespace OSC {
       } else {
         selectedItems.push(item);
       }
-      var buttons = $("#CasinoItems").Children();
-      for (var i = 0; i < buttons.length; i++) {
-        buttons[i].SetHasClass(
-          "Selected",
-          selectedItems.indexOf(buttons[i].GetAttributeInt("osc_item", -1) as ItemEntityIndex) >= 0,
-        );
-      }
-      UpdateStakeLabel();
-      UpdateSpinButton();
+      Render();
     }
 
     function ClearItemSelection() {
       selectedItems = [];
-      UpdateStakeLabel();
+      Render();
     }
 
     // Названия предметов из ответа сервера ("item_a,item_b") через запятую
@@ -396,69 +267,29 @@ namespace OSC {
         .join(", ");
     }
 
-    // Слот инвентаря: свой продаваемый предмет — кнопка ставки; чужой или
-    // непродаваемый — серый с подсказкой почему; пустой — тёмная ячейка
-    function BuildSlot(container: Panel, slot: InventorySlot) {
-      var cell = $.CreatePanel("Button", container, "");
-      cell.AddClass("CasinoItem");
-      if (slot.item === -1) {
-        cell.AddClass("Empty");
-        return;
-      }
-      var item = slot.item;
-      var image = $.CreatePanel("DOTAItemImage", cell, "");
-      image.itemname = Abilities.GetAbilityName(item);
-      image.hittest = false;
-      if (slot.reason) {
-        cell.AddClass("Locked");
-        ShowTooltipOnHover(cell, function () {
-          return $.Localize("#" + slot.reason);
-        });
-        return;
-      }
-      var price = $.CreatePanel("Label", cell, "");
-      price.AddClass("CasinoItemPrice");
-      price.text = String(GetItemValue(item));
-      cell.SetHasClass("Selected", selectedItems.indexOf(item) >= 0);
-      cell.SetAttributeInt("osc_item", item);
-      cell.SetPanelEvent("onactivate", function () {
-        SelectItem(item);
-      });
-    }
-
-    // Перестраивает слоты, только если инвентарь изменился
+    // Перечитывает инвентарь; перерисовывает ряд, только если он изменился
     function RefreshItems(force: boolean) {
-      var container = $("#CasinoItems");
-      if (!container) return;
-
-      var slots = GetInventorySlots();
-      var signature = slots
+      var current = GetInventorySlots();
+      var signature = current
         .map(function (s) {
           return s.item + ":" + s.reason;
         })
         .join(",");
       if (!force && signature === itemsSignature) return;
       itemsSignature = signature;
+      slots = current;
 
       // Убираем из выбора предметы, которых больше нет в инвентаре
       var stakeable = GetStakeableItems();
       selectedItems = selectedItems.filter(function (item) {
         return stakeable.indexOf(item) >= 0;
       });
-
-      // Без ставок предметами вкладок нет; ставить нечего — вкладка серая
-      $("#CasinoModeTabs").SetHasClass("Hidden", !itemBets);
-      $("#CasinoModeSwitch").SetHasClass("ItemsUnavailable", stakeable.length === 0);
+      itemsUnavailable = stakeable.length === 0;
       if (stakeMode === "items" && stakeable.length === 0) {
         SetMode("gold");
         return;
       }
-      UpdateStakeLabel();
-
-      container.RemoveAndDeleteChildren();
-      slots.forEach(function (slot) {
-        BuildSlot(container, slot);
-      });
+      Render();
     }
 
     // Пока окно открыто и спина нет, держим баланс и список предметов свежими:
@@ -467,11 +298,7 @@ namespace OSC {
       if (OSC.Util.IsPostGame()) return false;
       if (machine < 0 || waiting || animating) return;
       var gold = Players.GetGold(Players.GetLocalPlayer());
-      if (gold !== currentGold) {
-        SetBalance(gold);
-        UpdateStakeLabel();
-        UpdateSpinButton();
-      }
+      if (gold !== currentGold) SetBalance(gold);
       RefreshItems(false);
     }
 
@@ -486,19 +313,13 @@ namespace OSC {
       minSpinDone = false;
       outcome = null;
 
-      var win = $("#CasinoWindow");
-      win.RemoveClass("Win");
-      win.RemoveClass("Jackpot");
-      MarkPayCell(null);
-      win.AddClass("Spinning");
+      windowWin = "";
+      hitSymbol = null;
+      windowSpinning = true;
+      reels = reels.map(function (reel) {
+        return { symbol: reel.symbol, spinning: true, stopped: false };
+      });
       SetResult("osc_casino_spinning");
-
-      for (var i = 0; i < 3; i++) {
-        Reel(i).RemoveClass("Stopped");
-        Reel(i).AddClass("Spinning");
-      }
-
-      UpdateSpinButton();
 
       CancelTimers();
       minSpinHandle = $.Schedule(MIN_SPIN_TIME, function () {
@@ -532,11 +353,11 @@ namespace OSC {
 
       revealing = true;
       var token = spinToken;
-      var result = outcome;
+      var spun = outcome;
       var symbols = [
-        SymbolOr(result.reel1, "circle"),
-        SymbolOr(result.reel2, "diamond"),
-        SymbolOr(result.reel3, "star"),
+        SymbolOr(spun.reel1, "circle"),
+        SymbolOr(spun.reel2, "diamond"),
+        SymbolOr(spun.reel3, "star"),
       ];
 
       for (var i = 0; i < 3; i++) {
@@ -544,7 +365,7 @@ namespace OSC {
       }
       $.Schedule(REEL_STOP_DELAYS[2] + REEL_BOUNCE_TIME, function () {
         if (token !== spinToken) return;
-        FinishSpin(result);
+        FinishSpin(spun);
       });
     }
 
@@ -553,49 +374,44 @@ namespace OSC {
       for (var i = 0; i < 3; i++) StopReel(i, null, false);
       animating = false;
       revealing = false;
-      $("#CasinoWindow").RemoveClass("Spinning");
+      windowSpinning = false;
       RefreshItems(true);
       SetResult(token, {
         min_stake: (data && data.min_stake) || stakeMinimum,
       });
-      UpdateSpinButton();
     }
 
-    function FinishSpin(result: CasinoOutcome) {
+    function FinishSpin(spun: CasinoOutcome) {
       animating = false;
       revealing = false;
-      if (result.gold !== undefined) SetBalance(result.gold);
+      if (spun.gold !== undefined) currentGold = spun.gold;
+      windowSpinning = false;
 
-      var win = $("#CasinoWindow");
-      win.RemoveClass("Spinning");
-
-      var payout = result.payout || 0;
-      var isJackpot =
-        result.reel1 === "seven" && result.reel2 === "seven" && result.reel3 === "seven";
+      var payout = spun.payout || 0;
+      var isJackpot = spun.reel1 === "seven" && spun.reel2 === "seven" && spun.reel3 === "seven";
 
       if (payout > 0) {
-        win.AddClass(isJackpot ? "Jackpot" : "Win");
-        MarkPayCell(result.reel1);
+        windowWin = isJackpot ? "Jackpot" : "Win";
+        hitSymbol = spun.reel1 || null;
         OSC.Util.PlaySound(isJackpot ? OSC.Sounds.casinoJackpot : OSC.Sounds.casinoWin);
         if (isJackpot) PlayJackpotParticles();
       }
 
-      var net = result.net! > 0 ? "+" + result.net : String(result.net);
-      var itemNames = result.items ? LocalizeItemList(result.items) : "";
-      if (result.items && result.multiplier === 1) {
+      var net = spun.net! > 0 ? "+" + spun.net : String(spun.net);
+      var itemNames = spun.items ? LocalizeItemList(spun.items) : "";
+      if (spun.items && spun.multiplier === 1) {
         SetResult("osc_casino_result_item_return", { item: itemNames });
       } else if (payout > 0) {
         SetResult("osc_casino_result_win", { payout: payout, net: net });
-      } else if (result.items) {
+      } else if (spun.items) {
         SetResult("osc_casino_result_item_lose", { item: itemNames });
       } else {
-        SetResult("osc_casino_result_lose", { stake: result.stake });
+        SetResult("osc_casino_result_lose", { stake: spun.stake });
       }
 
       // Поставленные предметы ушли в автомат — снимаем выбор
       ClearItemSelection();
       RefreshItems(true);
-      UpdateSpinButton();
     }
 
     function ResetState() {
@@ -607,7 +423,7 @@ namespace OSC {
       minSpinDone = false;
       outcome = null;
       for (var i = 0; i < 3; i++) StopReel(i, null, false);
-      $("#CasinoWindow").RemoveClass("Spinning");
+      windowSpinning = false;
     }
 
     // ================= События сервера =================
@@ -618,13 +434,12 @@ namespace OSC {
       itemBets = (event.item_bets as unknown) !== false && event.item_bets !== 0;
       itemValueFactor = event.item_value_factor || 0.5;
 
-      SetBalance(event.gold);
-      SetRules(event.outcomes);
+      currentGold = event.gold;
+      payouts = OSC.Util.LuaArray(event.outcomes);
 
-      var stakeEntry = $("#CasinoStake") as TextEntry;
-      var currentStake = parseInt(stakeEntry.text, 10);
+      var currentStake = parseInt(stakeText, 10);
       if (isNaN(currentStake) || currentStake < stakeMinimum || currentStake > event.gold) {
-        stakeEntry.text = String(Math.min(event.default_stake, event.gold));
+        stakeText = String(Math.min(event.default_stake, event.gold));
       }
 
       if (!animating && !waiting) {
@@ -638,8 +453,8 @@ namespace OSC {
         SetResult("osc_casino_idle");
       }
 
-      UpdateSpinButton();
-      $("#CasinoPanel").AddClass("Visible");
+      visible = true;
+      Render();
     }
 
     function OnResult(event: NetworkedData<CustomGameEventDeclarations["osc_casino_result"]>) {
@@ -652,16 +467,17 @@ namespace OSC {
       // Баланс после выигрыша покажем, когда барабаны остановятся (FinishSpin),
       // иначе он раньше времени выдаёт исход
       var revealLater = animating && !revealing && !event.error;
-      if (event.gold !== undefined && !revealLater) SetBalance(event.gold);
+      if (event.gold !== undefined && !revealLater) currentGold = event.gold;
 
       // Поздний ответ (после таймаута или закрытия) — только баланс
       if (!animating || revealing) {
-        UpdateSpinButton();
+        Render();
         return;
       }
 
       outcome = event.error ? { error: event.error, min_stake: event.min_stake } : event;
       TryReveal();
+      Render();
     }
 
     function OnClosed(event: NetworkedData<CustomGameEventDeclarations["osc_casino_closed"]>) {
@@ -683,7 +499,7 @@ namespace OSC {
         return;
       }
 
-      var stake = parseInt(($("#CasinoStake") as TextEntry).text, 10);
+      var stake = parseInt(stakeText, 10);
       if (machine < 0 || waiting || animating || isNaN(stake) || stake < stakeMinimum) return;
 
       StartSpinVisuals();
@@ -698,7 +514,8 @@ namespace OSC {
       selectionSuppressed = machine >= 0 && GetClickedMachine() === machine;
       machine = -1;
       ResetState();
-      $("#CasinoPanel").RemoveClass("Visible");
+      visible = false;
+      Render();
     }
 
     // ================= Повторное открытие по выделению =================
@@ -736,14 +553,14 @@ namespace OSC {
     }
 
     function FindMachines() {
-      var result: EntityIndex[] = [];
+      var found: EntityIndex[] = [];
       var creatures = Entities.GetAllEntitiesByClassname("npc_dota_creature") || [];
       for (var i = 0; i < creatures.length; i++) {
         if (Entities.GetUnitName(creatures[i]) === MACHINE_UNIT_NAME) {
-          result.push(creatures[i]);
+          found.push(creatures[i]);
         }
       }
-      return result;
+      return found;
     }
 
     function DestroyRange(ent: string) {
@@ -780,36 +597,287 @@ namespace OSC {
       }
     }
 
+    // ================= Окно =================
+
+    function Tooltip(getText: () => string) {
+      return {
+        onmouseover: function (panel: Panel) {
+          var text = getText();
+          if (text) $.DispatchEvent("DOTAShowTextTooltip", panel, text);
+        },
+        onmouseout: function (panel: Panel) {
+          $.DispatchEvent("DOTAHideTextTooltip", panel);
+        },
+      };
+    }
+
+    // Panorama не пускает текст по кривой — заголовок собран из букв: каждая
+    // опущена по параболе и повёрнута по касательной к ней
+    function Title() {
+      var letters = $.Localize("#osc_casino_title").split("");
+      var half = Math.max(1, (letters.length - 1) / 2);
+      var halfWidth = half * TITLE_LETTER_WIDTH;
+      return (
+        <Panel id="CasinoTitle" hittest={false}>
+          {letters.map(function (letter, i) {
+            if (letter === " ") return <Panel key={i} className="CasinoTitleSpace" />;
+            var t = (i - half) / half; // -1 … 1 слева направо
+            var y = TITLE_ARC * t * t;
+            var angle = (Math.atan((2 * TITLE_ARC * t) / halfWidth) * 180) / Math.PI;
+            return (
+              <Label
+                key={i}
+                className="OSCTextTitle OSCGold"
+                text={letter}
+                style={{
+                  transform:
+                    "translateY(" + y.toFixed(1) + "px) rotateZ(" + angle.toFixed(1) + "deg)",
+                }}
+              />
+            );
+          })}
+        </Panel>
+      );
+    }
+
+    // Таблица выплат из исходов, которые прислал сервер: по ячейке на тройку
+    // (три символа, под ними множитель и шанс); самая дорогая подсвечена
+    function Paytable() {
+      var top = Math.max.apply(
+        null,
+        payouts.map(function (o) {
+          return o.multiplier;
+        }),
+      );
+      return (
+        <Panel id="CasinoPaytable">
+          {payouts.map(function (o) {
+            var classes = ["CasinoPayCell"];
+            if (o.multiplier === top) classes.push("Top");
+            if (o.symbol === hitSymbol) classes.push("Hit");
+            return (
+              <Panel key={o.symbol} className={classes.join(" ")}>
+                <Panel className="CasinoPayIcons">
+                  {[0, 1, 2].map(function (i) {
+                    return <Panel key={i} className={"CasinoPayIcon Sym_" + o.symbol} />;
+                  })}
+                </Panel>
+                <Panel className="CasinoPayText">
+                  <Label className="CasinoPayMult" text={"×" + o.multiplier} />
+                  <Label className="CasinoPayChance" text={o.chance + "%"} />
+                </Panel>
+              </Panel>
+            );
+          })}
+        </Panel>
+      );
+    }
+
+    // Слот инвентаря: свой продаваемый предмет — кнопка ставки; чужой или
+    // непродаваемый — серый с подсказкой почему; пустой — тёмная ячейка
+    function Slot(props: { slot: InventorySlot }) {
+      var slot = props.slot;
+      if (slot.item === -1) return <Button className="CasinoItem Empty" />;
+      var item = slot.item;
+      var image = <DOTAItemImage itemname={Abilities.GetAbilityName(item)} hittest={false} />;
+      if (slot.reason) {
+        return (
+          <Button
+            className="CasinoItem Locked"
+            {...Tooltip(function () {
+              return $.Localize("#" + slot.reason);
+            })}
+          >
+            {image}
+          </Button>
+        );
+      }
+      return (
+        <Button
+          className={"CasinoItem" + (selectedItems.indexOf(item) >= 0 ? " Selected" : "")}
+          onactivate={function () {
+            SelectItem(item);
+          }}
+        >
+          {image}
+          <Label className="CasinoItemPrice" text={String(GetItemValue(item))} />
+        </Button>
+      );
+    }
+
+    function CasinoWindow() {
+      var [, bump] = React.useReducer(function (n: number) {
+        return n + 1;
+      }, 0);
+      Render = bump;
+
+      var stake = parseInt(stakeText, 10);
+      var busy = machine < 0 || waiting || animating;
+      var spinEnabled =
+        stakeMode === "items"
+          ? !busy && selectedItems.length > 0 && GetSelectedValue() >= stakeMinimum
+          : !busy &&
+            !isNaN(stake) &&
+            stake >= stakeMinimum &&
+            !isNaN(currentGold) &&
+            stake <= currentGold;
+      var selectedValue = GetSelectedValue();
+      // TextEntry не центрирует текст (text-align не действует) — сдвигаем его
+      // отступом слева по числу символов.
+      // shortcut: ширина цифры подобрана на глаз (~10px при 18px); если шрифт поля
+      // сменится, подобрать STAKE_DIGIT_WIDTH заново
+      var free = STAKE_TEXT_AREA - stakeText.length * STAKE_DIGIT_WIDTH;
+
+      var windowClasses: string[] = [];
+      if (windowSpinning) windowClasses.push("Spinning");
+      if (windowWin) windowClasses.push(windowWin);
+      if (stakeMode === "items") windowClasses.push("ModeItems");
+
+      return (
+        <Panel id="CasinoPanel" className={visible ? "Visible" : ""} hittest={true}>
+          <Panel id="CasinoWindow" className={windowClasses.join(" ")} hittest={true}>
+            <Button id="CasinoCloseButton" className="OSCButton" onactivate={Close}>
+              <Label text={$.Localize("#osc_casino_btn_close")} />
+            </Button>
+            {/* Лента-заголовок; при джекпоте поверх проявляется огненная */}
+            <Panel id="CasinoTitlePlaque" hittest={false}>
+              <Panel id="CasinoTitleJackpot" hittest={false} />
+              <Title />
+            </Panel>
+            <Panel id="CasinoReels">
+              {/* Окошко барабанов: обрезает ленты по краю рамки */}
+              <Panel id="CasinoReelsWindow">
+                {reels.map(function (reel, i) {
+                  var classes = ["CasinoReel", "Sym_" + reel.symbol];
+                  if (reel.spinning) classes.push("Spinning");
+                  if (reel.stopped) classes.push("Stopped");
+                  return (
+                    <Panel key={i} id={"CasinoReel" + (i + 1)} className={classes.join(" ")}>
+                      <Panel className="CasinoReelStrip" />
+                    </Panel>
+                  );
+                })}
+              </Panel>
+            </Panel>
+            <Label
+              id="CasinoResult"
+              className="OSCTextBody"
+              text={Localized(result.token, result.vars)}
+            />
+            <Paytable />
+            <Label
+              id="CasinoBalance"
+              className="OSCTextBody OSCBold OSCGold"
+              text={
+                isNaN(currentGold) ? "" : Localized("osc_casino_balance", { gold: currentGold })
+              }
+            />
+            {/* Ставка либо золотом, либо предметами: переключатель с иконками,
+                ползунок под активной */}
+            <Panel id="CasinoModeTabs" className={itemBets ? "" : "Hidden"}>
+              <Button
+                id="CasinoModeSwitch"
+                className={itemsUnavailable ? "ItemsUnavailable" : ""}
+                onactivate={ToggleMode}
+                {...Tooltip(function () {
+                  if (stakeMode === "gold" && itemsUnavailable) {
+                    return $.Localize("#osc_casino_items_empty");
+                  }
+                  return $.Localize(
+                    stakeMode === "items" ? "#osc_casino_mode_items" : "#osc_casino_mode_gold",
+                  );
+                })}
+              >
+                <Panel id="CasinoModeKnob" hittest={false} />
+                <Panel id="CasinoModeGoldIcon" className="CasinoModeIcon" hittest={false} />
+                <DOTAItemImage
+                  id="CasinoModeItemsIcon"
+                  className="CasinoModeIcon"
+                  itemname="item_broadsword"
+                  hittest={false}
+                />
+              </Button>
+            </Panel>
+            {/* Режим «Предметы»: шесть слотов инвентаря и сумма ставки (красная,
+                если меньше минимума) */}
+            <Panel id="CasinoItemsRow">
+              <Panel id="CasinoItems">
+                {slots.map(function (slot, i) {
+                  return <Slot key={i + ":" + slot.item} slot={slot} />;
+                })}
+              </Panel>
+              <Label
+                id="CasinoItemsTotal"
+                className={selectedItems.length > 0 && selectedValue < stakeMinimum ? "Low" : ""}
+                text={String(selectedValue)}
+                {...Tooltip(function () {
+                  return Localized("osc_casino_items_hint", { min: stakeMinimum })(
+                    $("#CasinoItemsTotal") as LabelPanel,
+                  );
+                })}
+              />
+            </Panel>
+            <Panel id="CasinoStakeRow">
+              {/* −/+ гаснут на краях диапазона */}
+              <Button
+                id="CasinoStakeMinus"
+                className="CasinoStakeStep"
+                enabled={!busy && (isNaN(stake) || stake > stakeMinimum)}
+                onactivate={function () {
+                  StepStake(-1);
+                }}
+              >
+                <Label text={$.Localize("#osc_casino_stake_minus")} />
+              </Button>
+              <TextEntry
+                id="CasinoStake"
+                text={stakeText}
+                maxchars={8}
+                style={{ paddingLeft: STAKE_COIN_WIDTH + Math.max(0, Math.floor(free / 2)) + "px" }}
+                ontextentrychange={function (entry) {
+                  stakeText = entry.text;
+                  Render();
+                }}
+              />
+              <Button
+                id="CasinoStakePlus"
+                className="CasinoStakeStep"
+                enabled={!busy && (isNaN(stake) || isNaN(currentGold) || stake < currentGold)}
+                onactivate={function () {
+                  StepStake(1);
+                }}
+              >
+                <Label text={$.Localize("#osc_casino_stake_plus")} />
+              </Button>
+            </Panel>
+            <Panel id="CasinoButtons">
+              <Button
+                id="CasinoSpinButton"
+                className="OSCButton OSCButtonPrimary"
+                enabled={spinEnabled}
+                onactivate={Spin}
+              >
+                <Label text={$.Localize("#osc_casino_btn_spin")} />
+              </Button>
+            </Panel>
+          </Panel>
+          {/* Слой для частиц поверх окна */}
+          <Panel id="CasinoFx" hittest={false} />
+        </Panel>
+      );
+    }
+
     // ================= Инициализация =================
     function Init() {
-      BuildTitle();
+      ReactPanorama.render(<CasinoWindow />, $("#CasinoRoot"));
       GameEvents.Subscribe("osc_casino_open", OnOpen);
       GameEvents.Subscribe("osc_casino_result", OnResult);
       GameEvents.Subscribe("osc_casino_closed", OnClosed);
-      $("#CasinoStake").SetPanelEvent("ontextentrychange", UpdateSpinButton);
-      ShowTooltipOnHover($("#CasinoModeSwitch"), function () {
-        if (stakeMode === "gold" && $("#CasinoModeSwitch").BHasClass("ItemsUnavailable"))
-          return $.Localize("#osc_casino_items_empty");
-        return $.Localize(
-          stakeMode === "items" ? "#osc_casino_mode_items" : "#osc_casino_mode_gold",
-        );
-      });
-      ShowTooltipOnHover($("#CasinoItemsTotal"), function () {
-        var hint = $("#CasinoItemsTotal") as LabelPanel;
-        hint.SetDialogVariableInt("min", stakeMinimum);
-        return $.Localize("#osc_casino_items_hint", hint);
-      });
       OSC.Util.Loop(SELECTION_POLL, PollSelection);
       OSC.Util.Loop(RANGE_POLL, UpdateRangeDisplay);
       OSC.Util.Loop(0.5, PollItems);
     }
 
-    return {
-      Init: Init,
-      Spin: Spin, // вызывается из XML
-      ToggleMode: ToggleMode, // вызывается из XML
-      StepStake: StepStake, // вызывается из XML
-      Close: Close, // вызывается из XML
-    };
+    return { Init: Init };
   })();
 }
