@@ -73,7 +73,7 @@ end
 
 local function CasinoOutcomes()
     local outcomes = {}
-    for _, outcome in ipairs(OSC_Config.Get("CASINO_OUTCOMES") or {}) do
+    for _, outcome in ipairs(OSC_Config.Get("CASINO_OUTCOMES")) do
         table.insert(outcomes, {
             symbol = outcome.symbol,
             chance = outcome.chance,
@@ -115,7 +115,7 @@ function OSC_Help.Build()
             min_stake = OSC_Config.Get("CASINO_MIN_SPIN_COST"),
             lifetime = OSC_Config.Get("CASINO_MACHINE_LIFETIME"),
             item_bets = Flag("CASINO_ITEM_BETS"),
-            item_value_pct = math.floor((OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR") or 0) * 100 + 0.5),
+            item_value_pct = math.floor(OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR") * 100 + 0.5),
             outcomes = CasinoOutcomes(),
         },
         sphere = {
@@ -129,7 +129,7 @@ function OSC_Help.Build()
         },
         summary = {
             enabled = Flag("SUMMARY_ENABLED"),
-            titles = OSC_Config.Get("SUMMARY_TITLES") or {},
+            titles = OSC_Config.Get("SUMMARY_TITLES"),
             ties = OSC_Config.Get("SUMMARY_TITLE_TIES"),
         },
     }

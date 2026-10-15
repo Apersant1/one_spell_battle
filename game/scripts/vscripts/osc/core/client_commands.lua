@@ -29,7 +29,7 @@ function OSC_ClientCommands.LogRefusal(channel, senderKey, message)
     local key = channel .. ":" .. tostring(senderKey)
     local record = OSC_ClientCommands.refusal_log[key]
     local now = GameRules:GetGameTime()
-    local interval = OSC_Config.Get("CLIENT_REFUSAL_LOG_INTERVAL") or 0
+    local interval = OSC_Config.Get("CLIENT_REFUSAL_LOG_INTERVAL")
     if record and now - record.time < interval then
         record.suppressed = record.suppressed + 1
         return

@@ -94,9 +94,9 @@ function OSC_Summary.Titles(rows, extras)
     table.sort(ids) -- при lowest_player_id из равных побеждает первый
 
     local titles = {}
-    local minimums = OSC_Config.Get("SUMMARY_TITLE_MIN") or {}
-    local ties = OSC_Config.Get("SUMMARY_TITLE_TIES") or "none"
-    for _, titleId in ipairs(OSC_Config.Get("SUMMARY_TITLES") or {}) do
+    local minimums = OSC_Config.Get("SUMMARY_TITLE_MIN")
+    local ties = OSC_Config.Get("SUMMARY_TITLE_TIES")
+    for _, titleId in ipairs(OSC_Config.Get("SUMMARY_TITLES")) do
         local rule = TITLE_RULES[titleId]
         if not rule then
             OSC_Logger.Error("Unknown summary title: " .. tostring(titleId))

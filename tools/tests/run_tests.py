@@ -243,6 +243,34 @@ def check_config_reads():
     return errors
 
 
+def check_config_paths():
+    """Каждый путь OSC_Config.Get("...") есть в OSC_CONFIG: опечатка в ключе
+    иначе тихо вернула бы nil. Учитываются и обёртки вида
+    local function cfg(key) return OSC_Config.Get("COURIERS." .. key)."""
+    runtime = lupa_runtime.LuaRuntime()
+    runtime.execute(read_text(VSCRIPTS / "osc" / "config" / "config.lua"))
+    exists = runtime.eval(
+        """function(path)
+            local value = OSC_CONFIG
+            for part in string.gmatch(path, "[^%.]+") do
+                if type(value) ~= "table" then return false end
+                value = value[part]
+            end
+            return value ~= nil
+        end"""
+    )
+    helper = re.compile(r'local function (\w+)\((\w+)\)\s*\n\s*return OSC_Config\.Get\((?:"([A-Z_.]*)" \.\. )?\2\)')
+    errors = []
+    for path in sorted(VSCRIPTS.rglob("*.lua")):
+        text = read_text(path)
+        paths = set(re.findall(r'OSC_Config\.Get\("([A-Z_.]+)"\)', text))
+        for name, _, prefix in helper.findall(text):
+            paths |= {(prefix or "") + key for key in re.findall(rf'\b{name}\("([A-Z_.]+)"\)', text)}
+        rel = path.relative_to(VSCRIPTS).as_posix()
+        errors += [f"{rel}: {p} not in OSC_CONFIG" for p in sorted(paths) if not exists(p)]
+    return errors
+
+
 def run_lua_tests():
     failures, passed = [], 0
     for path in sorted(TESTS.glob("test_*.lua")):
@@ -273,6 +301,7 @@ def main():
         ("Layout includes", check_layout_includes),
         ("Release script", check_release_script),
         ("Config reads", check_config_reads),
+        ("Config paths", check_config_paths),
     ):
         errors = check()
         print(f"{title}: {'OK' if not errors else 'FAIL'}")

@@ -22,7 +22,7 @@ OSC_ChaosShop = OSC_ChaosShop or { sold = {} }
 local BACKPACK_LAST_SLOT = 8 -- 0-5 инвентарь, 6-8 рюкзак
 
 local function GetItems()
-    return OSC_Config.Get("CHAOS_SHOP_ITEMS") or {}
+    return OSC_Config.Get("CHAOS_SHOP_ITEMS")
 end
 
 local function FindEntry(name)

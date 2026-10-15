@@ -50,7 +50,7 @@ local function LogRefusal(senderKey, reason)
 end
 
 local function MinLevel()
-    return OSC_Config.Get("CHAOS_SPHERE_MIN_LEVEL") or 0
+    return OSC_Config.Get("CHAOS_SPHERE_MIN_LEVEL")
 end
 
 local function Contains(list, value)
@@ -88,7 +88,7 @@ function OSC_ChaosSphere.OnEntityKilled(event)
         return
     end
     -- Рядом с Аегисом, но не в той же точке
-    local offset = OSC_Config.Get("CHAOS_SPHERE_DROP_OFFSET") or 0
+    local offset = OSC_Config.Get("CHAOS_SPHERE_DROP_OFFSET")
     CreateItemOnPositionSync(killed:GetAbsOrigin() + RandomVector(offset), item)
     OSC_Logger.Log("Chaos sphere dropped by Roshan")
     OSC_Notifications.Notify("chaos_sphere_dropped")

@@ -66,7 +66,7 @@ local function CanUseMachine(hero, playerID, machine)
         return false, "osc_casino_err_unavailable"
     end
     if not isOwner then
-        local access = OSC_Config.Get("CASINO_ACCESS") or "team"
+        local access = OSC_Config.Get("CASINO_ACCESS")
         if access == "owner" then
             return false, "osc_casino_err_owner_only"
         end
@@ -76,7 +76,7 @@ local function CanUseMachine(hero, playerID, machine)
     end
 
     local distance = (hero:GetAbsOrigin() - machine:GetAbsOrigin()):Length2D()
-    if distance > (OSC_Config.Get("CASINO_USE_DISTANCE") or 450) then
+    if distance > OSC_Config.Get("CASINO_USE_DISTANCE") then
         return false, "osc_casino_err_too_far"
     end
     return true
@@ -105,7 +105,7 @@ local function SendOpen(player, playerID, hero, machine)
         min_stake = OSC_Config.Get("CASINO_MIN_SPIN_COST"),
         default_stake = OSC_Config.Get("CASINO_DEFAULT_STAKE"),
         item_bets = OSC_Config.Get("CASINO_ITEM_BETS") ~= false,
-        item_value_factor = OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR") or 0.5,
+        item_value_factor = OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR"),
         gold = hero:GetGold(),
         lifetime = OSC_Config.Get("CASINO_MACHINE_LIFETIME"),
         -- Анимацию продолжает только тот, кто сам крутит; остальные видят автомат свободным
@@ -166,7 +166,7 @@ function OSC_Casino.Init()
 
     -- Клиенту нужен радиус, чтобы рисовать зону действия по Alt
     CustomNetTables:SetTableValue("osc_state", "casino", {
-        use_distance = OSC_Config.Get("CASINO_USE_DISTANCE") or 450,
+        use_distance = OSC_Config.Get("CASINO_USE_DISTANCE"),
     })
     -- Казино выключили голосованием — убираем уже поставленные автоматы
     OSC_GameEvents.Subscribe("config_overrides_applied", "casino", function()
@@ -340,7 +340,7 @@ end
 
 -- Сколько золота стоит предмет как ставка: доля цены покупки, как при продаже
 local function GetItemStakeValue(item)
-    local factor = OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR") or 0.5
+    local factor = OSC_Config.Get("CASINO_ITEM_VALUE_FACTOR")
     return math.floor(item:GetCost() * factor)
 end
 

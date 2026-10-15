@@ -23,7 +23,7 @@ end
 -- Величину берёт сервер из OSC_Config, клиенту она приходит числом стаков
 function modifier_osc_chaos_cooldowns:OnCreated()
     if IsServer() then
-        self:SetStackCount(OSC_Config.Get("CHAOS_ROUNDS.COOLDOWN_REDUCTION_PCT") or 0)
+        self:SetStackCount(OSC_Config.Get("CHAOS_ROUNDS.COOLDOWN_REDUCTION_PCT"))
     end
 end
 

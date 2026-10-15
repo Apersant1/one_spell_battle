@@ -97,7 +97,7 @@ local function FindItems(unit, name)
 end
 
 function OSC_Anchor.Merge(unit)
-    local need = OSC_Config.Get("ANCHOR_MERGE_COUNT") or 2
+    local need = OSC_Config.Get("ANCHOR_MERGE_COUNT")
     for level = 1, #LEVELS - 1 do
         local items, charges = FindItems(unit, LEVELS[level])
         local merged = math.floor(charges / need)

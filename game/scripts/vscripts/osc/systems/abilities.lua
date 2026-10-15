@@ -225,7 +225,7 @@ end
 
 -- Перезарядка способности, пришедшей на смену прежней (NEW_ABILITY_COOLDOWN_MODE)
 local function ApplyNewAbilityCooldown(ability)
-    local mode = OSC_Config.Get("NEW_ABILITY_COOLDOWN_MODE") or "ready"
+    local mode = OSC_Config.Get("NEW_ABILITY_COOLDOWN_MODE")
     if mode == "ready" then return end
     if mode ~= "partial" then
         OSC_Logger.Error("Unknown NEW_ABILITY_COOLDOWN_MODE: " .. tostring(mode))

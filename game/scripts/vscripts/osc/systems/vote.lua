@@ -30,7 +30,7 @@ OSC_Vote = OSC_Vote or {
 }
 
 local function Questions()
-    return OSC_Config.Get("VOTE_QUESTIONS") or {}
+    return OSC_Config.Get("VOTE_QUESTIONS")
 end
 
 function OSC_Vote.IsEnabled()
@@ -143,7 +143,7 @@ end
 
 local function MarkDirty()
     OSC_Vote.dirty = true
-    local interval = OSC_Config.Get("VOTE_PUBLISH_INTERVAL") or 0
+    local interval = OSC_Config.Get("VOTE_PUBLISH_INTERVAL")
     if interval <= 0 then
         OSC_Vote.FlushPublish()
         return
