@@ -25,8 +25,14 @@ namespace OSC.TeamSelect {
     if (OSC.Sounds[name]) OSC.Util.PlaySound(OSC.Sounds[name]);
   }
 
-  export function IsSetupPhase() {
-    return Game.GetState() === DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP;
+  // Скрипт может загрузиться чуть раньше стадии выбора команд — тогда ждём;
+  // закончилась — возвращаем Dota её чат и контейнер
+  export function SetupStarted() {
+    return Game.GetState() >= DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP;
+  }
+
+  export function SetupOver() {
+    return Game.GetState() > DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP;
   }
 
   function IsHost() {
@@ -342,7 +348,7 @@ namespace OSC.TeamSelect {
   var lastFrame = Date.now();
 
   function Tick() {
-    if (!IsSetupPhase()) {
+    if (SetupOver()) {
       Container.restore();
       Chat.restore();
       return false; // останавливает OSC.Util.Loop

@@ -82,9 +82,28 @@ namespace OSC.TeamSelect {
       chat.style.margin = "0px 0px " + (f.bottom + pad.bottom) + "px " + (f.left + pad.side) + "px";
     }
 
-    // каждый кадр: подложка повторяет высоту чата
+    var narrowNow: () => boolean = function () {
+      return false;
+    };
+    var onReady = function () {};
+    var searching = false;
+
+    // каждый кадр: подложка повторяет высоту чата. Если чат ушёл из
+    // #ChatLayer (Dota вернула его к себе или его удалили) — ищем и
+    // переносим заново; куда он делся, пишем в консоль
     function sync(narrow: boolean) {
-      if (chat === null || !chat.IsValid()) return;
+      if (chat === null) return;
+
+      var parent = chat.IsValid() ? chat.GetParent() : null;
+      if (parent === null || parent.id !== "ChatLayer") {
+        $.Msg(
+          "[OSC] team select chat left #ChatLayer: ",
+          chat.IsValid() ? (parent ? parent.paneltype + " #" + parent.id : "no parent") : "deleted",
+        );
+        chat = null;
+        search();
+        return;
+      }
 
       if (narrow !== lastNarrow) {
         lastNarrow = narrow;
@@ -99,62 +118,82 @@ namespace OSC.TeamSelect {
       }
     }
 
-    // onReady — чат перенесён, подложку можно показать
-    function attach(narrow: () => boolean, onReady: () => void) {
+    function take(found: Panel) {
+      chat = found;
+      // При повторном переносе родитель уже может быть нашим — помним родной
+      if (originalParent === null) originalParent = found.GetParent();
+      if (CHAT.debug) {
+        $.Schedule(1, function () {
+          if (chat !== null && chat.IsValid()) dump(chat, 0);
+        });
+      }
+
+      // в конец #ChatLayer — поверх подложки
+      chat.SetParent($("#ChatLayer"));
+      // в обычном клиенте Дота сама сдвигает чат — обнуляем её позиционирование
+      setStyle(chat, "position", "0px 0px 0px");
+      setStyle(chat, "transform", "none");
+      setStyle(chat, "align", "left bottom"); // !!!!!!
+      setStyle(chat, "backgroundColor", "#00000000");
+      setStyle(chat, "boxShadow", "none");
+      setStyle(chat, "borderRadius", "0px");
+      touched.push([chat, "width"], [chat, "margin"]);
+      clearInnerBackgrounds(chat);
+
+      // скрытая справка занимает 196px над сообщениями — убираем её и кнопку «?»
+      var help = chat.FindChildTraverse("ChatHelpPanel");
+      if (help) setStyle(help, "visibility", "collapse");
+      var helpBtn = chat.FindChildTraverse("ChatTabHelpButton");
+      if (helpBtn) setStyle(helpBtn, "visibility", "collapse");
+
+      // отдаём освободившееся место сообщениям
+      var area = chat.FindChildTraverse("ChatLinesArea");
+      if (area) setStyle(area, "height", CHAT.linesHeight + "px");
+      ["ChatChannelArea", "ChatLinesContainer"].forEach(function (id) {
+        var p = chat!.FindChildTraverse(id);
+        if (p) setStyle(p, "height", "100%");
+      });
+
+      lastNarrow = null;
+      sync(narrowNow());
+    }
+
+    // Ищем чат, пока идёт выбор команд; до его начала — ждём
+    function search() {
+      if (searching) return;
+      searching = true;
       var attempts = 0;
 
       OSC.Util.Loop(CHAT.searchInterval, function () {
-        if (!IsSetupPhase()) return false;
+        if (SetupOver()) {
+          searching = false;
+          return false;
+        }
+        if (!SetupStarted()) return true;
 
         var found = find();
         if (found === null) {
           attempts++;
           if (attempts >= CHAT.searchAttempts) {
             $.Msg("[OSC] native chat not found");
+            searching = false;
             return false;
           }
           return true;
         }
 
-        chat = found;
-        originalParent = found.GetParent();
-        if (CHAT.debug) {
-          $.Schedule(1, function () {
-            if (chat !== null && chat.IsValid()) dump(chat, 0);
-          });
-        }
-
-        // в конец #ChatLayer — поверх подложки
-        chat.SetParent($("#ChatLayer"));
-        // в обычном клиенте Дота сама сдвигает чат — обнуляем её позиционирование
-        setStyle(chat, "position", "0px 0px 0px");
-        setStyle(chat, "transform", "none");
-        setStyle(chat, "align", "left bottom"); // !!!!!!
-        setStyle(chat, "backgroundColor", "#00000000");
-        setStyle(chat, "boxShadow", "none");
-        setStyle(chat, "borderRadius", "0px");
-        touched.push([chat, "width"], [chat, "margin"]);
-        clearInnerBackgrounds(chat);
-
-        // скрытая справка занимает 196px над сообщениями — убираем её и кнопку «?»
-        var help = chat.FindChildTraverse("ChatHelpPanel");
-        if (help) setStyle(help, "visibility", "collapse");
-        var helpBtn = chat.FindChildTraverse("ChatTabHelpButton");
-        if (helpBtn) setStyle(helpBtn, "visibility", "collapse");
-
-        // отдаём освободившееся место сообщениям
-        var area = chat.FindChildTraverse("ChatLinesArea");
-        if (area) setStyle(area, "height", CHAT.linesHeight + "px");
-        ["ChatChannelArea", "ChatLinesContainer"].forEach(function (id) {
-          var p = chat!.FindChildTraverse(id);
-          if (p) setStyle(p, "height", "100%");
-        });
-
-        lastNarrow = null;
-        sync(narrow());
+        take(found);
+        searching = false;
         onReady();
         return false;
       });
+    }
+
+    // narrow — текущая раскладка; ready — чат перенесён, подложку можно показать
+    function attach(narrow: () => boolean, ready: () => void) {
+      narrowNow = narrow;
+      onReady = ready;
+      search();
     }
 
     function restore() {
