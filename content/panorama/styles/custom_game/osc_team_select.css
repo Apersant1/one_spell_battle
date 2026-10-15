@@ -593,43 +593,6 @@
   transition-timing-function: ease-out;
 }
 
-/* ===================== ЧАТ ===================== */
-/* только подложка; высоту выставляет JS по реальному размеру чата */
-#ChatFrame {
-  width: 380px;
-  height: 300px;
-  horizontal-align: left;
-  vertical-align: bottom;
-  margin: 0px 0px 36px 40px; /* зеркально #Lobby */
-  border-radius: 8px;
-  border: 1px solid #d8b46a40;
-  background-color: gradient(
-    linear,
-    0% 0%,
-    0% 100%,
-    from(#0b0f18e8),
-    to(#05070cf2)
-  );
-  box-shadow: #000000aa 0px 6px 24px 0px;
-}
-#ChatAccent {
-  width: 80%;
-  height: 1px;
-  horizontal-align: center;
-  background-color: gradient(
-    linear,
-    0% 0%,
-    100% 0%,
-    from(#d8b46a00),
-    color-stop(0.5, #d8b46acc),
-    to(#d8b46a00)
-  );
-}
-#LBRoot.Narrow #ChatFrame {
-  width: 300px;
-  margin: 0px 0px 20px 16px;
-}
-
 /* ===================== КНОПКИ ===================== */
 #Footer {
   horizontal-align: center;

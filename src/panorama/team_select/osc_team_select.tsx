@@ -16,7 +16,6 @@ namespace OSC.TeamSelect {
   var TEAM_CONTAINERS = ["TeamLeft", "TeamRight"];
 
   var Render = function () {}; // перерисовка экрана; задаёт App
-  var chatReady = false;
   var narrowNow = false;
 
   // ================= Утилиты =================
@@ -330,15 +329,7 @@ namespace OSC.TeamSelect {
         </Panel>
 
         {/* Последний слой: сюда переносится родной чат Dota (Chat) */}
-        <Panel id="ChatLayer" hittest={false}>
-          <Panel
-            id="ChatFrame"
-            className={OSC.Util.Classes(!chatReady && "Hidden")}
-            hittest={false}
-          >
-            <Panel id="ChatAccent" hittest={false} />
-          </Panel>
-        </Panel>
+        <Panel id="ChatLayer" hittest={false} />
       </Panel>
     );
   }
@@ -369,15 +360,9 @@ namespace OSC.TeamSelect {
     ReactPanorama.render(<App />, $.GetContextPanel());
 
     OSC.Util.Loop(CFG.tick, Tick);
-    Chat.attach(
-      function () {
-        return narrowNow;
-      },
-      function () {
-        chatReady = true;
-        Render();
-      },
-    );
+    Chat.attach(function () {
+      return narrowNow;
+    });
 
     $.RegisterForUnhandledEvent("DOTAGame_TeamPlayerListChanged", function () {
       Render();

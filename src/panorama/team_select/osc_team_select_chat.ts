@@ -9,10 +9,9 @@ namespace OSC.TeamSelect {
     linesHeight: 300, // высота области сообщений, px
     searchInterval: 0.25,
     searchAttempts: 20, // ~5 секунд
-    // = width и margin у #ChatFrame (обычный / Narrow)
-    frame: { width: 380, left: 40, bottom: 36 },
-    frameNarrow: { width: 300, left: 16, bottom: 20 },
-    padding: { top: 12, side: 10, bottom: 8 }, // отступ чата внутри рамки
+    // ширина и отступы от левого нижнего угла (обычный / Narrow) — зеркально #Lobby
+    place: { width: 360, left: 50, bottom: 44 },
+    placeNarrow: { width: 280, left: 26, bottom: 28 },
   };
 
   function TopPanel() {
@@ -22,8 +21,7 @@ namespace OSC.TeamSelect {
   }
 
   // =====================================================================
-  // РОДНОЙ ЧАТ DOTA: лежит поверх своей подложки #ChatFrame,
-  // подложка каждый кадр подстраивается под его реальную высоту
+  // РОДНОЙ ЧАТ DOTA: переносится в #ChatLayer, без своей подложки
   // =====================================================================
 
   export const Chat = (function () {
@@ -74,21 +72,19 @@ namespace OSC.TeamSelect {
       for (var i = 0; i < p.GetChildCount(); i++) dump(p.GetChild(i)!, depth + 1);
     }
 
-    // позиция и ширина чата внутри рамки
+    // позиция и ширина чата в левом нижнем углу
     function place(chat: Panel, narrow: boolean) {
-      var f = narrow ? CHAT.frameNarrow : CHAT.frame;
-      var pad = CHAT.padding;
-      chat.style.width = f.width - pad.side * 2 + "px";
-      chat.style.margin = "0px 0px " + (f.bottom + pad.bottom) + "px " + (f.left + pad.side) + "px";
+      var f = narrow ? CHAT.placeNarrow : CHAT.place;
+      chat.style.width = f.width + "px";
+      chat.style.margin = "0px 0px " + f.bottom + "px " + f.left + "px";
     }
 
     var narrowNow: () => boolean = function () {
       return false;
     };
-    var onReady = function () {};
     var searching = false;
 
-    // каждый кадр: подложка повторяет высоту чата. Если чат ушёл из
+    // каждый кадр: раскладка под ширину экрана. Если чат ушёл из
     // #ChatLayer (Dota вернула его к себе или его удалили) — ищем и
     // переносим заново; куда он делся, пишем в консоль
     function sync(narrow: boolean) {
@@ -109,13 +105,6 @@ namespace OSC.TeamSelect {
         lastNarrow = narrow;
         place(chat, narrow);
       }
-
-      var scale = chat.actualuiscale_y || 1;
-      var h = chat.actuallayoutheight / scale;
-      if (h > 0) {
-        var pad = CHAT.padding;
-        $("#ChatFrame").style.height = Math.round(h + pad.top + pad.bottom) + "px";
-      }
     }
 
     function take(found: Panel) {
@@ -128,7 +117,7 @@ namespace OSC.TeamSelect {
         });
       }
 
-      // в конец #ChatLayer — поверх подложки
+      // в #ChatLayer — последний слой экрана, поверх остального
       chat.SetParent($("#ChatLayer"));
       // в обычном клиенте Дота сама сдвигает чат — обнуляем её позиционирование
       setStyle(chat, "position", "0px 0px 0px");
@@ -184,15 +173,13 @@ namespace OSC.TeamSelect {
 
         take(found);
         searching = false;
-        onReady();
         return false;
       });
     }
 
-    // narrow — текущая раскладка; ready — чат перенесён, подложку можно показать
-    function attach(narrow: () => boolean, ready: () => void) {
+    // narrow — текущая раскладка
+    function attach(narrow: () => boolean) {
       narrowNow = narrow;
-      onReady = ready;
       search();
     }
 
