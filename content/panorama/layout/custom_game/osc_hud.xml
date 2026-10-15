@@ -184,21 +184,8 @@
             <Panel id="CasinoFx" hittest="false" />
         </Panel>
 
-        <!-- Справка (osc_help.js): кнопка «?» рядом с Хаос-лавкой и панель правил -->
-        <Button id="HelpButton" class="OSCButton" onactivate="OSC.Help.Toggle()">
-            <Label text="#osc_hud_help_button" />
-        </Button>
-        <Panel id="HelpPanel" hittest="true">
-            <Button id="HelpClose" class="OSCButton" onactivate="OSC.Help.Close()">
-                <Label text="#osc_hud_help_close" />
-            </Button>
-            <Label id="HelpTitle" class="OSCTextTitle OSCChaosText" text="#osc_hud_help_title" />
-            <!-- Вкладки и страница строятся из osc_help.js -->
-            <Panel id="HelpBody">
-                <Panel id="HelpTabs" />
-                <Panel id="HelpPage" />
-            </Panel>
-        </Panel>
+        <!-- Справка (osc_help.tsx, React): кнопка «?» рядом с Хаос-лавкой и панель правил -->
+        <Panel id="HelpRoot" hittest="false" />
 
         <!-- Хаос-лавка (osc_chaos_shop.tsx, React): кнопка рядом со стандартным
              магазином и панель товаров -->

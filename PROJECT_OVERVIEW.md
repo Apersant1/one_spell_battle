@@ -393,7 +393,7 @@ dota_launch_custom_game one_spell dota
 ### Справка
 
 - Кнопка «?» рядом с Хаос-лавкой открывает панель правил режима
-  (`osc_help.ts`, `OSC.Help`, `#HelpPanel`). Только клиент; тексты разделов —
+  (`osc_help.tsx`, React, `OSC.Help`, `#HelpPanel` в `#HelpRoot`). Только клиент; тексты разделов —
   ключи `osc_hud_help_*` в XML.
 
 ### Уведомления и интерфейс
@@ -501,7 +501,7 @@ table `osc_state` и кастомные события — в `src/panorama/osc_
 собранные `.js` в git не хранятся. Модули — глобальные скрипты без
 import/export: каждый файл кладёт свой компонент в `namespace OSC`.
 
-Модули `.tsx` написаны на React (пилот — Хаос-лавка): `react@17` и
+Модули `.tsx` написаны на React (Хаос-лавка, справка): `react@17` и
 `@demon673/react-panorama` (форк react-panorama без `new Function`, который
 Panorama запрещает) подключаются UMD-сборками (`npm run build` копирует их в
 `scripts/custom_game/libraries/`, `osc_hud.xml` включает их перед модулями на
