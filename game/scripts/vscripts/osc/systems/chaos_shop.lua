@@ -14,6 +14,7 @@ require("osc/core/runtime_config")
 require("osc/core/client_commands")
 require("osc/core/notifications")
 require("osc/core/anchor")
+require("osc/core/gold")
 
 -- sold[team][item] — сколько продано команде; переживает script_reload
 OSC_ChaosShop = OSC_ChaosShop or { sold = {} }
@@ -148,17 +149,6 @@ local function GiveItem(hero, name, stashSlot)
     return true
 end
 
--- Возврат так же, как списали: сначала надёжное золото (как ReturnGold в casino.lua)
-local function ReturnGold(playerID, amount, reliableSpent)
-    local reliablePart = math.min(amount, reliableSpent)
-    if reliablePart > 0 then
-        PlayerResource:ModifyGold(playerID, reliablePart, true, DOTA_ModifyGold_Unspecified)
-    end
-    if amount > reliablePart then
-        PlayerResource:ModifyGold(playerID, amount - reliablePart, false, DOTA_ModifyGold_Unspecified)
-    end
-end
-
 -- ================= Покупка =================
 
 function OSC_ChaosShop.OnBuy(sourceIndex, event)
@@ -214,15 +204,10 @@ function OSC_ChaosShop.OnBuy(sourceIndex, event)
         return
     end
 
-    -- Сверяем фактически списанное, как в casino.lua
-    local goldBefore = PlayerResource:GetGold(playerID)
-    local reliableBefore = PlayerResource:GetReliableGold(playerID)
-    PlayerResource:SpendGold(playerID, cost, DOTA_ModifyGold_PurchaseItem)
-    local spent = goldBefore - PlayerResource:GetGold(playerID)
-    local reliableSpent = math.max(0, reliableBefore - PlayerResource:GetReliableGold(playerID))
+    local spent, reliableSpent = OSC_Gold.Spend(playerID, cost, DOTA_ModifyGold_PurchaseItem)
     if spent ~= cost then
         if spent > 0 then
-            ReturnGold(playerID, spent, reliableSpent)
+            OSC_Gold.Refund(playerID, spent, reliableSpent)
         end
         OSC_Logger.Error("Chaos shop: " .. name .. " was not charged: expected "
             .. cost .. ", got " .. spent)
@@ -231,7 +216,7 @@ function OSC_ChaosShop.OnBuy(sourceIndex, event)
     end
 
     if not GiveItem(hero, name, destination ~= "inventory" and destination or nil) then
-        ReturnGold(playerID, spent, reliableSpent)
+        OSC_Gold.Refund(playerID, spent, reliableSpent)
         OSC_Logger.Error("Chaos shop: failed to give " .. name .. " to player " .. playerID)
         Refuse("osc_shop_err_no_space")
         return

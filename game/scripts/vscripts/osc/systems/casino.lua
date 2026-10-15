@@ -2,6 +2,7 @@ require("osc/core/runtime_config")
 require("osc/core/client_commands")
 require("osc/core/hero_state")
 require("osc/core/game_events")
+require("osc/core/gold")
 
 OSC_Casino = OSC_Casino or {}
 
@@ -493,21 +494,11 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         end
         stakeItems = taken
     else
-        local goldBefore = PlayerResource:GetGold(playerID)
-        local reliableBefore = PlayerResource:GetReliableGold(playerID)
-        PlayerResource:SpendGold(playerID, stake, DOTA_ModifyGold_Unspecified)
-        spent = goldBefore - PlayerResource:GetGold(playerID)
-        reliableSpent = math.max(0, reliableBefore - PlayerResource:GetReliableGold(playerID))
+        spent, reliableSpent = OSC_Gold.Spend(playerID, stake)
     end
 
     local function ReturnGold(amount)
-        local reliablePart = math.min(amount, reliableSpent)
-        if reliablePart > 0 then
-            PlayerResource:ModifyGold(playerID, reliablePart, true, DOTA_ModifyGold_Unspecified)
-        end
-        if amount > reliablePart then
-            PlayerResource:ModifyGold(playerID, amount - reliablePart, false, DOTA_ModifyGold_Unspecified)
-        end
+        OSC_Gold.Refund(playerID, amount, reliableSpent)
     end
 
     -- Возвращает предметы-ставку герою; что не влезло — кладёт рядом с ним
