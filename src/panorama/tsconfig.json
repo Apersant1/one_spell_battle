@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../../content/panorama/scripts/custom_game",
+    "target": "es2017",
+    "lib": ["es2017"],
+    "types": ["@moddota/panorama-types", "react", "@demon673/react-panorama"],
+    "jsx": "react",
+    "moduleResolution": "node",
+    "strict": true,
+    // @types/react и panorama-types оба объявляют глобальный MouseEvent
+    "skipLibCheck": true,
+    "newLine": "lf"
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

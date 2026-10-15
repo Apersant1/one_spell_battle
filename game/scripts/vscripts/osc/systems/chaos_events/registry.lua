@@ -16,7 +16,7 @@ require("osc/core/runtime_config")
 
 OSC_ChaosEvents = OSC_ChaosEvents or { list = {}, byId = {} }
 
--- Экранные события (эффект целиком на клиенте, osc_chaos_round.js) не идут
+-- Экранные события (эффект целиком на клиенте, osc_chaos_round.ts) не идут
 -- подряд друг за другом: используются как conflicts каждого из них
 OSC_ChaosEvents.SCREEN_EVENTS = { "no_hud", "mouse_swap", "tunnel", "vegas", "doom" }
 

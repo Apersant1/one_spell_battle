@@ -1,0 +1,25 @@
+{
+  "name": "one-spell-chaos",
+  "private": true,
+  "scripts": {
+    "build": "tsc --project src/panorama/tsconfig.json && node tools/panorama-libs.mjs",
+    "dev": "node tools/panorama-libs.mjs && tsc --project src/panorama/tsconfig.json --watch",
+    "lint": "eslint . && prettier --check \"src/panorama/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"src/panorama/**/*.{ts,tsx}\" && eslint --fix .",
+    "compile": "npm run build && node tools/dota.mjs compile",
+    "launch": "node tools/dota.mjs launch"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@moddota/panorama-types": "^1.39.2",
+    "@types/react": "^17.0.93",
+    "eslint": "^10.12.0",
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.2"
+  },
+  "dependencies": {
+    "@demon673/react-panorama": "^0.3.4",
+    "react": "^17.0.2"
+  }
+}

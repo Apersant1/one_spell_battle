@@ -1,6 +1,6 @@
 -- Сфера хаоса (флаг CHAOS_SPHERE_ENABLED): предмет item_osc_chaos_sphere
 -- падает с Рошана. Владелец применяет её (item_chaos_sphere.lua -> Offer) и
--- в окне HUD (osc_chaos_sphere.js) выбирает одно из двух:
+-- в окне HUD (osc_chaos_sphere.ts) выбирает одно из двух:
 --   ultimate — легендарный ультимейт из CHAOS_SPHERE_ULTIMATE_CHOICES
 --     вариантов, с CHAOS_SPHERE_MIN_LEVEL уровня (проверяется при выборе);
 --   enemies — новая случайная способность каждому основному герою врагов,

@@ -15,57 +15,93 @@
 }
 
 /* ---------- Итоги матча ---------- */
-#SummaryPanel {
-  width: 820px;
+/* Два окна рядом в рамке справки, уменьшенной до 0.7 (summary_*_shadow,
+   tools/hud_assets.py): поля — как у #HelpPanel, умноженные на 0.7.
+   Вместе 1696px — помещается на 16:10 */
+#SummaryWindows {
   horizontal-align: center;
-  vertical-align: bottom;
-  margin-bottom: 210px; /* над «Продолжить», растёт вверх к баннеру */
-  padding: 14px 18px 16px 18px;
-  flow-children: down;
+  vertical-align: top;
+  margin-top: 40px;
+  flow-children: right;
   visibility: collapse;
 }
 
-#SummaryPanel.Visible {
+#SummaryWindows.Visible {
   visibility: visible;
   animation-name: OSCChoiceIn;
   animation-duration: 0.3s;
   animation-timing-function: ease-out;
 }
 
-#SummaryHeader {
-  width: 100%;
-  flow-children: right;
+.SummaryWindow {
+  height: 830px;
+  padding: 87px 81px 66px 81px;
+  flow-children: down;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
-#SummaryTitle {
-  width: fill-parent-flow(1);
-  vertical-align: center;
+#SummaryPodiumWindow {
+  width: 700px;
+  background-image: url("file://{images}/custom_game/hud/summary_podium_shadow.png");
 }
 
+#SummaryStatsWindow {
+  width: 980px;
+  margin-left: 16px;
+  background-image: url("file://{images}/custom_game/hud/summary_stats_shadow.png");
+}
+
+.SummaryWindowTitle {
+  horizontal-align: center;
+  font-size: 26px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Крестик в углу рамки — как #HelpClose */
 #SummaryClose {
-  padding: 4px 12px;
-  vertical-align: center;
-  background-color: #382443;
-  border: 1px solid #bd72e8;
-  border-radius: 3px;
-}
-
-#SummaryClose:hover,
-#SummaryReopen:hover {
-  background-color: #4a2f59;
+  width: 42px;
+  height: 42px;
+  horizontal-align: right;
+  margin-top: -8px;
+  margin-right: -10px;
+  margin-bottom: -34px;
 }
 
 #SummaryClose Label {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: bold;
+  horizontal-align: center;
+  vertical-align: center;
+  font-size: 40px;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 1;
 }
 
-#SummaryReopen {
+#SummaryClose:hover Label {
+  color: #ffffff;
+}
+
+/* Низ экрана: «Итоги матча» (после закрытия) и своя «Продолжить» */
+#SummaryFooter {
   horizontal-align: center;
   vertical-align: bottom;
-  margin-bottom: 210px; /* над «Продолжить», растёт вверх к баннеру */
-  padding: 6px 16px;
+  margin-bottom: 40px;
+  flow-children: right;
+  visibility: collapse;
+}
+
+#SummaryFooter.Visible {
+  visibility: visible;
+}
+
+/* На плашке кнопки Хаос-лавки (4:1), как свёрнутое голосование */
+#SummaryReopen {
+  width: 260px;
+  height: 65px;
+  margin-right: 24px;
+  vertical-align: center;
+  background-image: url("file://{images}/custom_game/hud/chaos_shop.png");
+  background-size: 100% 100%;
   visibility: collapse;
 }
 
@@ -73,74 +109,121 @@
   visibility: visible;
 }
 
-#SummaryTitles {
-  width: 100%;
-  margin-top: 10px;
-  flow-children: right-wrap;
+#SummaryReopen Label {
+  horizontal-align: center;
+  vertical-align: center;
+  color: #efc96c;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: #000000 1px 1px 3px 0px;
 }
 
-#SummaryTitles.Hidden {
-  visibility: collapse;
+/* Кнопка «Начать игру» экрана выбора команд (832x260) */
+#SummaryContinue {
+  width: 300px;
+  height: 94px;
+  background-image: url("file://{images}/custom_game/team_select/startgame_bg_button.png");
+  background-size: 100% 100%;
+  wash-color: #ffb84a40;
+}
+
+#SummaryContinue Label {
+  horizontal-align: center;
+  vertical-align: center;
+  color: #ffd98a;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 10px 3px #d9902a99;
+}
+
+#SummaryReopen:hover Label,
+#SummaryContinue:hover Label {
+  color: #ffffff;
+}
+
+/* ---- Пьедесталы: титулы или победители ---- */
+#SummaryPodiums {
+  width: 100%;
+  height: fill-parent-flow(1);
+  flow-children: down;
+}
+
+/* Ряды по три карточки (PODIUMS_PER_ROW), по центру окна */
+.SummaryPodiumRow {
+  horizontal-align: center;
+  margin-top: 24px;
+  flow-children: right;
+}
+
+#SummaryNoTitles {
+  width: 100%;
+  margin-top: 24px;
+  text-align: center;
+  color: #b9aebe;
+  font-size: 14px;
 }
 
 .SummaryTitleCard {
-  width: 384px;
-  margin: 0px 6px 8px 0px;
-  padding: 6px;
-  flow-children: right;
-  background-color: #08070bcc;
-  border: 1px solid #efc96c60;
-  border-radius: 4px;
+  width: 172px;
+  margin: 0px 3px;
+  flow-children: down;
 }
 
-.SummaryTitleCard.Local {
-  border: 2px solid #efc96c;
-  box-shadow: #efc96c66 0px 0px 10px 0px;
-}
-
-/* 3D-модель на пьедестале. Камера сцены сама кадрирует героя по его
-   размерам (центр, ноги около 93% высоты), поэтому сцену не сдвигаем и не
-   обрезаем — сдвиги под одного героя ломают другого */
+/* Герой в кристальной рамке своей команды (рамки экрана выбора команд,
+   600x555) */
 .SummaryPodium {
-  width: 160px;
-  height: 220px;
+  width: 166px;
+  height: 153px;
+  horizontal-align: center;
+  background-size: 100% 100%;
 }
 
+.Radiant .SummaryPodium {
+  background-image: url("file://{images}/custom_game/team_select/frame_radiant.png");
+}
+
+.Dire .SummaryPodium {
+  background-image: url("file://{images}/custom_game/team_select/frame_dire.png");
+}
+
+/* Камера сцены сама кадрирует героя по его размерам (центр, ноги около 93%
+   высоты), поэтому сцену не сдвигаем — сдвиги под одного героя ломают другого.
+   Сцена меньше рамки, чтобы модель не заходила на кристаллы: ноги — на
+   93% высоты сцены, то есть в 21px от низа рамки */
 .SummaryPodiumScene {
-  width: 100%;
-  height: 100%;
+  width: 144px;
+  height: 133px;
+  horizontal-align: center;
+  margin-top: 8px;
 }
 
 .SummaryPedestalSide {
-  width: 120px;
-  height: 26px;
+  width: 96px;
+  height: 22px;
   horizontal-align: center;
   vertical-align: bottom;
+  margin-bottom: 8px;
   background-color: gradient(linear, 0% 0%, 0% 100%, from(#3a2f1c), to(#120d06));
-  border-radius: 0px 0px 60px 60px / 0px 0px 12px 12px;
-  box-shadow: #000000aa 0px 4px 8px 0px;
+  border-radius: 0px 0px 48px 48px / 0px 0px 10px 10px;
 }
 
 .SummaryPedestalTop {
-  width: 120px;
-  height: 18px;
+  width: 96px;
+  height: 16px;
   horizontal-align: center;
   vertical-align: bottom;
-  margin-bottom: 6px; /* центр грани на 93% высоты — там ноги */
+  margin-bottom: 13px; /* центр грани в 21px от низа — на уровне ног */
   background-color: gradient(linear, 0% 0%, 0% 100%, from(#8a7040), to(#4a3a1e));
   border: 1px solid #efc96c;
   border-radius: 50% / 50%;
 }
 
-.SummaryTitleText {
-  width: fill-parent-flow(1);
-  margin-left: 8px;
-  vertical-align: center;
-  flow-children: down;
-}
-
 .SummaryTitleName {
   width: 100%;
+  margin-top: 4px;
+  text-align: center;
   color: #efc96c;
   font-size: 17px;
   font-weight: bold;
@@ -149,27 +232,97 @@
 
 .SummaryTitlePlayer {
   width: 100%;
+  text-align: center;
   color: #ffffff;
   font-size: 14px;
 }
 
+.Radiant .SummaryTitlePlayer {
+  color: #8fe388;
+}
+
+.Dire .SummaryTitlePlayer {
+  color: #ff7b6b;
+}
+
+/* Свой титул — имя светится */
+.SummaryTitleCard.Local .SummaryTitleName {
+  color: #ffe9a8;
+  text-shadow: #efc96c 0px 0px 8px 1;
+}
+
 .SummaryTitleDesc {
   width: 100%;
+  margin-top: 2px;
+  text-align: center;
   color: #b9aebe;
   font-size: 12px;
 }
 
+/* ---- Таблица по командам ---- */
 #SummaryTable {
   width: 100%;
-  margin-top: 6px;
+  margin-top: 20px;
   flow-children: down;
+}
+
+.SummaryTeam {
+  width: 100%;
+  margin-top: 8px;
+  flow-children: down;
+  border-left: 3px solid #ffffff30;
+}
+
+.SummaryTeam.Radiant {
+  border-left: 3px solid #8fe388;
+  background-color: gradient(linear, 0% 0%, 100% 0%, from(#8fe38814), to(#00000000));
+}
+
+.SummaryTeam.Dire {
+  border-left: 3px solid #ff7b6b;
+  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ff7b6b14), to(#00000000));
+}
+
+.SummaryTeamHeader {
+  width: 100%;
+  height: 28px;
+  padding-left: 10px;
+  flow-children: right;
+}
+
+.SummaryTeamName {
+  vertical-align: center;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.Radiant .SummaryTeamName {
+  color: #8fe388;
+}
+
+.Dire .SummaryTeamName {
+  color: #ff7b6b;
+}
+
+.SummaryTeamWinner {
+  vertical-align: center;
+  margin-left: 10px;
+  padding: 1px 8px;
+  color: #1a1206;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: #efc96c;
+  border-radius: 3px;
 }
 
 .SummaryRow {
   width: 100%;
-  height: 30px;
+  height: 36px;
   flow-children: right;
-  border-bottom: 1px solid #ffffff14;
+  border-top: 1px solid #ffffff10;
 }
 
 .SummaryRow.Local {
@@ -178,7 +331,7 @@
 
 .SummaryHeaderRow {
   height: 24px;
-  border-bottom: 1px solid #bd72e880;
+  border-top: 0px solid #00000000;
 }
 
 .SummaryHeaderRow Label {
@@ -191,42 +344,37 @@
 .SummaryCellPlayer {
   width: fill-parent-flow(1);
   height: 100%;
+  padding-left: 10px;
   flow-children: right;
   vertical-align: center;
 }
 
 .SummaryHeaderRow .SummaryCellPlayer {
   height: fit-children;
+  padding-left: 13px;
 }
 
 .SummaryRowHero {
-  width: 26px;
-  height: 26px;
-  margin: 2px 8px 2px 2px;
+  width: 54px;
+  height: 30px;
+  margin-right: 10px;
   vertical-align: center;
+  border-radius: 3px;
 }
 
 .SummaryPlayerName {
   vertical-align: center;
   color: #ffffff;
-  font-size: 14px;
-}
-
-.SummaryPlayerName.Radiant {
-  color: #8fe388;
-}
-
-.SummaryPlayerName.Dire {
-  color: #ff7b6b;
+  font-size: 15px;
 }
 
 .SummaryCell {
-  width: 120px;
+  width: 140px;
   vertical-align: center;
   text-align: right;
-  padding-right: 8px;
+  padding-right: 12px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .SummaryCell.Positive {
@@ -235,4 +383,11 @@
 
 .SummaryCell.Negative {
   color: #ff7b6b;
+}
+
+/* Лучший в колонке */
+.SummaryCell.Best {
+  color: #efc96c;
+  font-weight: bold;
+  text-shadow: #efc96c88 0px 0px 6px 0px;
 }

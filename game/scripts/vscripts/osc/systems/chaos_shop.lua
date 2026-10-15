@@ -1,5 +1,5 @@
 -- Хаос-лавка (флаг CHAOS_SHOP_ENABLED): предметы режима из CHAOS_SHOP_ITEMS
--- продаются в своей панели HUD (osc_chaos_shop.js). В стандартном магазине
+-- продаются в своей панели HUD (osc_chaos_shop.ts). В стандартном магазине
 -- их нет (ItemPurchasable "0"), цена — ItemCost из npc_items_custom.txt.
 --
 -- Клиент шлёт osc_shop_buy { item }. Предмет кладётся в инвентарь, если герой

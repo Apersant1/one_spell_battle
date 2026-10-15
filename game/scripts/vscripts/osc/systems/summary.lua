@@ -157,6 +157,11 @@ function OSC_Summary.Publish(statsPlayers)
 end
 
 function OSC_Summary.Init()
+    -- Надпись «Победа сил …» ложится на окно итогов: оставляем только эффект.
+    -- Пробел, а не "": пустая строка может вернуть стандартный текст
+    if OSC_Summary.IsEnabled() then
+        GameRules:SetCustomVictoryMessage(" ")
+    end
     OSC_GameEvents.Subscribe("match_stats", "summary", function(stats)
         OSC_Summary.Publish(stats.players or {})
     end)

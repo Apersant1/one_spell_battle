@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "panorama: watch",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "tests",
+      "type": "shell",
+      "command": "python tools/tests/run_tests.py",
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}

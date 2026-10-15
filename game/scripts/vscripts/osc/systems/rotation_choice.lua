@@ -1,6 +1,6 @@
 -- Выбор из трёх (часть системы ротации, флаг ROTATION_CHOICE_ENABLED).
 --
--- Протокол с HUD (osc_rotation_choice.js):
+-- Протокол с HUD (osc_rotation_choice.ts):
 --   сервер -> игрок  osc_rotation_choice_offer  { round, deadline, duration, options }
 --   сервер -> игрок  osc_rotation_choice_closed { round, chosen }
 --   игрок -> сервер  osc_rotation_choice_pick   { round, ability }

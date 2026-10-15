@@ -154,7 +154,7 @@ dota_launch_custom_game one_spell dota
 - `mana_free` снижает стоимость маны на 100%; его модификатор сохраняется
   после смерти. `gold_rush` выдаёт каждому подключённому игроку 15
   ненадёжного золота каждые 2 секунды. `no_hud` не трогает героев: пока он
-  активен, `osc_chaos_round.js` прячет стандартный интерфейс Доты
+  активен, `osc_chaos_round.ts` прячет стандартный интерфейс Доты
   (способности, инвентарь, магазин, миникарта, верхняя полоса) через
   `GameUI.SetDefaultUIEnabled`; HUD режима остаётся. `mouse_swap` тоже
   клиентский: через `GameUI.SetMouseCallback` левая кнопка отдаёт приказ
@@ -357,7 +357,8 @@ dota_launch_custom_game one_spell dota
 - Net table `osc_state/shop_<team>` = { items = { [i] = { name, cost, stock,
   max } } } (`stock = max = -1` — без лимита) публикуется при старте и после
   каждой покупки команды; сток переживает `script_reload`.
-- Panorama: `osc_chaos_shop.js` (`OSC.ChaosShop`), панель `#ChaosShopPanel`.
+- Panorama: `osc_chaos_shop.tsx` (`OSC.ChaosShop`, React), панель `#ChaosShopPanel`
+  рисуется в контейнер `#ChaosShopRoot`.
   Кнопка «Купить» неактивна при нехватке золота или пустом стоке — это
   только подсказка, решает сервер.
 
@@ -387,12 +388,12 @@ dota_launch_custom_game one_spell dota
   всем врагам без «Якоря», `cancel` — закрыть окно.
 - Предмет расходуется только после успешного выбора; подделанный выбор,
   вариант не из предложения, сфера, которой уже нет в инвентаре, — отказ в лог.
-- Panorama: `osc_chaos_sphere.js` (`OSC.ChaosSphere`), панель `#ChaosSpherePanel`.
+- Panorama: `osc_chaos_sphere.ts` (`OSC.ChaosSphere`), панель `#ChaosSpherePanel`.
 
 ### Справка
 
 - Кнопка «?» рядом с Хаос-лавкой открывает панель правил режима
-  (`osc_help.js`, `OSC.Help`, `#HelpPanel`). Только клиент; тексты разделов —
+  (`help/osc_help.tsx` — окно, `osc_help_pages.tsx` — страницы тем, `osc_help_blocks.tsx` — кирпичики; React, `OSC.Help`, `#HelpPanel` в `#HelpRoot`). Только клиент; тексты разделов —
   ключи `osc_hud_help_*` в XML.
 
 ### Уведомления и интерфейс
@@ -406,7 +407,7 @@ dota_launch_custom_game one_spell dota
   интерфейсе нет.
 - Panorama HUD состоит из модулей: общие утилиты/звуки, версия, таймер
   ротации, хаос-раунд, попап способности, казино, лента уведомлений, выбор
-  из трёх (`osc_rotation_choice.js`) и значок «Якоря» (`osc_anchor.js`).
+  из трёх (`osc_rotation_choice.ts`) и значок «Якоря» (`osc_anchor.ts`).
 - Выбор из трёх — окно с тремя карточками (иконка, название, тултип
   способности) под таймером ротации, с отсчётом до смены. Клик отправляет
   выбор, его можно менять; если сервер выбор не подтвердил (`picked` в net
@@ -492,13 +493,46 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
 
 ### Клиент: Panorama
 
-`custom_ui_manifest.xml` устанавливает пользовательский HUD и подключает
-`osc_hud.xml`. Порядок `<include>` в его блоке `scripts` важен:
+Клиентский код написан на TypeScript в `src/panorama/`, по папке на разметку:
 
-1. `osc_core.js` создаёт общий объект `OSC` и утилиты.
+- `shared/` — то, что подключают несколько разметок: `osc_core.ts` (`OSC.Util`,
+  `OSC.Net`, звуки, ошибки HUD), `osc_components.tsx` (общие React-хелперы и
+  карточка способности), `osc_types.d.ts` (контракт с сервером — net table
+  `osc_state` и кастомные события);
+- `hud/` — модули `osc_hud.xml`: в корне точка входа `osc_hud.ts`, метка
+  версии и лента уведомлений; по папке на фичу, как системы в
+  `osc/systems/`: `rotation/` (таймер, «Якорь», попап новой способности, выбор
+  из трёх), `chaos/` (хаос-раунды, сфера хаоса, Хаос-лавка), `casino/` (окно, его части, инвентарь для ставки, зона по Alt),
+  `help/` (окно, страницы тем, кирпичики страниц);
+- `vote/`, `team_select/`, `end_screen/` — окна `osc_vote.xml`,
+  `osc_team_select.xml`, `osc_end_screen.xml` (инициализируются сами). Выбор
+  команд разложен по частям: экран, карточки команд, орбита и
+  перетаскивание игроков хостом (`osc_team_move`), родной чат Dota.
+
+Типы Panorama API — из `@moddota/panorama-types`. `npm install`, затем
+`npm run build` (или `npm run dev` — пересборка при сохранении) компилирует их
+в `content/panorama/scripts/custom_game/<папка>/*.js`; собранное в git не
+хранится. Модули — глобальные скрипты без import/export: каждый файл кладёт
+свой компонент в `namespace OSC`.
+
+Модули `.tsx` написаны на React (выбор из трёх, сфера хаоса, казино, Хаос-лавка,
+справка, голосование, итоги матча, выбор команд): `react@17` и
+`@demon673/react-panorama` (форк react-panorama без `new Function`, который
+Panorama запрещает) подключаются UMD-сборками (`npm run build` копирует их в
+`scripts/custom_game/libraries/`, все разметки включают их перед модулями на
+React), JSX компилирует тот же `tsc`. Компонент рисуется
+`ReactPanorama.render(...)` в пустую панель-контейнер из разметки; данные —
+хуки `useNetTableKey` и `useGameEvent`. После добавления новых `<include>`
+Dota нужно перезапустить: горячая перезагрузка их не подхватывает.
+
+`custom_ui_manifest.xml` устанавливает пользовательский HUD и подключает
+`osc_hud.xml`. Порядок `<include>` (собранных `.js`) в его блоке `scripts`
+важен:
+
+1. `shared/osc_core.ts` создаёт общий объект `OSC` и утилиты.
 2. Модули версии, таймера, хаос-раунда, попапа, казино и ленты добавляют
    компоненты к `OSC`.
-3. `osc_hud.js` вызывает `Init()` этих компонентов.
+3. `hud/osc_hud.ts` вызывает `Init()` этих компонентов.
 
 Клиент обновляет визуальное состояние по данным сервера и событиям игры.
 Panorama отправляет серверу действия пользователя казино и перемешивания
@@ -535,9 +569,13 @@ Panorama отправляет серверу действия пользоват
 │   ├── panorama/
 │   │   ├── images/                   # Иконки HUD
 │   │   ├── layout/custom_game/       # Манифест и разметка HUD
-│   │   ├── scripts/custom_game/      # Клиентские модули Panorama
+│   │   ├── scripts/custom_game/      # Собранный JS (npm run build, не в git)
 │   │   └── styles/custom_game/       # Тема и стили HUD
 │   └── particles/                   # Исходные частицы
+├── src/panorama/                     # Исходники Panorama на TypeScript (+ tsconfig.json)
+│   ├── shared/                       # Ядро OSC, общие React-хелперы, контракт с сервером
+│   ├── hud/                          # Модули HUD (osc_hud.xml): rotation/, chaos/, casino/, help/
+│   └── vote/, team_select/, end_screen/  # Окна выбора героев, команд и конца игры
 └── game/
     ├── addoninfo.txt                 # Настройки custom game
     ├── resource/                     # Локализация
@@ -558,7 +596,7 @@ Panorama отправляет серверу действия пользоват
     └── maps/                        # Скомпилированные карты
 ```
 
-В корне также находятся `.gitignore`, этот обзор, а планы работ хранятся в
+В корне также находятся `.gitignore`, `package.json` (сборка Panorama), этот обзор, а планы работ хранятся в
 `game/todo.md`
 
 ## Основная конфигурация
@@ -650,11 +688,18 @@ Panorama отправляет серверу действия пользоват
 - Серверная логика автомата: `osc/systems/casino.lua`.
 - Хаос-лавка: `osc/systems/chaos_shop.lua`.
 - HUD: `content/panorama/layout/custom_game/osc_hud.xml` и
-  `content/panorama/scripts/custom_game/`.
+  `src/panorama/` (TypeScript).
+- Контракт клиент–сервер (net table, события): `src/panorama/shared/osc_types.d.ts`.
 - Внешний вид HUD: `content/panorama/styles/custom_game/`.
 
-Редактируйте исходники в `content/` и `game/scripts/`; собранные игровые
-ресурсы обновляйте средствами Dota 2 Workshop Tools/Resource Compiler.
+Редактируйте исходники в `content/`, `game/scripts/` и `src/panorama/`.
+`npm run compile` собирает TypeScript и компилирует Panorama
+(`resourcecompiler` по разметке из `content/panorama/layout`, вместе с её
+скриптами, стилями и картинками; `npm run compile -- -f` — принудительно).
+`npm run launch` открывает Workshop Tools и сразу запускает игру. Папка Dota
+ищется по Steam, переопределяется переменной `DOTA_PATH`
+(`tools/dota.mjs`). `npm run lint` / `npm run format` — ESLint и Prettier для
+`src/panorama`. Остальные ресурсы (карты, частицы) — средствами Workshop Tools.
 
 ## Офлайн-тесты
 

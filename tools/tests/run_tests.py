@@ -1,16 +1,18 @@
 """Офлайн-проверки One Spell Chaos.
 
 1. Синтаксис всех .lua в game/scripts/vscripts (компиляция LuaJIT).
-2. Синтаксис всех .js в content/panorama (node --check).
+2. Типы и синтаксис Panorama TS в src/panorama (tsc --noEmit).
 3. Локализация: ключи из кода есть в обоих addon_*.txt, наборы ключей совпадают.
+3a. Контракт клиент–сервер: события и ключи osc_state из src/panorama/shared/osc_types.d.ts
+    совпадают с тем, что шлёт и слушает Lua.
 4. Тесты tools/tests/test_*.lua с моками Dota API (каждый тест в свежем рантайме).
 
 Запуск: pip install lupa && python tools/tests/run_tests.py
 """
 
 import io
+import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -23,6 +25,7 @@ except ImportError:  # pragma: no cover - запасной вариант без
 ROOT = Path(__file__).resolve().parents[2]
 VSCRIPTS = ROOT / "game" / "scripts" / "vscripts"
 PANORAMA = ROOT / "content" / "panorama"
+PANORAMA_SRC = ROOT / "src" / "panorama"
 RESOURCE = ROOT / "game" / "resource"
 TESTS = Path(__file__).resolve().parent
 
@@ -37,8 +40,6 @@ LOC_PREFIXES = (
     "osc_notify_",
     "osc_ts_",
 )
-# Имена событий с теми же префиксами — не ключи локализации
-NOT_LOC_KEYS = {"osc_hud_error", "osc_shop_buy", "osc_shop_result", "osc_sphere_offer", "osc_sphere_pick"}
 
 
 def read_text(path):
@@ -85,15 +86,82 @@ def check_lua_syntax():
     return errors
 
 
-def check_js_syntax():
-    node = shutil.which("node")
-    if not node:
-        return ["node not found: JS syntax not checked"]
+def check_ts_types():
+    tsc = ROOT / "node_modules" / ".bin" / ("tsc.cmd" if os.name == "nt" else "tsc")
+    if not tsc.is_file():
+        return ["node_modules not found (npm install): Panorama TS not checked"]
+    # shell=True: на Windows .cmd запускается только через cmd.exe
+    result = subprocess.run(
+        f'"{tsc}" --noEmit -p "{PANORAMA_SRC / "tsconfig.json"}"',
+        capture_output=True, text=True, shell=True,
+    )
+    return result.stdout.strip().splitlines() if result.returncode != 0 else []
+
+
+def declared_contract():
+    """События и ключи osc_state из src/panorama/shared/osc_types.d.ts: (события, ключи, префиксы ключей)."""
+    text = read_text(PANORAMA_SRC / "shared" / "osc_types.d.ts")
+    events = re.search(r"^interface CustomGameEventDeclarations \{(.*?)^\}", text, re.S | re.M).group(1)
+    state = re.search(r"^  osc_state: \{(.*?)^  \};", text, re.S | re.M).group(1)
+    return (
+        set(re.findall(r"^  (osc_[a-z0-9_]+)\??:", events, re.M)),
+        set(re.findall(r"^    ([a-z0-9_]+)\??:", state, re.M)),
+        set(re.findall(r"^    \[key: `([a-z0-9_]+)\$\{number\}`\]", state, re.M)),
+    )
+
+
+def check_contract():
+    events, keys, prefixes = declared_contract()
+    lua = "\n".join(read_text(p) for p in VSCRIPTS.rglob("*.lua"))
+    ts = "\n".join(read_text(p) for p in [*PANORAMA_SRC.rglob("*.ts"), *PANORAMA_SRC.rglob("*.tsx")])
+    lua_strings = set(re.findall(r'"([a-z0-9_]+)"', lua))
     errors = []
-    for path in sorted(PANORAMA.rglob("*.js")):
-        result = subprocess.run([node, "--check", str(path)], capture_output=True, text=True)
-        if result.returncode != 0:
-            errors.append(f"{path.relative_to(ROOT)}: {result.stderr.strip()}")
+    for name in sorted(set(re.findall(r'GameEvents\.Subscribe\(\s*"(osc_[a-z0-9_]+)"', ts)) - events):
+        errors.append(f"panorama subscribes to {name}, not declared in osc_types.d.ts")
+    for name in sorted(set(re.findall(r'RegisterListener\(\s*"([a-z0-9_]+)"', lua)) - events):
+        errors.append(f"Lua listens for {name}, not declared in osc_types.d.ts")
+    # Имя может прийти и через переменную (FEED_EVENT, settings.event) — ищем любой литерал
+    for name in sorted(events - lua_strings):
+        errors.append(f"event {name} declared in osc_types.d.ts but never used in Lua")
+    for key, concat in re.findall(r'SetTableValue\(\s*"osc_state"\s*,\s*"([a-z0-9_]+)"(\s*\.\.)?', lua):
+        if key not in (prefixes if concat else keys):
+            errors.append(f"Lua writes osc_state/{key}{'<id>' if concat else ''}, not declared in osc_types.d.ts")
+    for key in sorted((keys | prefixes) - lua_strings):
+        errors.append(f"osc_state/{key} declared in osc_types.d.ts but never written by Lua")
+    return errors
+
+
+def check_layout_includes():
+    """Скрипты Panorama — глобальные, tsc не видит, подключён ли в разметке файл,
+    который определяет OSC.<имя> (или член OSC.<ns> из соседнего файла)."""
+    sources = [*PANORAMA_SRC.rglob("*.ts"), *PANORAMA_SRC.rglob("*.tsx")]
+    defines = {}  # файл -> {"OSC.Util", "OSC.Help", "OSC.Help.L", ...}
+    for path in sources:
+        text = read_text(path)
+        names = set()
+        for ns, body in re.findall(r"^namespace (OSC(?:\.\w+)?) \{\n(.*?)^\}", text, re.S | re.M):
+            if ns != "OSC":
+                names.add(ns)
+            names |= {f"{ns}.{n}" for n in re.findall(r"^  export (?:function|const|var|type) (\w+)", body, re.M)}
+        defines[path] = names
+    errors = []
+    for layout in sorted((PANORAMA / "layout" / "custom_game").glob("*.xml")):
+        included = re.findall(r"scripts/custom_game/([\w/-]+)\.js", read_text(layout))
+        files = [p for p in sources if p.relative_to(PANORAMA_SRC).with_suffix("").as_posix() in included]
+        available = set().union(*(defines[p] for p in files)) if files else set()
+        for path in files:
+            text = read_text(path)
+            rel = path.relative_to(PANORAMA_SRC).as_posix()
+            used = {"OSC." + n for n in re.findall(r"\bOSC\.(\w+)", text)}
+            for ns in re.findall(r"^namespace (OSC\.\w+) \{", text, re.M):
+                # члены своего пространства имён из соседних файлов — без префикса
+                used |= {n for p in sources if p != path for n in defines[p]
+                         if n.startswith(ns + ".") and re.search(rf"\b{n.split('.')[-1]}\b", text)}
+            for name in sorted(used - available):
+                if any(name in defines[p] for p in sources):
+                    errors.append(f"{layout.name}: {rel} uses {name}, its file is not included")
+            if path.suffix == ".tsx" and not {"libraries/react", "libraries/react-panorama"} <= set(included):
+                errors.append(f"{layout.name}: {rel} needs libraries/react.js and react-panorama.js")
     return errors
 
 
@@ -127,12 +195,13 @@ def check_localization():
     errors = [f"only in addon_russian.txt: {k}" for k in sorted(ru - en)]
     errors += [f"only in addon_english.txt: {k}" for k in sorted(en - ru)]
 
-    sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA.rglob("*.js")) + list(PANORAMA.rglob("*.xml"))
+    sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA_SRC.rglob("*.ts")) + list(PANORAMA_SRC.rglob("*.tsx")) + list(PANORAMA.rglob("*.xml"))
     used = set()
+    not_loc_keys = declared_contract()[0]  # имена событий с теми же префиксами
     for path in sources:
         for key in re.findall(r'["#](osc_[a-z0-9_]+)', read_text(path)):
             # "osc_notify_vote_" и т. п. — префикс ключа, собираемого в коде
-            if key.startswith(LOC_PREFIXES) and key not in NOT_LOC_KEYS and not key.endswith("_"):
+            if key.startswith(LOC_PREFIXES) and key not in not_loc_keys and not key.endswith("_"):
                 used.add(key)
     used |= dynamic_localization_keys()
     for key in sorted(used):
@@ -180,8 +249,10 @@ def main():
     problems = 0
     for title, check in (
         ("Lua syntax", check_lua_syntax),
-        ("JS syntax", check_js_syntax),
+        ("Panorama types", check_ts_types),
         ("Localization", check_localization),
+        ("Client-server contract", check_contract),
+        ("Layout includes", check_layout_includes),
         ("Config reads", check_config_reads),
     ):
         errors = check()
