@@ -1,0 +1,14 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  // Собранный JS (npm run build): видно, но править — в src/panorama
+  "files.readonlyInclude": {
+    "content/panorama/scripts/custom_game/*.js": true
+  },
+  "search.exclude": {
+    "content/panorama/scripts/custom_game/*.js": true
+  }
+}
