@@ -181,6 +181,7 @@
 			"osc_hud_summary_winner"		"Winner"
 			"osc_hud_summary_tab_podium"		"Podium"
 			"osc_hud_summary_tab_stats"		"Statistics"
+			"osc_hud_summary_continue"		"Continue"
 			"osc_hud_title_gambler"		"Degenerate Gambler"
 			"osc_hud_title_gambler_desc"		"Fed the casino the most: {d:value} gold net"
 			"osc_hud_title_lucky"		"Lady Luck's Pet"

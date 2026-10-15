@@ -17,15 +17,13 @@ namespace OSC {
     // Ключи титулов собираются из id с сервера:
     // osc_hud_title_<id> и osc_hud_title_<id>_desc (с {d:value})
     var POLL = 0.5;
+    var PODIUMS_PER_ROW = 3;
     var TEAMS: Record<number, { className: string; token: string }> = {};
     TEAMS[DOTATeam_t.DOTA_TEAM_GOODGUYS] = {
       className: "Radiant",
       token: "osc_hud_summary_team_radiant",
     };
     TEAMS[DOTATeam_t.DOTA_TEAM_BADGUYS] = { className: "Dire", token: "osc_hud_summary_team_dire" };
-
-    // Вкладки окна: ключи osc_hud_summary_tab_<id>
-    var TABS = ["podium", "stats"];
 
     var COLUMNS: { key: string; field: keyof OSCSummaryRow; signed?: boolean }[] = [
       { key: "osc_hud_summary_col_rotations", field: "rotations" },
@@ -121,30 +119,40 @@ namespace OSC {
     function Podiums(props: { data: SummaryData }) {
       var cards = PodiumCards(props.data);
       if (cards.length === 0) return null;
+      var items = cards.map(function (card) {
+        var hero = PlayerHero(card.playerId, props.data.players[String(card.playerId)]);
+        return (
+          <Panel
+            key={card.key}
+            className={OSC.Util.Classes(
+              "SummaryTitleCard",
+              (TEAMS[Players.GetTeam(card.playerId)] || { className: "" }).className,
+              card.playerId === Players.GetLocalPlayer() && "Local",
+            )}
+            hittest={false}
+          >
+            <Podium hero={hero} />
+            <Label className="SummaryTitleName" hittest={false} text={card.name} />
+            <Label
+              className="SummaryTitlePlayer"
+              hittest={false}
+              text={PlayerName(card.playerId, hero)}
+            />
+            {card.desc && <Label className="SummaryTitleDesc" hittest={false} text={card.desc} />}
+          </Panel>
+        );
+      });
+      // По три карточки в ряд, ряды по центру окна
+      var rows: JSX.Element[][] = [];
+      for (var i = 0; i < items.length; i += PODIUMS_PER_ROW) {
+        rows.push(items.slice(i, i + PODIUMS_PER_ROW));
+      }
       return (
         <Panel id="SummaryPodiums" hittest={false}>
-          {cards.map(function (card) {
-            var hero = PlayerHero(card.playerId, props.data.players[String(card.playerId)]);
+          {rows.map(function (row, index) {
             return (
-              <Panel
-                key={card.key}
-                className={OSC.Util.Classes(
-                  "SummaryTitleCard",
-                  (TEAMS[Players.GetTeam(card.playerId)] || { className: "" }).className,
-                  card.playerId === Players.GetLocalPlayer() && "Local",
-                )}
-                hittest={false}
-              >
-                <Podium hero={hero} />
-                <Label className="SummaryTitleName" hittest={false} text={card.name} />
-                <Label
-                  className="SummaryTitlePlayer"
-                  hittest={false}
-                  text={PlayerName(card.playerId, hero)}
-                />
-                {card.desc && (
-                  <Label className="SummaryTitleDesc" hittest={false} text={card.desc} />
-                )}
+              <Panel key={index} className="SummaryPodiumRow" hittest={false}>
+                {row}
               </Panel>
             );
           })}
@@ -311,8 +319,7 @@ namespace OSC {
         return post;
       });
       var [closed, setClosed] = React.useState(false);
-      var [tab, setTab] = React.useState(TABS[0]);
-      // Итог может прийти с задержкой — до него окна нет
+      // Итог может прийти с задержкой — до него окон нет
       var ready = postGame && !!data && !!data.players;
       React.useEffect(
         function () {
@@ -323,61 +330,63 @@ namespace OSC {
 
       return (
         <>
+          {/* Пьедестал и статистика — отдельные окна рядом */}
           <Panel
-            id="SummaryPanel"
+            id="SummaryWindows"
             className={OSC.Util.Classes(ready && !closed && "Visible")}
-            hittest={true}
+            hittest={false}
           >
-            {/* Как в справке: крестик в углу рамки, заголовок по центру */}
-            <Button
-              id="SummaryClose"
-              onactivate={function () {
-                setClosed(true);
-              }}
-            >
-              <Label text={$.Localize("#osc_hud_summary_close")} />
-            </Button>
-            <Label
-              id="SummaryTitle"
-              className="OSCTextTitle OSCGold"
-              text={$.Localize("#osc_hud_summary_title")}
-            />
-            {/* Пьедестал и таблица — на разных вкладках, чтобы таблица помещалась
-                целиком, без прокрутки */}
-            <Panel id="SummaryTabs">
-              {TABS.map(function (id) {
-                return (
-                  <Button
-                    key={id}
-                    className={OSC.Util.Classes("SummaryTab", id === tab && "Selected")}
-                    onactivate={function () {
-                      setTab(id);
-                    }}
-                  >
-                    <Label text={$.Localize("#osc_hud_summary_tab_" + id)} />
-                  </Button>
-                );
-              })}
+            <Panel id="SummaryPodiumWindow" className="SummaryWindow" hittest={true}>
+              <Label
+                className="SummaryWindowTitle OSCTextTitle OSCGold"
+                text={$.Localize("#osc_hud_summary_tab_podium")}
+              />
+              {ready && <Podiums data={data!} />}
             </Panel>
-            <Panel id="SummaryBody" hittest={false}>
-              {ready && tab === "podium" && <Podiums data={data!} />}
-              {ready && tab === "stats" && <Table data={data!} />}
+            <Panel id="SummaryStatsWindow" className="SummaryWindow" hittest={true}>
+              {/* Как в справке: крестик в углу рамки; прячет оба окна */}
+              <Button
+                id="SummaryClose"
+                onactivate={function () {
+                  setClosed(true);
+                }}
+              >
+                <Label text={$.Localize("#osc_hud_summary_close")} />
+              </Button>
+              <Label
+                className="SummaryWindowTitle OSCTextTitle OSCGold"
+                text={$.Localize("#osc_hud_summary_tab_stats")}
+              />
+              {ready && <Table data={data!} />}
             </Panel>
           </Panel>
-          <Button
-            id="SummaryReopen"
-            className={OSC.Util.Classes(ready && closed && "Visible")}
-            onactivate={function () {
-              setClosed(false);
-            }}
-          >
-            <Label className="OSCTextBody OSCBold" text={$.Localize("#osc_hud_summary_show")} />
-          </Button>
+          {/* Стандартный экран конца игры скрыт (Init) — своя «Продолжить», как
+              в multiteam_end_screen.xml от Valve. Видна и без итогов */}
+          <Panel id="SummaryFooter" className={OSC.Util.Classes(postGame && "Visible")}>
+            <Button
+              id="SummaryReopen"
+              className={OSC.Util.Classes(ready && closed && "Visible")}
+              onactivate={function () {
+                setClosed(false);
+              }}
+            >
+              <Label text={$.Localize("#osc_hud_summary_show")} />
+            </Button>
+            <Button
+              id="SummaryContinue"
+              onactivate={function () {
+                Game.FinishGame();
+              }}
+            >
+              <Label text={$.Localize("#osc_hud_summary_continue")} />
+            </Button>
+          </Panel>
         </>
       );
     }
 
     function Init() {
+      GameUI.SetDefaultUIEnabled(DotaDefaultUIElement_t.DOTA_DEFAULT_UI_ENDGAME, false);
       // Корень разметки (.OSCRoot) — сама контекстная панель: id у корня запрещён
       ReactPanorama.render(<SummaryWindow />, $.GetContextPanel());
     }

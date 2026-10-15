@@ -186,6 +186,7 @@
 		"osc_hud_summary_winner"		"Победитель"
 		"osc_hud_summary_tab_podium"		"Пьедестал"
 		"osc_hud_summary_tab_stats"		"Статистика"
+		"osc_hud_summary_continue"		"Продолжить"
 		"osc_hud_title_gambler"		"Лудоман"
 		"osc_hud_title_gambler_desc"		"Оставил в казино больше всех: итог {d:value} золота"
 		"osc_hud_title_lucky"		"Любимчик Фортуны"
