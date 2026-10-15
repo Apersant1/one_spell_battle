@@ -7,3 +7,4 @@ graphify-out/
 node_modules/
 # Собирается из src/panorama (npm run build)
 content/panorama/scripts/custom_game/*.js
+content/panorama/scripts/custom_game/libraries/

@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["content/", "game/", "node_modules/", "tools/", "graphify-out/"] },
   {
-    files: ["src/panorama/**/*.ts"],
+    files: ["src/panorama/**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     rules: {
       // Модули Panorama — глобальные скрипты с общим namespace OSC (без import/export)

@@ -14,6 +14,9 @@
         <include src="file://{resources}/scripts/custom_game/osc_chaos_sphere.js" />
         <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
+        <!-- React (UMD, кладёт npm run build) — до модулей на React -->
+        <include src="file://{resources}/scripts/custom_game/libraries/react.js" />
+        <include src="file://{resources}/scripts/custom_game/libraries/react-panorama.js" />
         <include src="file://{resources}/scripts/custom_game/osc_chaos_shop.js" />
         <include src="file://{resources}/scripts/custom_game/osc_help.js" />
         <include src="file://{resources}/scripts/custom_game/osc_notification_feed.js" />
@@ -197,19 +200,9 @@
             </Panel>
         </Panel>
 
-        <!-- Хаос-лавка (osc_chaos_shop.js): кнопка рядом со стандартным
-             магазином и панель товаров; плитки товаров создаются из JS -->
-        <Button id="ChaosShopButton" class="OSCButton OSCButtonPrimary Hidden"
-            onactivate="OSC.ChaosShop.Toggle()">
-            <Label text="#osc_shop_button" />
-        </Button>
-        <Panel id="ChaosShopPanel" hittest="true">
-            <Button id="ChaosShopClose" class="OSCButton" onactivate="OSC.ChaosShop.Close()">
-                <Label text="#osc_shop_close" />
-            </Button>
-            <Label id="ChaosShopTitle" class="OSCTextTitle OSCChaosText" text="#osc_shop_title" />
-            <Panel id="ChaosShopItems" />
-        </Panel>
+        <!-- Хаос-лавка (osc_chaos_shop.tsx, React): кнопка рядом со стандартным
+             магазином и панель товаров -->
+        <Panel id="ChaosShopRoot" hittest="false" />
 
         <!-- Сфера хаоса (osc_chaos_sphere.js): выбор режима, затем карточки
              ультимейтов (создаются из JS) -->

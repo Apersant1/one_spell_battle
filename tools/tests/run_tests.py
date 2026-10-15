@@ -113,7 +113,7 @@ def declared_contract():
 def check_contract():
     events, keys, prefixes = declared_contract()
     lua = "\n".join(read_text(p) for p in VSCRIPTS.rglob("*.lua"))
-    ts = "\n".join(read_text(p) for p in PANORAMA_SRC.glob("*.ts"))
+    ts = "\n".join(read_text(p) for p in [*PANORAMA_SRC.glob("*.ts"), *PANORAMA_SRC.glob("*.tsx")])
     lua_strings = set(re.findall(r'"([a-z0-9_]+)"', lua))
     errors = []
     for name in sorted(set(re.findall(r'GameEvents\.Subscribe\(\s*"(osc_[a-z0-9_]+)"', ts)) - events):
@@ -161,7 +161,7 @@ def check_localization():
     errors = [f"only in addon_russian.txt: {k}" for k in sorted(ru - en)]
     errors += [f"only in addon_english.txt: {k}" for k in sorted(en - ru)]
 
-    sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA_SRC.rglob("*.ts")) + list(PANORAMA.rglob("*.xml"))
+    sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA_SRC.rglob("*.ts")) + list(PANORAMA_SRC.rglob("*.tsx")) + list(PANORAMA.rglob("*.xml"))
     used = set()
     not_loc_keys = declared_contract()[0]  # имена событий с теми же префиксами
     for path in sources:

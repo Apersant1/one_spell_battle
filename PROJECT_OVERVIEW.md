@@ -357,7 +357,8 @@ dota_launch_custom_game one_spell dota
 - Net table `osc_state/shop_<team>` = { items = { [i] = { name, cost, stock,
   max } } } (`stock = max = -1` — без лимита) публикуется при старте и после
   каждой покупки команды; сток переживает `script_reload`.
-- Panorama: `osc_chaos_shop.ts` (`OSC.ChaosShop`), панель `#ChaosShopPanel`.
+- Panorama: `osc_chaos_shop.tsx` (`OSC.ChaosShop`, React), панель `#ChaosShopPanel`
+  рисуется в контейнер `#ChaosShopRoot`.
   Кнопка «Купить» неактивна при нехватке золота или пустом стоке — это
   только подсказка, решает сервер.
 
@@ -499,6 +500,14 @@ table `osc_state` и кастомные события — в `src/panorama/osc_
 сохранении) компилирует их в `content/panorama/scripts/custom_game/*.js`;
 собранные `.js` в git не хранятся. Модули — глобальные скрипты без
 import/export: каждый файл кладёт свой компонент в `namespace OSC`.
+
+Модули `.tsx` написаны на React (пилот — Хаос-лавка): `react@17` и
+`react-panorama` подключаются UMD-сборками (`npm run build` копирует их в
+`scripts/custom_game/libraries/`, `osc_hud.xml` включает их перед модулями на
+React), JSX компилирует тот же `tsc`. Компонент рисуется
+`ReactPanorama.render(...)` в пустую панель-контейнер из разметки; данные —
+хуки `useNetTableKey` и `useGameEvent`. После добавления новых `<include>`
+Dota нужно перезапустить: горячая перезагрузка их не подхватывает.
 
 `custom_ui_manifest.xml` устанавливает пользовательский HUD и подключает
 `osc_hud.xml`. Порядок `<include>` (собранных `.js`) в его блоке `scripts`
