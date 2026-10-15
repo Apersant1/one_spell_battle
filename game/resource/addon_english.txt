@@ -179,6 +179,8 @@
 			"osc_hud_summary_team_radiant"		"The Radiant"
 			"osc_hud_summary_team_dire"		"The Dire"
 			"osc_hud_summary_winner"		"Winner"
+			"osc_hud_summary_winner_desc"		"Kills: {d:kills} · rotations: {d:rotations}"
+			"osc_hud_summary_no_titles"		"No titles this time: nobody reached the minimum. The winners take the podium"
 			"osc_hud_summary_tab_podium"		"Podium"
 			"osc_hud_summary_tab_stats"		"Statistics"
 			"osc_hud_summary_continue"		"Continue"

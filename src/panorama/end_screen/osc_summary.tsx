@@ -112,6 +112,12 @@ namespace OSC {
             key: String(playerId),
             playerId: playerId,
             name: $.Localize("#osc_hud_summary_winner"),
+            desc: function (label: LabelPanel) {
+              var stats: SummaryStats = data.players[String(playerId)] || {};
+              label.SetDialogVariableInt("kills", Math.round(Number(stats.kills) || 0));
+              label.SetDialogVariableInt("rotations", Math.round(Number(stats.rotations) || 0));
+              return $.Localize("#osc_hud_summary_winner_desc", label);
+            },
           };
         });
     }
@@ -156,6 +162,14 @@ namespace OSC {
               </Panel>
             );
           })}
+          {/* На пьедесталах победители — объясняем, почему не титулы */}
+          {OSC.Util.LuaArray(props.data.titles).length === 0 && (
+            <Label
+              id="SummaryNoTitles"
+              hittest={false}
+              text={$.Localize("#osc_hud_summary_no_titles")}
+            />
+          )}
         </Panel>
       );
     }

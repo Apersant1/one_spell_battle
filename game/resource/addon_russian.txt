@@ -184,6 +184,8 @@
 		"osc_hud_summary_team_radiant"		"Силы Света"
 		"osc_hud_summary_team_dire"		"Силы Тьмы"
 		"osc_hud_summary_winner"		"Победитель"
+		"osc_hud_summary_winner_desc"		"Убийства: {d:kills} · ротации: {d:rotations}"
+		"osc_hud_summary_no_titles"		"Титулы не вручены: никто не набрал минимум. На пьедестале — победители"
 		"osc_hud_summary_tab_podium"		"Пьедестал"
 		"osc_hud_summary_tab_stats"		"Статистика"
 		"osc_hud_summary_continue"		"Продолжить"

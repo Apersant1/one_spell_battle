@@ -157,6 +157,14 @@
   flow-children: right;
 }
 
+#SummaryNoTitles {
+  width: 100%;
+  margin-top: 24px;
+  text-align: center;
+  color: #b9aebe;
+  font-size: 14px;
+}
+
 .SummaryTitleCard {
   width: 172px;
   margin: 0px 3px;
