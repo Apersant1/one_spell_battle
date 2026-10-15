@@ -528,14 +528,12 @@
   border-radius: 50%;
   border: 2px solid #ffffff28;
   background-color: #0e1826;
-  box-shadow: #8fd0ff7c 0px 0px 12px 0px;
   transition-property: opacity, transform;
   transition-duration: 0.2s;
   transition-timing-function: ease-out;
 }
 .OrbitItem.Local {
   border: 2px solid #f2c96a94;
-  box-shadow: #f2c96a88 0px 0px 14px 2px;
 }
 .OrbitItem:hover {
   brightness: 1.25;
