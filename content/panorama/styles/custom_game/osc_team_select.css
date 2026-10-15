@@ -526,6 +526,8 @@
   border-radius: 50%;
   border: 2px solid #ffffff28;
   background-color: #0e1826;
+  /* тёмная тень вниз; у круглой панели (border-radius) она тоже круглая */
+  box-shadow: #000000b0 0px 4px 8px 0px;
   transition-property: opacity, transform;
   transition-duration: 0.2s;
   transition-timing-function: ease-out;
