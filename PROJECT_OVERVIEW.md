@@ -696,7 +696,8 @@ Panorama отправляет серверу действия пользоват
 `npm run compile` собирает TypeScript и компилирует Panorama
 (`resourcecompiler` по разметке из `content/panorama/layout`, вместе с её
 скриптами, стилями и картинками; `npm run compile -- -f` — принудительно).
-`npm run launch` открывает Workshop Tools и сразу запускает игру. Папка Dota
+`npm run launch` открывает Workshop Tools и сразу запускает игру,
+`npm run setup` готовит свежий клон (см. README.md). Папка Dota
 ищется по Steam, переопределяется переменной `DOTA_PATH`
 (`tools/dota.mjs`). `npm run lint` / `npm run format` — ESLint и Prettier для
 `src/panorama`. Остальные ресурсы (карты, частицы) — средствами Workshop Tools.
@@ -708,7 +709,7 @@ Panorama отправляет серверу действия пользоват
 прямые чтения `OSC_CONFIG` и модульные тесты систем на моках Dota API. Запуск:
 
 ```text
-pip install lupa
+pip install -r tools/requirements.txt
 python tools/tests/run_tests.py
 ```
 

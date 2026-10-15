@@ -7,7 +7,7 @@
     совпадают с тем, что шлёт и слушает Lua.
 4. Тесты tools/tests/test_*.lua с моками Dota API (каждый тест в свежем рантайме).
 
-Запуск: pip install lupa && python tools/tests/run_tests.py
+Запуск: pip install -r tools/requirements.txt && python tools/tests/run_tests.py
 """
 
 import io

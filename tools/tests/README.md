@@ -12,7 +12,7 @@
 Запуск:
 
 ```text
-pip install lupa
+pip install -r tools/requirements.txt
 python tools/tests/run_tests.py
 ```
 

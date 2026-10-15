@@ -2,6 +2,7 @@
   "name": "one-spell-chaos",
   "private": true,
   "scripts": {
+    "setup": "node tools/dota.mjs setup",
     "build": "tsc --project src/panorama/tsconfig.json && node tools/panorama-libs.mjs",
     "dev": "node tools/panorama-libs.mjs && tsc --project src/panorama/tsconfig.json --watch",
     "lint": "eslint . && prettier --check \"src/panorama/**/*.{ts,tsx}\"",
@@ -21,5 +22,8 @@
   "dependencies": {
     "@demon673/react-panorama": "^0.3.4",
     "react": "^17.0.2"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
