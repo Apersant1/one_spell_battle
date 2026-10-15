@@ -1,5 +1,5 @@
 OSC_CONFIG = {
-    VERSION = "1.5.0",
+    VERSION = "1.6.0",
     -- Пассивное золото после горна (osc/systems/passive_gold.lua — движок в
     -- этом режиме его не начисляет): PASSIVE_GOLD_PER_TICK золота раз в
     -- PASSIVE_GOLD_TICK_TIME секунд (1 раз в 0.6 с — около 100 в минуту,
