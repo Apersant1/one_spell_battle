@@ -20,6 +20,9 @@
         <include src="file://{resources}/scripts/custom_game/hud/chaos/osc_chaos_round.js" />
         <include src="file://{resources}/scripts/custom_game/hud/chaos/osc_chaos_sphere.js" />
         <include src="file://{resources}/scripts/custom_game/hud/chaos/osc_chaos_shop.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/casino/osc_casino_items.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/casino/osc_casino_range.js" />
+        <include src="file://{resources}/scripts/custom_game/hud/casino/osc_casino_view.js" />
         <include src="file://{resources}/scripts/custom_game/hud/casino/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/hud/help/osc_help_blocks.js" />
         <include src="file://{resources}/scripts/custom_game/hud/help/osc_help_pages.js" />
