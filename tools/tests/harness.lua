@@ -150,6 +150,7 @@ GameRules = {
     SetCustomGameSetupAutoLaunchDelay = function() end,
     SetCustomGameSetupTimeout = function() end,
     LockCustomGameSetupTeamAssignment = function() end,
+    SetCustomVictoryMessage = function(_, text) H.victoryMessage = text end,
 }
 
 PlayerResource = {
