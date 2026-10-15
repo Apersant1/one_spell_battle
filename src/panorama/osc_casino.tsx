@@ -1,6 +1,8 @@
 namespace OSC {
   type CasinoOutcome = NetworkedData<OSCCasinoResult>;
-  type InventorySlot = { item: ItemEntityIndex | -1; reason: string };
+  // name и value запоминаются при чтении инвентаря: проигранные предметы сервер
+  // удаляет сразу, а окно ещё перерисовывается, пока крутятся барабаны
+  type InventorySlot = { item: ItemEntityIndex | -1; reason: string; name: string; value: number };
   type ReelView = { symbol: string; spinning: boolean; stopped: boolean };
 
   // Окно автомата (React). Состояние спина — переменные модуля, как и раньше:
@@ -181,7 +183,7 @@ namespace OSC {
       return "";
     }
 
-    // Шесть слотов основного инвентаря: { item, reason }; item -1 — слот пуст
+    // Шесть слотов основного инвентаря; item -1 — слот пуст
     function GetInventorySlots() {
       var hero = GetLocalHero();
       var result: InventorySlot[] = [];
@@ -192,6 +194,8 @@ namespace OSC {
         result.push({
           item: item,
           reason: item === -1 ? "" : GetItemRejectReason(item, hero),
+          name: item === -1 ? "" : Abilities.GetAbilityName(item),
+          value: item === -1 ? 0 : GetItemValue(item),
         });
       }
       return result;
@@ -209,11 +213,12 @@ namespace OSC {
         });
     }
 
+    // По запомненным слотам, а не по живым предметам (см. InventorySlot)
     function GetSelectedValue() {
       var total = 0;
-      for (var i = 0; i < selectedItems.length; i++) {
-        total += GetItemValue(selectedItems[i]);
-      }
+      slots.forEach(function (slot) {
+        if (slot.item !== -1 && selectedItems.indexOf(slot.item) >= 0) total += slot.value;
+      });
       return total;
     }
 
@@ -679,7 +684,7 @@ namespace OSC {
       var slot = props.slot;
       if (slot.item === -1) return <Button className="CasinoItem Empty" />;
       var item = slot.item;
-      var image = <DOTAItemImage itemname={Abilities.GetAbilityName(item)} hittest={false} />;
+      var image = <DOTAItemImage itemname={slot.name} hittest={false} />;
       if (slot.reason) {
         return (
           <Button
@@ -700,7 +705,7 @@ namespace OSC {
           }}
         >
           {image}
-          <Label className="CasinoItemPrice" text={String(GetItemValue(item))} />
+          <Label className="CasinoItemPrice" text={String(slot.value)} />
         </Button>
       );
     }
