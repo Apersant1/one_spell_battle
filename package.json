@@ -1,0 +1,12 @@
+{
+  "name": "one-spell-chaos",
+  "private": true,
+  "scripts": {
+    "build": "tsc --project src/panorama/tsconfig.json",
+    "dev": "tsc --project src/panorama/tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@moddota/panorama-types": "^1.39.2",
+    "typescript": "~5.9.3"
+  }
+}

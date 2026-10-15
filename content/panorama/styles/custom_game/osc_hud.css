@@ -1364,7 +1364,7 @@
   width: 139px;
   height: 46px;
   margin: 0px 8px;
-  /* по вертикали — отступом сверху; по горизонтали центрирует osc_casino.js
+  /* по вертикали — отступом сверху; по горизонтали центрирует osc_casino.ts
      (CenterStakeText): text-align у TextEntry не действует */
   padding: 11px 10px 0px 26px;
   font-size: 18px;

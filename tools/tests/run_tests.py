@@ -1,7 +1,7 @@
 """Офлайн-проверки One Spell Chaos.
 
 1. Синтаксис всех .lua в game/scripts/vscripts (компиляция LuaJIT).
-2. Синтаксис всех .js в content/panorama (node --check).
+2. Типы и синтаксис Panorama TS в src/panorama (tsc --noEmit).
 3. Локализация: ключи из кода есть в обоих addon_*.txt, наборы ключей совпадают.
 4. Тесты tools/tests/test_*.lua с моками Dota API (каждый тест в свежем рантайме).
 
@@ -9,8 +9,8 @@
 """
 
 import io
+import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover - запасной вариант без
 ROOT = Path(__file__).resolve().parents[2]
 VSCRIPTS = ROOT / "game" / "scripts" / "vscripts"
 PANORAMA = ROOT / "content" / "panorama"
+PANORAMA_SRC = ROOT / "src" / "panorama"
 RESOURCE = ROOT / "game" / "resource"
 TESTS = Path(__file__).resolve().parent
 
@@ -85,16 +86,16 @@ def check_lua_syntax():
     return errors
 
 
-def check_js_syntax():
-    node = shutil.which("node")
-    if not node:
-        return ["node not found: JS syntax not checked"]
-    errors = []
-    for path in sorted(PANORAMA.rglob("*.js")):
-        result = subprocess.run([node, "--check", str(path)], capture_output=True, text=True)
-        if result.returncode != 0:
-            errors.append(f"{path.relative_to(ROOT)}: {result.stderr.strip()}")
-    return errors
+def check_ts_types():
+    tsc = ROOT / "node_modules" / ".bin" / ("tsc.cmd" if os.name == "nt" else "tsc")
+    if not tsc.is_file():
+        return ["node_modules not found (npm install): Panorama TS not checked"]
+    # shell=True: на Windows .cmd запускается только через cmd.exe
+    result = subprocess.run(
+        f'"{tsc}" --noEmit -p "{PANORAMA_SRC / "tsconfig.json"}"',
+        capture_output=True, text=True, shell=True,
+    )
+    return result.stdout.strip().splitlines() if result.returncode != 0 else []
 
 
 def localization_keys(path):
@@ -127,7 +128,7 @@ def check_localization():
     errors = [f"only in addon_russian.txt: {k}" for k in sorted(ru - en)]
     errors += [f"only in addon_english.txt: {k}" for k in sorted(en - ru)]
 
-    sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA.rglob("*.js")) + list(PANORAMA.rglob("*.xml"))
+    sources = list(VSCRIPTS.rglob("*.lua")) + list(PANORAMA_SRC.rglob("*.ts")) + list(PANORAMA.rglob("*.xml"))
     used = set()
     for path in sources:
         for key in re.findall(r'["#](osc_[a-z0-9_]+)', read_text(path)):
@@ -180,7 +181,7 @@ def main():
     problems = 0
     for title, check in (
         ("Lua syntax", check_lua_syntax),
-        ("JS syntax", check_js_syntax),
+        ("Panorama types", check_ts_types),
         ("Localization", check_localization),
         ("Config reads", check_config_reads),
     ):

@@ -83,7 +83,7 @@ end
 
 -- Красная подсказка внизу экрана, как у стандартных ошибок Dota.
 -- Сервер не может вызвать её напрямую: шлём своё событие, а клиент
--- (osc_casino.js, OnHudError) превращает его в стандартную ошибку HUD.
+-- (osc_casino.ts, OnHudError) превращает его в стандартную ошибку HUD.
 local function ShowHudError(player, token)
     if player then
         CustomGameEventManager:Send_ServerToPlayer(player, "osc_hud_error", {
@@ -219,7 +219,7 @@ function OSC_Casino.DebugForceSymbol(symbol)
 end
 
 -- Клиент показывает исход после остановки барабанов: последний встаёт через
--- REEL_STOP_DELAYS[2] + REEL_BOUNCE_TIME (osc_casino.js) после ответа сервера
+-- REEL_STOP_DELAYS[2] + REEL_BOUNCE_TIME (osc_casino.ts) после ответа сервера
 local WIN_EFFECTS_DELAY = 1.4
 
 -- Вспышка и звук на автомате при выигрыше; джекпот — эффект побольше

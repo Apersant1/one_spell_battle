@@ -1,5 +1,3 @@
-"use strict";
-
 (function () {
   OSC.HudError.Init();
   OSC.Version.Init();

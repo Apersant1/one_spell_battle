@@ -4,3 +4,6 @@ game/panorama/
 tools_asset_info.bin
 tools_thumbnail_cache.sqlite3*
 graphify-out/
+node_modules/
+# Собирается из src/panorama (npm run build)
+content/panorama/scripts/custom_game/*.js

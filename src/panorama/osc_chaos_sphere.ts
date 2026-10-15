@@ -1,133 +1,131 @@
-"use strict";
+namespace OSC {
+  // Сфера хаоса: сервер шлёт osc_sphere_offer { options, ultimate_allowed,
+  // min_level }, когда игрок применил сферу. Окно: два режима; после
+  // «Легендарный ультимейт» — карточки вариантов (классы выбора из трёх и
+  // рамки редкости). Выбор уходит osc_sphere_pick { mode, ability }; решает
+  // сервер, отказы показывает OSC.HudError.
+  export const ChaosSphere = (function () {
+    var ultimateAllowed = false;
 
-var OSC = OSC || {};
+    // Lua-таблица { "1": {...}, "2": {...} } -> массив по возрастанию ключей
+    function ToOptionList(raw: { [key: number]: Partial<OSCAbilityOption> } | null | undefined): OSCAbilityOption[] {
+      if (!raw) return [];
+      return Object.keys(raw)
+        .sort(function (a, b) {
+          return Number(a) - Number(b);
+        })
+        .map(function (key) {
+          var option = raw[Number(key)] || {};
+          return {
+            name: String(option.name || ""),
+            label: String(option.label || ""),
+            rarity: String(option.rarity || "common"),
+          };
+        })
+        .filter(function (option) {
+          return option.name !== "";
+        });
+    }
 
-// Сфера хаоса: сервер шлёт osc_sphere_offer { options, ultimate_allowed,
-// min_level }, когда игрок применил сферу. Окно: два режима; после
-// «Легендарный ультимейт» — карточки вариантов (классы выбора из трёх и
-// рамки редкости). Выбор уходит osc_sphere_pick { mode, ability }; решает
-// сервер, отказы показывает OSC.HudError.
-OSC.ChaosSphere = (function () {
-  var ultimateAllowed = false;
+    // Имя способности из локализации Dota; если ключа нет — подпись из пула
+    function AbilityDisplayName(option: OSCAbilityOption) {
+      var token = "#DOTA_Tooltip_Ability_" + option.name;
+      var localized = $.Localize(token);
+      if (localized && localized !== token) return localized;
+      return option.label || option.name;
+    }
 
-  // Lua-таблица { "1": {...}, "2": {...} } -> массив по возрастанию ключей
-  function ToOptionList(raw) {
-    if (!raw) return [];
-    return Object.keys(raw)
-      .sort(function (a, b) {
-        return Number(a) - Number(b);
-      })
-      .map(function (key) {
-        var option = raw[key] || {};
-        return {
-          name: String(option.name || ""),
-          label: String(option.label || ""),
-          rarity: String(option.rarity || "common"),
-        };
-      })
-      .filter(function (option) {
-        return option.name !== "";
+    function Send(mode: string, ability?: string) {
+      GameEvents.SendCustomGameEventToServer("osc_sphere_pick", {
+        mode: mode,
+        ability: ability || "",
       });
-  }
+    }
 
-  // Имя способности из локализации Dota; если ключа нет — подпись из пула
-  function AbilityDisplayName(option) {
-    var token = "#DOTA_Tooltip_Ability_" + option.name;
-    var localized = $.Localize(token);
-    if (localized && localized !== token) return localized;
-    return option.label || option.name;
-  }
+    function Hide() {
+      var panel = $("#ChaosSpherePanel");
+      panel.RemoveClass("Visible");
+      panel.RemoveClass("Cards");
+      $.DispatchEvent("DOTAHideAbilityTooltip", panel);
+    }
 
-  function Send(mode, ability) {
-    GameEvents.SendCustomGameEventToServer("osc_sphere_pick", {
-      mode: mode,
-      ability: ability || "",
-    });
-  }
+    function CreateCard(container: Panel, option: OSCAbilityOption) {
+      var card = $.CreatePanel("Button", container, "");
+      card.AddClass("ChoiceCard");
+      card.SetHasClass("RarityRare", option.rarity === "rare");
+      card.SetHasClass("RarityLegendary", option.rarity === "legendary");
 
-  function Hide() {
-    var panel = $("#ChaosSpherePanel");
-    panel.RemoveClass("Visible");
-    panel.RemoveClass("Cards");
-    $.DispatchEvent("DOTAHideAbilityTooltip", panel);
-  }
+      var image = $.CreatePanel("DOTAAbilityImage", card, "");
+      image.AddClass("ChoiceIcon");
+      image.abilityname = option.name;
+      image.hittest = false;
 
-  function CreateCard(container, option) {
-    var card = $.CreatePanel("Button", container, "");
-    card.AddClass("ChoiceCard");
-    card.SetHasClass("RarityRare", option.rarity === "rare");
-    card.SetHasClass("RarityLegendary", option.rarity === "legendary");
+      var nameLabel = $.CreatePanel("Label", card, "");
+      nameLabel.AddClass("ChoiceName");
+      nameLabel.AddClass("OSCTextSmall");
+      nameLabel.AddClass("OSCBold");
+      nameLabel.text = AbilityDisplayName(option);
+      nameLabel.hittest = false;
 
-    var image = $.CreatePanel("DOTAAbilityImage", card, "");
-    image.AddClass("ChoiceIcon");
-    image.abilityname = option.name;
-    image.hittest = false;
+      card.SetPanelEvent("onactivate", function () {
+        Send("ultimate", option.name);
+        Hide();
+      });
+      card.SetPanelEvent("onmouseover", function () {
+        $.DispatchEvent("DOTAShowAbilityTooltip", card, option.name);
+      });
+      card.SetPanelEvent("onmouseout", function () {
+        $.DispatchEvent("DOTAHideAbilityTooltip", card);
+      });
+    }
 
-    var nameLabel = $.CreatePanel("Label", card, "");
-    nameLabel.AddClass("ChoiceName");
-    nameLabel.AddClass("OSCTextSmall");
-    nameLabel.AddClass("OSCBold");
-    nameLabel.text = AbilityDisplayName(option);
-    nameLabel.hittest = false;
+    function OnOffer(event: NetworkedData<CustomGameEventDeclarations["osc_sphere_offer"]>) {
+      if (!event) return;
+      var options = ToOptionList(event.options);
+      var levelOk = Number(event.ultimate_allowed) === 1;
+      ultimateAllowed = levelOk && options.length > 0;
 
-    card.SetPanelEvent("onactivate", function () {
-      Send("ultimate", option.name);
+      var cards = $("#ChaosSphereCards");
+      cards.RemoveAndDeleteChildren();
+      options.forEach(function (option) {
+        CreateCard(cards, option);
+      });
+
+      $("#ChaosSphereUltimateButton").enabled = ultimateAllowed;
+      var hint = $("#ChaosSphereLevelHint") as LabelPanel;
+      hint.SetDialogVariableInt("level", Number(event.min_level) || 0);
+      hint.text = $.Localize("#osc_sphere_level_hint", hint);
+      hint.SetHasClass("Hidden", levelOk);
+
+      var panel = $("#ChaosSpherePanel");
+      panel.RemoveClass("Cards");
+      panel.AddClass("Visible");
+    }
+
+    function ChooseUltimate() {
+      if (!ultimateAllowed) return;
+      $("#ChaosSpherePanel").AddClass("Cards");
+    }
+
+    function ChooseEnemies() {
+      Send("enemies");
       Hide();
-    });
-    card.SetPanelEvent("onmouseover", function () {
-      $.DispatchEvent("DOTAShowAbilityTooltip", card, option.name);
-    });
-    card.SetPanelEvent("onmouseout", function () {
-      $.DispatchEvent("DOTAHideAbilityTooltip", card);
-    });
-  }
+    }
 
-  function OnOffer(event) {
-    if (!event) return;
-    var options = ToOptionList(event.options);
-    var levelOk = Number(event.ultimate_allowed) === 1;
-    ultimateAllowed = levelOk && options.length > 0;
+    function Cancel() {
+      Send("cancel");
+      Hide();
+    }
 
-    var cards = $("#ChaosSphereCards");
-    cards.RemoveAndDeleteChildren();
-    options.forEach(function (option) {
-      CreateCard(cards, option);
-    });
+    function Init() {
+      GameEvents.Subscribe("osc_sphere_offer", OnOffer);
+    }
 
-    $("#ChaosSphereUltimateButton").enabled = ultimateAllowed;
-    var hint = $("#ChaosSphereLevelHint");
-    hint.SetDialogVariableInt("level", Number(event.min_level) || 0);
-    hint.text = $.Localize("#osc_sphere_level_hint", hint);
-    hint.SetHasClass("Hidden", levelOk);
-
-    var panel = $("#ChaosSpherePanel");
-    panel.RemoveClass("Cards");
-    panel.AddClass("Visible");
-  }
-
-  function ChooseUltimate() {
-    if (!ultimateAllowed) return;
-    $("#ChaosSpherePanel").AddClass("Cards");
-  }
-
-  function ChooseEnemies() {
-    Send("enemies");
-    Hide();
-  }
-
-  function Cancel() {
-    Send("cancel");
-    Hide();
-  }
-
-  function Init() {
-    GameEvents.Subscribe("osc_sphere_offer", OnOffer);
-  }
-
-  return {
-    Init: Init,
-    ChooseUltimate: ChooseUltimate,
-    ChooseEnemies: ChooseEnemies,
-    Cancel: Cancel,
-  };
-})();
+    return {
+      Init: Init,
+      ChooseUltimate: ChooseUltimate,
+      ChooseEnemies: ChooseEnemies,
+      Cancel: Cancel,
+    };
+  })();
+}
