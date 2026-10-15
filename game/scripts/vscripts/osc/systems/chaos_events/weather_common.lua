@@ -86,7 +86,7 @@ end
 
 -- Звук в точке; соседний герой нужен движку как «источник» звука
 function OSC_Weather.PlaySound(name, position, source)
-    if name and name ~= "" and source and not source:IsNull() then
+    if name and name ~= "" and IsValidEntity(source) then
         EmitSoundOnLocationWithCaster(position, name, source)
     end
 end

@@ -68,7 +68,7 @@ function OSC_Stats.OnAbilityChanged(change)
     if change.slot == "ability" and change.previous ~= nil and change.previous ~= change.ability then
         record.rotations = record.rotations + 1
     end
-    if change.hero and not change.hero:IsNull() then
+    if IsValidEntity(change.hero) then
         record.hero = change.hero:GetUnitName()
     end
 end
@@ -86,7 +86,7 @@ local function Entity(index)
 end
 
 local function OwnerID(unit)
-    if not OSC_Heroes.IsValid(unit) or not unit.GetPlayerOwnerID then
+    if not IsValidEntity(unit) or not unit.GetPlayerOwnerID then
         return nil
     end
     local playerID = unit:GetPlayerOwnerID()
@@ -96,7 +96,7 @@ end
 function OSC_Stats.OnEntityKilled(event)
     if not OSC_Stats.IsEnabled() then return end
     local killed = Entity(event.entindex_killed)
-    if OSC_Heroes.IsValid(killed) and killed.GetClassname
+    if IsValidEntity(killed) and killed.GetClassname
         and killed:GetClassname() == "npc_dota_fort" then
         OSC_Stats.Publish()
         return
@@ -113,7 +113,7 @@ function OSC_Stats.OnEntityKilled(event)
     record.kills = record.kills + 1
 
     local inflictor = Entity(event.entindex_inflictor)
-    if OSC_Heroes.IsValid(inflictor) and inflictor.GetAbilityName
+    if IsValidEntity(inflictor) and inflictor.GetAbilityName
         and not (inflictor.IsItem and inflictor:IsItem()) then
         local name = inflictor:GetAbilityName()
         record.kill_abilities[name] = (record.kill_abilities[name] or 0) + 1

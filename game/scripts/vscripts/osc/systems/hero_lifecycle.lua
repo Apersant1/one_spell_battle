@@ -8,7 +8,7 @@ local MAX_INIT_ATTEMPTS = 3
 local RETRY_DELAY = 1
 
 local function InitializeHeroAbilities(hero, source)
-    if not OSC_Heroes.IsValid(hero) then return end
+    if not IsValidEntity(hero) then return end
     local state = OSC_HeroState.Get(hero)
     if state.initialized then return end
     if state.init_attempts >= MAX_INIT_ATTEMPTS then
@@ -22,7 +22,7 @@ local function InitializeHeroAbilities(hero, source)
         .. " (attempt " .. state.init_attempts .. ")")
 
     hero:SetContextThink("osc_init", function()
-        if not OSC_Heroes.IsValid(hero) then return nil end
+        if not IsValidEntity(hero) then return nil end
 
         local ok, err = pcall(function()
             -- Каждая попытка — первичная выдача: после частичного успеха
@@ -52,7 +52,7 @@ local function InitializeHeroAbilities(hero, source)
         if state.init_attempts < MAX_INIT_ATTEMPTS then
             state.init_state = "retry_pending"
             hero:SetContextThink("osc_init_retry", function()
-                if OSC_Heroes.IsValid(hero) and not state.initialized then
+                if IsValidEntity(hero) and not state.initialized then
                     InitializeHeroAbilities(hero, source)
                 end
                 return nil
@@ -102,7 +102,7 @@ local function OnPlayerLevelUp(event)
     end
     -- До инициализации уровни не трогаем: она сама выдаст ультимейт с 6-го уровня
     local state = OSC_HeroState.Peek(hero)
-    if not OSC_Heroes.IsValid(hero) or not state or not state.initialized then return end
+    if not IsValidEntity(hero) or not state or not state.initialized then return end
 
     local ok, err = pcall(function()
         local level = event.level or hero:GetLevel()

@@ -71,7 +71,7 @@ local function OnPlayerChat(event)
     end
 
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-    if not hero or hero:IsNull() then
+    if not IsValidEntity(hero) then
         OSC_Logger.Error(text .. " ignored: player has no hero")
         return
     end

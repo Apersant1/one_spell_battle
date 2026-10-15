@@ -18,12 +18,8 @@
 
 OSC_Heroes = OSC_Heroes or {}
 
-function OSC_Heroes.IsValid(entity)
-    return entity ~= nil and not entity:IsNull()
-end
-
 function OSC_Heroes.IsHeroUnit(unit)
-    return OSC_Heroes.IsValid(unit) and unit.IsHero ~= nil and unit:IsHero() == true
+    return IsValidEntity(unit) and unit.IsHero ~= nil and unit:IsHero() == true
 end
 
 -- Солдат Wukong's Command: у него модификатор
@@ -83,7 +79,7 @@ function OSC_Heroes.GetPlayerHero(playerID)
         return nil
     end
     local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-    if OSC_Heroes.IsValid(hero) then
+    if IsValidEntity(hero) then
         return hero
     end
     return nil

@@ -51,7 +51,7 @@ function OSC_ClientCommands.GetSender(sourceIndex, event)
     local playerID = event and tonumber(event.PlayerID)
     if playerID == nil then
         local source = sourceIndex and EntIndexToHScript(sourceIndex)
-        if source and not source:IsNull() and source.GetPlayerID then
+        if IsValidEntity(source) and source.GetPlayerID then
             playerID = source:GetPlayerID()
         end
     end

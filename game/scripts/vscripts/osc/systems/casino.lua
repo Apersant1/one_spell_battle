@@ -20,7 +20,7 @@ local function GetHeroPlayer(hero)
     end
 
     local owner = hero:GetPlayerOwner()
-    if owner and not owner:IsNull() then
+    if IsValidEntity(owner) then
         if not PlayerResource:IsValidPlayerID(playerID) and owner.GetPlayerID then
             playerID = owner:GetPlayerID()
         end
@@ -51,10 +51,10 @@ end
 -- "team" — Огр и его союзники, "all" — все игроки. Вторым значением
 -- возвращает ключ локализации с причиной отказа.
 local function CanUseMachine(hero, playerID, machine)
-    if not machine or machine:IsNull() or machine.osc_casino_owner_player_id == nil then
+    if not IsValidEntity(machine) or machine.osc_casino_owner_player_id == nil then
         return false, "osc_casino_err_bad_machine"
     end
-    if not hero or hero:IsNull() then
+    if not IsValidEntity(hero) then
         return false, "osc_casino_err_unavailable"
     end
     if not hero:IsAlive() then
@@ -225,7 +225,7 @@ local WIN_EFFECTS_DELAY = 1.4
 
 -- Вспышка и звук на автомате при выигрыше; джекпот — эффект побольше
 local function PlayWinEffects(machine, isJackpot)
-    if not machine or machine:IsNull() then return end
+    if not IsValidEntity(machine) then return end
 
     local particleName = isJackpot and OSC_Config.Get("CASINO_JACKPOT_PARTICLE")
         or OSC_Config.Get("CASINO_WIN_PARTICLE")
@@ -247,7 +247,7 @@ end
 
 -- Убирает автомат и закрывает окно у всех, кто в нём сидел
 local function RemoveMachine(machine)
-    if not machine or machine:IsNull() then return end
+    if not IsValidEntity(machine) then return end
 
     for viewerID in pairs(machine.osc_casino_viewers or {}) do
         local viewer = PlayerResource:GetPlayer(viewerID)
@@ -259,7 +259,7 @@ local function RemoveMachine(machine)
     end
 
     local owner = machine.osc_casino_owner_hero
-    if owner and not owner:IsNull() and OSC_HeroState.Get(owner).casino_machine == machine then
+    if IsValidEntity(owner) and OSC_HeroState.Get(owner).casino_machine == machine then
         OSC_HeroState.Get(owner).casino_machine = nil
     end
     UTIL_Remove(machine)
@@ -269,7 +269,7 @@ function OSC_Casino.OnConfigChanged()
     if OSC_Config.Get("CASINO_ENABLED") == true then return end
     OSC_Heroes.ForEachPlayerHero(function(hero)
         local machine = OSC_HeroState.Get(hero).casino_machine
-        if machine and not machine:IsNull() then
+        if IsValidEntity(machine) then
             RemoveMachine(machine)
         end
     end)
@@ -288,7 +288,7 @@ function OSC_Casino.SpawnMachine(hero)
     end
 
     local oldMachine = OSC_HeroState.Get(hero).casino_machine
-    if oldMachine and not oldMachine:IsNull() then
+    if IsValidEntity(oldMachine) then
         if oldMachine.osc_casino_is_spinning then
             ShowHudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
             return false
@@ -353,7 +353,7 @@ local function ValidateStakeItem(hero, itemIndex)
     end
 
     local item = EntIndexToHScript(itemIndex)
-    if not item or item:IsNull() or not item.IsItem or not item:IsItem() then
+    if not IsValidEntity(item) or not item.IsItem or not item:IsItem() then
         return nil, "osc_casino_err_bad_item"
     end
 
@@ -505,7 +505,7 @@ function OSC_Casino.OnSpin(sourceIndex, event)
     -- (или у автомата, если героя нет)
     local function GiveItemsBack()
         local owner = PlayerResource:GetSelectedHeroEntity(playerID)
-        local ownerValid = owner and not owner:IsNull()
+        local ownerValid = IsValidEntity(owner)
         for _, item in ipairs(stakeItems) do
             if not item:IsNull() and not (ownerValid and owner:AddItem(item)) then
                 local position = ownerValid and owner:GetAbsOrigin()
@@ -605,7 +605,7 @@ function OSC_Casino.OnSpin(sourceIndex, event)
         function()
             local ok, currentGold, failureReason = pcall(function()
                 local currentHero = PlayerResource:GetSelectedHeroEntity(playerID)
-                if not currentHero or currentHero:IsNull() then
+                if not IsValidEntity(currentHero) then
                     RefundStake()
                     stakePending = false
                     stakeRefunded = true

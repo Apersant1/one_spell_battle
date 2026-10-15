@@ -77,7 +77,7 @@ end
 function OSC_ChaosSphere.OnEntityKilled(event)
     if not OSC_ChaosSphere.IsEnabled() then return end
     local killed = event and event.entindex_killed and EntIndexToHScript(event.entindex_killed)
-    if not OSC_Heroes.IsValid(killed) or not killed.GetUnitName
+    if not IsValidEntity(killed) or not killed.GetUnitName
         or killed:GetUnitName() ~= ROSHAN then
         return
     end
@@ -99,7 +99,7 @@ end
 -- Открывает выбор владельцу сферы. Возвращает true или false и причину
 -- (предмет в этом случае не тратится).
 function OSC_ChaosSphere.Offer(hero, item)
-    local player = OSC_Heroes.IsValid(hero) and OwnerPlayer(hero) or nil
+    local player = IsValidEntity(hero) and OwnerPlayer(hero) or nil
     if not OSC_ChaosSphere.IsEnabled() then
         HudError(player, "osc_sphere_err_disabled")
         return false, "disabled"
@@ -193,7 +193,7 @@ function OSC_ChaosSphere.OnPick(sourceIndex, event)
     end
 
     local item = EntIndexToHScript(offer.item)
-    if not OSC_Heroes.IsValid(item) or not HeroHasItem(hero, item) then
+    if not IsValidEntity(item) or not HeroHasItem(hero, item) then
         state.sphere_offer = nil
         LogRefusal(cmd.player_id, "no item")
         HudError(player, "osc_sphere_err_no_item")

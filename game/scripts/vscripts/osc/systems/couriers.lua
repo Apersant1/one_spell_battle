@@ -9,10 +9,6 @@ end
 OSC_Couriers = OSC_Couriers or {}
 OSC_Couriers.Abilities = OSC_COURIER_ABILITY_POOL
 
-local function IsValidEntity(entity)
-    return entity and not entity:IsNull()
-end
-
 local function GetTeamHeroes(team)
     local heroes = {}
     OSC_Heroes.ForEachPlayerHero(function(hero)
@@ -80,6 +76,7 @@ local function ApplyCourierAbility(courier, ability, suppressAnnouncement)
         slow_pct = ability.slow_pct,
         base_move_speed = baseMoveSpeed,
     })
+    -- модификатор не сущность: IsValidEntity для него не годится
     if not modifier or modifier:IsNull() then
         OSC_Logger.Error("Failed to apply courier modifier: " .. ability.modifier)
         return false
@@ -170,7 +167,7 @@ local function FinishDelivery(courier, hero)
 
     local owner = courier.osc_delivery_owner
     courier.osc_delivery_owner = nil
-    if owner and not owner:IsNull() and owner ~= hero then
+    if IsValidEntity(owner) and owner ~= hero then
         OSC_Notifications.Notify("courier_wrong_delivery", {
             team = hero:GetTeamNumber(),
             owner = "#" .. owner:GetUnitName(),
