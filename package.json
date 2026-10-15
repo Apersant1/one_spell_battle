@@ -19,7 +19,7 @@
     "typescript-eslint": "^8.71.2"
   },
   "dependencies": {
-    "react": "^17.0.2",
-    "react-panorama": "^0.1.2"
+    "@demon673/react-panorama": "^0.3.4",
+    "react": "^17.0.2"
   }
 }
