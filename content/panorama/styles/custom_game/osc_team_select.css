@@ -464,7 +464,7 @@
   transition-delay: 0.5s;
 }
 
-/* размеры #Orbit и .OrbitItem должны совпадать с CFG.orbit в JS */
+/* размеры #Orbit и .OrbitItem должны совпадать с ORBIT в osc_team_select_lobby.ts */
 #Orbit {
   width: 240px;
   height: 240px;
@@ -481,7 +481,6 @@
   animation-duration: 90s;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  box-shadow: #8a6a2a08 0px 0px 54px 0px;
 }
 #OrbitCenter {
   width: 110px;
@@ -497,7 +496,6 @@
     from(#1a1f2e),
     to(#07090f)
   );
-  box-shadow: #00000099 0px 0px 18px 0px;
 }
 #LobbyCount {
   horizontal-align: center;
