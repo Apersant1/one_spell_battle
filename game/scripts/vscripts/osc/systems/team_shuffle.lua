@@ -1,4 +1,5 @@
 require("osc/core/client_commands")
+require("osc/core/util")
 
 OSC_TeamShuffle = OSC_TeamShuffle or {}
 local TeamShuffle = OSC_TeamShuffle
@@ -20,9 +21,7 @@ function TeamShuffle:OnShuffle(event)
   if not ok or not IsHost(cmd) then return end
 
   local ids = {}
-  for id = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-    if PlayerResource:IsValidPlayerID(id) then table.insert(ids, id) end
-  end
+  OSC_Util.ForEachPlayerID(function(id) table.insert(ids, id) end)
 
   -- Перемешивание Фишера–Йетса
   for i = #ids, 2, -1 do

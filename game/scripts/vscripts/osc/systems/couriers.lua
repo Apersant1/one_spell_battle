@@ -1,6 +1,7 @@
 require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/game_events")
+require("osc/core/util")
 
 local function cfg(key)
     return OSC_Config.Get("COURIERS." .. key)
@@ -283,11 +284,9 @@ local function InitializeCourier(courier, homePosition)
         )
 
     FindClearSpaceForUnit(courier, homePosition, true)
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            courier:SetControllableByPlayer(playerID, false)
-        end
-    end
+    OSC_Util.ForEachPlayerID(function(playerID)
+        courier:SetControllableByPlayer(playerID, false)
+    end)
 
     courier:SetContextThink(
         "osc_courier_ai",

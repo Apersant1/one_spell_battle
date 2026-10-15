@@ -1,4 +1,5 @@
 require("osc/config/notifications")
+require("osc/core/util")
 
 OSC_Notifications = OSC_Notifications or {}
 
@@ -55,15 +56,12 @@ function Channels.feed(settings, params)
             return
         end
 
-        for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-            if PlayerResource:IsValidPlayerID(playerID)
-                and PlayerResource:GetTeam(playerID) == params.team then
-                local player = PlayerResource:GetPlayer(playerID)
-                if player then
-                    CustomGameEventManager:Send_ServerToPlayer(player, FEED_EVENT, data)
-                end
+        OSC_Util.ForEachPlayerID(function(playerID)
+            local player = PlayerResource:GetPlayer(playerID)
+            if player and PlayerResource:GetTeam(playerID) == params.team then
+                CustomGameEventManager:Send_ServerToPlayer(player, FEED_EVENT, data)
             end
-        end
+        end)
     else
         CustomGameEventManager:Send_ServerToAllClients(FEED_EVENT, data)
     end

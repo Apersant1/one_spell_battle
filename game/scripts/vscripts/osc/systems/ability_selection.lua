@@ -11,6 +11,7 @@
 require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/hero_state")
+require("osc/core/util")
 
 OSC_AbilitySelection = OSC_AbilitySelection or {}
 
@@ -33,22 +34,6 @@ end
 local function IsValidWeight(weight)
     return weight == nil
         or (type(weight) == "number" and weight > 0 and weight == math.floor(weight))
-end
-
-local function KnownTags()
-    local known = {}
-    for _, tag in ipairs(OSC_ABILITY_TAGS or {}) do
-        known[tag] = true
-    end
-    return known
-end
-
-local function KnownRarities()
-    local known = {}
-    for _, rarity in ipairs(OSC_ABILITY_RARITIES or {}) do
-        known[rarity] = true
-    end
-    return known
 end
 
 -- Причина, по которой теги записи неверны, или nil
@@ -133,8 +118,8 @@ function OSC_AbilitySelection.ValidatePools()
         { name = "OSC_ULTIMATE_POOL", list = OSC_ULTIMATE_POOL },
     }
 
-    local knownTags = KnownTags()
-    local knownRarities = KnownRarities()
+    local knownTags = OSC_Util.ToSet(OSC_ABILITY_TAGS)
+    local knownRarities = OSC_Util.ToSet(OSC_ABILITY_RARITIES)
 
     for _, pool in ipairs(pools) do
         local reasons, invalidCount = {}, 0
@@ -205,15 +190,6 @@ local function StreakLimit()
     return limit
 end
 
-local function HasTag(tags, tag)
-    for _, current in ipairs(tags or {}) do
-        if current == tag then
-            return true
-        end
-    end
-    return false
-end
-
 -- Теги, которые уже limit раз подряд были у способностей слота: следующая
 -- способность с любым из них продлила бы серию сверх лимита
 local function ExhaustedTags(hero, slot, limit)
@@ -225,7 +201,7 @@ local function ExhaustedTags(hero, slot, limit)
     for _, tag in ipairs(history[#history]) do
         local streak = 0
         for index = #history, 1, -1 do
-            if not HasTag(history[index], tag) then
+            if not OSC_Util.Contains(history[index], tag) then
                 break
             end
             streak = streak + 1

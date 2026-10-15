@@ -3,6 +3,7 @@ require("osc/core/client_commands")
 require("osc/core/hero_state")
 require("osc/core/game_events")
 require("osc/core/gold")
+require("osc/core/util")
 
 OSC_Casino = OSC_Casino or {}
 
@@ -111,10 +112,7 @@ function OSC_Casino.ValidateOutcomes(outcomes)
         return false, "no outcomes configured"
     end
 
-    local known = {}
-    for _, symbol in ipairs(SYMBOLS) do
-        known[symbol] = true
-    end
+    local known = OSC_Util.ToSet(SYMBOLS)
 
     local seen, totalChance, expected = {}, 0, 0
     for index, outcome in ipairs(outcomes) do

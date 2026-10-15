@@ -299,8 +299,8 @@ return {
         local lina = H.NewHero({ name = "npc_dota_hero_lina" })
         local axe = H.NewHero({ name = "npc_dota_hero_axe" })
 
-        OSC_Abilities.GrantHeroExtras(lina)
-        OSC_Abilities.GrantHeroExtras(axe)
+        OSC_Abilities.SyncHeroExtras(lina)
+        OSC_Abilities.SyncHeroExtras(axe)
 
         local extra = lina:FindAbilityByName("test_extra")
         H.truthy(extra, "extra ability granted")

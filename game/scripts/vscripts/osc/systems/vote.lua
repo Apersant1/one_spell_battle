@@ -21,6 +21,7 @@
 require("osc/core/runtime_config")
 require("osc/core/client_commands")
 require("osc/core/game_events")
+require("osc/core/util")
 
 OSC_Vote = OSC_Vote or {
     open = false,
@@ -163,11 +164,7 @@ function OSC_Vote.Open()
     OSC_Vote.votes = {}
     OSC_Vote.result = nil
     PublishVote()
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            PublishBallot(playerID)
-        end
-    end
+    OSC_Util.ForEachPlayerID(PublishBallot)
     OSC_Logger.Log("Lobby vote opened")
     return true
 end

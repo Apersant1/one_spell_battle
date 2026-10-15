@@ -17,6 +17,7 @@ require("osc/core/hero_state")
 require("osc/core/client_commands")
 require("osc/core/game_events")
 require("osc/systems/ability_selection")
+require("osc/core/util")
 
 OSC_RotationChoice = OSC_RotationChoice or {}
 
@@ -108,15 +109,6 @@ function OSC_RotationChoice.OfferAll(round, deadline)
     end)
 end
 
-local function Contains(list, value)
-    for _, item in ipairs(list or {}) do
-        if item == value then
-            return true
-        end
-    end
-    return false
-end
-
 local function LogRefusal(senderKey, message)
     OSC_ClientCommands.LogRefusal("Rotation choice", senderKey, message)
 end
@@ -143,7 +135,7 @@ function OSC_RotationChoice.OnPick(sourceIndex, event)
         refusal = "no offer"
     elseif pending.round ~= cmd.args.round then
         refusal = "wrong round"
-    elseif type(ability) ~= "string" or not Contains(pending.options, ability) then
+    elseif type(ability) ~= "string" or not OSC_Util.Contains(pending.options, ability) then
         refusal = "not offered: " .. tostring(ability)
     end
 

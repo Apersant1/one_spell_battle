@@ -148,7 +148,7 @@ return {
         H.DefineAbility("ogre_magi_casino")
         local ogre = H.NewHero({ name = "npc_dota_hero_ogre_magi", playerID = 0 })
         H.players[0].hero = ogre
-        OSC_Abilities.GrantHeroExtras(ogre)
+        OSC_Abilities.SyncHeroExtras(ogre)
         H.eq(ogre:FindAbilityByName("ogre_magi_casino"), nil, "casino ability not granted")
         H.eq(OSC_Casino.SpawnMachine(ogre), false, "machine refused")
         H.eq(H.lastEvent("osc_hud_error").data.message, "osc_casino_err_disabled", "player told why")

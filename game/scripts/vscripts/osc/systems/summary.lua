@@ -18,6 +18,7 @@
 require("osc/core/runtime_config")
 require("osc/core/heroes")
 require("osc/core/game_events")
+require("osc/core/util")
 
 OSC_Summary = OSC_Summary or { published = false }
 
@@ -138,11 +139,7 @@ function OSC_Summary.Publish(statsPlayers)
         end
     end
     -- Игроки без единого события тоже есть в итогах (с нулями)
-    for playerID = 0, DOTA_MAX_TEAM_PLAYERS - 1 do
-        if PlayerResource:IsValidPlayerID(playerID) then
-            Add(playerID)
-        end
-    end
+    OSC_Util.ForEachPlayerID(Add)
 
     local players = {}
     for playerID, row in pairs(rows) do

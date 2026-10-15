@@ -23,6 +23,7 @@ require("osc/core/notifications")
 require("osc/core/anchor")
 require("osc/systems/ability_selection")
 require("osc/systems/abilities")
+require("osc/core/util")
 
 -- listening — обработчик entity_killed уже стоит (переживает script_reload)
 OSC_ChaosSphere = OSC_ChaosSphere or { listening = false }
@@ -45,15 +46,6 @@ end
 
 local function MinLevel()
     return OSC_Config.Get("CHAOS_SPHERE_MIN_LEVEL")
-end
-
-local function Contains(list, value)
-    for _, item in ipairs(list or {}) do
-        if item == value then
-            return true
-        end
-    end
-    return false
 end
 
 -- Сфера ещё у героя: в инвентаре или рюкзаке
@@ -212,7 +204,7 @@ function OSC_ChaosSphere.OnPick(sourceIndex, event)
         return
     end
     local ability = event and event.ability
-    if type(ability) ~= "string" or not Contains(offer.options, ability) then
+    if type(ability) ~= "string" or not OSC_Util.Contains(offer.options, ability) then
         LogRefusal(cmd.player_id, "not offered: " .. tostring(ability))
         return
     end

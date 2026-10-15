@@ -33,7 +33,7 @@ local function InitializeHeroAbilities(hero, source)
             -- Порядок выдачи задаёт слоты: способность первой встаёт на Q,
             -- собственные способности героя (казино Огра) — следом на W
             OSC_Abilities.GiveRandom(hero, true)
-            OSC_Abilities.GrantHeroExtras(hero)
+            OSC_Abilities.SyncHeroExtras(hero)
             if hero:GetLevel() >= 6 then
                 OSC_Abilities.GiveRandomUltimate(hero, true)
             end

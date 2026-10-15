@@ -1,4 +1,5 @@
 require("osc/core/runtime_config")
+require("osc/core/util")
 OSC_ChaosEvents:Register({
     id = "gold_rush",
     weight = 6,
@@ -16,16 +17,10 @@ OSC_ChaosEvents:Register({
         end
 
         local amount = OSC_Config.Get("CHAOS_ROUNDS.GOLD_RUSH_AMOUNT")
-        for playerID = 0, DOTA_MAX_PLAYERS - 1 do
-            if PlayerResource:IsValidPlayerID(playerID)
-                and PlayerResource:GetPlayer(playerID) then
-                PlayerResource:ModifyGold(
-                    playerID,
-                    amount,
-                    false,
-                    DOTA_ModifyGold_Unspecified
-                )
+        OSC_Util.ForEachPlayerID(function(playerID)
+            if PlayerResource:GetPlayer(playerID) then
+                PlayerResource:ModifyGold(playerID, amount, false, DOTA_ModifyGold_Unspecified)
             end
-        end
+        end)
     end,
 })

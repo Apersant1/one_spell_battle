@@ -75,12 +75,6 @@ function OSC_Abilities.StripHero(hero)
     end
 end
 
--- Выдаёт герою его способности из OSC_HERO_EXTRA_ABILITIES (казино Огра);
--- см. SyncHeroExtras ниже
-function OSC_Abilities.GrantHeroExtras(hero)
-    return OSC_Abilities.SyncHeroExtras(hero)
-end
-
 function OSC_Abilities.CalcLevel(heroLevel, ability)
     local target
     if ability:GetAbilityType() == ABILITY_TYPE_ULTIMATE then
@@ -144,6 +138,15 @@ local function RetireLinked(unit, name)
             RetireAbility(unit, sub)
         end
     end
+end
+
+-- Снимает способность, стоявшую в слоте (oldName), с её подспособностями
+local function RetireOld(unit, oldName)
+    local old = oldName and unit:FindAbilityByName(oldName)
+    if old then
+        RetireAbility(unit, old)
+    end
+    RetireLinked(unit, oldName)
 end
 
 -- Если та же способность ещё ждёт удаления после прошлой смены, убираем её
@@ -404,12 +407,7 @@ local function SwapCopyEntry(unit, owner, slot)
     local state = OSC_HeroState.Get(unit)
     local name = OSC_HeroState.Get(owner)[slot]
     if not name then
-        local oldName = state[slot]
-        local old = oldName and unit:FindAbilityByName(oldName)
-        if old then
-            RetireAbility(unit, old)
-        end
-        RetireLinked(unit, oldName)
+        RetireOld(unit, state[slot])
         state[slot] = nil
         return
     end
@@ -434,12 +432,7 @@ local function SyncCopySlot(unit, owner, slot, force)
     -- сам) — запоминаем её, а не добавляем вторую
     local existing = name and unit:FindAbilityByName(name)
     if existing and not existing.osc_retired and state[slot] ~= name then
-        local oldName = state[slot]
-        local old = oldName and unit:FindAbilityByName(oldName)
-        if old then
-            RetireAbility(unit, old)
-        end
-        RetireLinked(unit, oldName)
+        RetireOld(unit, state[slot])
         state[slot] = name
     end
     if state[slot] == name and HasAbility(unit, name) then
