@@ -165,6 +165,24 @@ def check_layout_includes():
     return errors
 
 
+def check_release_script():
+    """Выбор следующей версии в tools/release.mjs (сам выпуск не запускается)."""
+    script = (ROOT / "tools" / "release.mjs").as_uri()
+    code = f"""
+import {{ NextVersion as n }} from "{script}";
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const cases = [
+  [[1, 4, 0], "patch", [1, 4, 1]], [[1, 4, 2], "minor", [1, 5, 0]],
+  [[1, 4, 2], "major", [2, 0, 0]], [[1, 4, 0], "1.10.0", [1, 10, 0]],
+  [[1, 4, 0], "1.4.0", null], [[1, 4, 0], "1.3.9", null], [[1, 4, 0], "x", null],
+];
+const bad = cases.filter(([cur, kind, want]) => !eq(n(cur, kind), want));
+if (bad.length) {{ console.log(JSON.stringify(bad)); process.exit(1); }}
+"""
+    result = subprocess.run(["node", "--input-type=module", "-e", code], capture_output=True, text=True)
+    return [] if result.returncode == 0 else [f"NextVersion: {result.stdout.strip() or result.stderr.strip()}"]
+
+
 def localization_keys(path):
     return set(re.findall(r'^\s*"([^"]+)"\s+"', read_text(path), re.M))
 
@@ -253,6 +271,7 @@ def main():
         ("Localization", check_localization),
         ("Client-server contract", check_contract),
         ("Layout includes", check_layout_includes),
+        ("Release script", check_release_script),
         ("Config reads", check_config_reads),
     ):
         errors = check()

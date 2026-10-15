@@ -8,7 +8,8 @@
     "lint": "eslint . && prettier --check \"src/panorama/**/*.{ts,tsx}\"",
     "format": "prettier --write \"src/panorama/**/*.{ts,tsx}\" && eslint --fix .",
     "compile": "npm run build && node tools/dota.mjs compile",
-    "launch": "node tools/dota.mjs launch"
+    "launch": "node tools/dota.mjs launch",
+    "release": "node tools/release.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
