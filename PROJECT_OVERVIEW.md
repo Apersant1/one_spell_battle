@@ -506,7 +506,7 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
   `help/` (окно, страницы тем, кирпичики страниц);
 - `vote/`, `team_select/`, `end_screen/` — окна `osc_vote.xml`,
   `osc_team_select.xml`, `osc_end_screen.xml` (инициализируются сами). Выбор
-  команд разложен по частям: экран, карточки команд, правила матча, орбита и
+  команд разложен по частям: экран, карточки команд, орбита и
   перетаскивание игроков хостом (`osc_team_move`), родной чат Dota.
 
 Типы Panorama API — из `@moddota/panorama-types`. `npm install`, затем

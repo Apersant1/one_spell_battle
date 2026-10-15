@@ -1,7 +1,7 @@
 namespace OSC.TeamSelect {
   // Экран выбора команд (React, свой контекст GameSetup). Части: карточки —
-  // osc_team_select_cards.tsx, правила — osc_team_select_rules.tsx, орбита и
-  // перетаскивание — osc_team_select_lobby.ts, родной чат — osc_team_select_chat.ts.
+  // osc_team_select_cards.tsx, орбита и перетаскивание — osc_team_select_lobby.ts,
+  // родной чат — osc_team_select_chat.ts.
   // Состояние берём у движка (Game.*) и перерисовываем по его событиям.
   var CFG = {
     tick: 0.03,
@@ -65,14 +65,12 @@ namespace OSC.TeamSelect {
       Sound("teamCancel");
     },
 
+    // Одна кнопка вместо «Перемешать» и «Автораспределения»: сервер
+    // раскладывает всех, включая игроков без команды, поровну и случайно
+    // (osc/systems/team_shuffle.lua)
     shuffle: function () {
       GameEvents.SendCustomGameEventToServer("osc_team_shuffle", {});
       Sound("teamShuffle");
-    },
-
-    autoAssign: function () {
-      Game.AutoAssignPlayersToTeams();
-      Sound("teamAutoAssign");
     },
 
     toggleStart: function () {
@@ -209,16 +207,14 @@ namespace OSC.TeamSelect {
 
   // ================= Кнопки =================
 
-  function Footer(props: { view: TeamView; host: boolean; unassigned: number }) {
+  function Footer(props: { view: TeamView; host: boolean; unassigned: number; inTeam: boolean }) {
     var locked = props.view.locked;
-    var inTeam =
-      props.view.localTeam !== -1 && props.view.localTeam !== DOTATeam_t.DOTA_TEAM_NOTEAM;
     return (
       <Panel id="Footer">
         <Label id="LockedBanner" text={$.Localize("#osc_ts_locked_banner")} />
         <Panel id="FooterDivider" hittest={false} />
         <Panel id="HostControls">
-          {inTeam && !locked && (
+          {props.inTeam && !locked && (
             <Button id="LeaveButton" className="LBButton Ghost" onactivate={Actions.leave}>
               <Label text={$.Localize("#osc_ts_btn_leave")} />
             </Button>
@@ -232,14 +228,6 @@ namespace OSC.TeamSelect {
                 onactivate={Actions.shuffle}
               >
                 <Label text={$.Localize("#osc_ts_btn_shuffle")} />
-              </Button>
-              <Button
-                id="AutoButton"
-                className="LBButton Ghost"
-                enabled={!locked}
-                onactivate={Actions.autoAssign}
-              >
-                <Label text={$.Localize("#osc_ts_btn_auto")} />
               </Button>
               <Button
                 id="StartButton"
@@ -313,10 +301,14 @@ namespace OSC.TeamSelect {
               );
             })}
           </Panel>
-          <Footer view={view} host={host} unassigned={unassigned} />
+          <Footer
+            view={view}
+            host={host}
+            unassigned={unassigned}
+            inTeam={teams.indexOf(view.localTeam as DOTATeam_t) >= 0}
+          />
         </Panel>
 
-        <Rules />
         <Timer />
 
         {/* Игроки без команды: орбита в правом нижнем углу, пузыри — Lobby */}

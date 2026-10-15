@@ -12,7 +12,6 @@
     <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_chat.js" />
     <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_lobby.js" />
     <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_cards.js" />
-    <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_rules.js" />
     <!-- Последним: в конце файла сам вызывает Init -->
     <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select.js" />
   </scripts>
