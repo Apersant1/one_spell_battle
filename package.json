@@ -5,7 +5,9 @@
     "build": "tsc --project src/panorama/tsconfig.json",
     "dev": "tsc --project src/panorama/tsconfig.json --watch",
     "lint": "eslint . && prettier --check \"src/panorama/**/*.ts\"",
-    "format": "prettier --write \"src/panorama/**/*.ts\" && eslint --fix ."
+    "format": "prettier --write \"src/panorama/**/*.ts\" && eslint --fix .",
+    "compile": "npm run build && node tools/dota.mjs compile",
+    "launch": "node tools/dota.mjs launch"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

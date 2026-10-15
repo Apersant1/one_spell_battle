@@ -664,9 +664,14 @@ Panorama отправляет серверу действия пользоват
 - Контракт клиент–сервер (net table, события): `src/panorama/osc_types.d.ts`.
 - Внешний вид HUD: `content/panorama/styles/custom_game/`.
 
-Редактируйте исходники в `content/`, `game/scripts/` и `src/panorama/`;
-перед компиляцией ресурсов соберите Panorama (`npm run build`), затем
-обновляйте игровые ресурсы средствами Dota 2 Workshop Tools/Resource Compiler.
+Редактируйте исходники в `content/`, `game/scripts/` и `src/panorama/`.
+`npm run compile` собирает TypeScript и компилирует Panorama
+(`resourcecompiler` по разметке из `content/panorama/layout`, вместе с её
+скриптами, стилями и картинками; `npm run compile -- -f` — принудительно).
+`npm run launch` открывает Workshop Tools и сразу запускает игру. Папка Dota
+ищется по Steam, переопределяется переменной `DOTA_PATH`
+(`tools/dota.mjs`). `npm run lint` / `npm run format` — ESLint и Prettier для
+`src/panorama`. Остальные ресурсы (карты, частицы) — средствами Workshop Tools.
 
 ## Офлайн-тесты
 
