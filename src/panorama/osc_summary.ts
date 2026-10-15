@@ -23,17 +23,6 @@ namespace OSC {
       return text && text !== token ? text : fallback;
     }
 
-    function SortedValues<T>(raw: { [key: number]: T } | null | undefined): T[] {
-      if (!raw) return [];
-      return Object.keys(raw)
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          return raw[Number(key)];
-        });
-    }
-
     // Данные с сервера — пропускаем только имя юнита
     function SafeHeroName(value: string | undefined) {
       var name = String(value || "");
@@ -97,7 +86,7 @@ namespace OSC {
     function RenderTitles(data: SummaryData) {
       var container = $("#SummaryTitles");
       container.RemoveAndDeleteChildren();
-      var titles = SortedValues(data.titles).filter(function (title) {
+      var titles = OSC.Util.LuaArray(data.titles).filter(function (title) {
         return title && title.id;
       });
       container.SetHasClass("Hidden", titles.length === 0);

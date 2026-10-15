@@ -32,40 +32,12 @@ namespace OSC {
       return `choice_${Players.GetLocalPlayer()}`;
     }
 
-    // Lua-таблица { "1": {...}, "2": {...} } -> массив по возрастанию ключей
-    function ToOptionList(raw: { [key: number]: Partial<OSCAbilityOption> } | null | undefined): OSCAbilityOption[] {
-      if (!raw) return [];
-      return Object.keys(raw)
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          var option = raw[Number(key)] || {};
-          return {
-            name: String(option.name || ""),
-            label: String(option.label || ""),
-            rarity: String(option.rarity || "common"),
-          };
-        })
-        .filter(function (option) {
-          return option.name !== "";
-        });
-    }
-
     function OptionsSignature(list: OSCAbilityOption[]) {
       return list
         .map(function (option) {
           return option.name;
         })
         .join(",");
-    }
-
-    // Имя способности из локализации Dota; если ключа нет — подпись из пула
-    function AbilityDisplayName(option: OSCAbilityOption) {
-      var token = "#DOTA_Tooltip_Ability_" + option.name;
-      var localized = $.Localize(token);
-      if (localized && localized !== token) return localized;
-      return option.label || option.name;
     }
 
     function CancelHide() {
@@ -180,7 +152,7 @@ namespace OSC {
       image.abilityname = option.name;
       image.hittest = false;
 
-      var displayName = AbilityDisplayName(option);
+      var displayName = OSC.Util.AbilityName(option.name, option.label);
       var nameLabel = $.CreatePanel("Label", card, "");
       nameLabel.AddClass("ChoiceName");
       nameLabel.AddClass("OSCTextSmall");
@@ -212,7 +184,7 @@ namespace OSC {
     function ApplyOffer(data: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_offer"]>, picked: string | undefined) {
       var newRound = Number(data.round);
       var newDeadline = Number(data.deadline) || 0;
-      var list = ToOptionList(data.options);
+      var list = OSC.Util.AbilityOptions(data.options);
       var now = Game.GetGameTime();
 
       if (list.length === 0) {
@@ -286,8 +258,7 @@ namespace OSC {
       ScheduleHide(CHOSEN_FLASH);
     }
 
-    function OnNetTableChanged(tableName: string, key: string, data: any) {
-      if (key !== NetTableKey()) return;
+    function OnChoiceState(data: NetworkedData<OSCRotationChoiceState> | null) {
       if (!data) {
         OnOptionsCleared(NaN);
         return;
@@ -321,11 +292,8 @@ namespace OSC {
       ($("#ChoiceHeader") as LabelPanel).text = $.Localize("#osc_hud_choice_header");
       GameEvents.Subscribe("osc_rotation_choice_offer", OnOffer);
       GameEvents.Subscribe("osc_rotation_choice_closed", OnClosed);
-      CustomNetTables.SubscribeNetTableListener("osc_state", OnNetTableChanged);
-
-      // Переподключение: предложение могло прийти, пока HUD не был загружен
-      var data = CustomNetTables.GetTableValue("osc_state", NetTableKey());
-      if (data) ApplyOffer(data, data.picked);
+      // Сразу и текущее значение: предложение могло прийти, пока HUD не был загружен
+      OSC.Net.Watch(NetTableKey, OnChoiceState);
 
       OSC.Util.Loop(UPDATE_INTERVAL, Update);
     }

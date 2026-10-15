@@ -40,6 +40,64 @@ namespace OSC {
         $.Schedule(interval, tick);
       })();
     },
+
+    // Lua-массив приходит объектом { "1": ..., "2": ... } -> массив по порядку ключей
+    LuaArray: function <T>(table: { [key: number]: T } | null | undefined): T[] {
+      if (!table) return [];
+      return Object.keys(table)
+        .sort(function (a, b) {
+          return Number(a) - Number(b);
+        })
+        .map(function (key) {
+          return table[Number(key)];
+        });
+    },
+
+    // Варианты способностей с сервера (выбор из трёх, сфера хаоса); пустые имена отбрасываются
+    AbilityOptions: function (
+      raw: { [key: number]: Partial<OSCAbilityOption> } | null | undefined,
+    ): OSCAbilityOption[] {
+      return Util.LuaArray(raw)
+        .map(function (option) {
+          option = option || {};
+          return {
+            name: String(option.name || ""),
+            label: String(option.label || ""),
+            rarity: String(option.rarity || "common"),
+          };
+        })
+        .filter(function (option) {
+          return option.name !== "";
+        });
+    },
+
+    // Имя способности из локализации Dota; если ключа нет — подпись из пула
+    AbilityName: function (name: string, label: string) {
+      var token = "#DOTA_Tooltip_Ability_" + name;
+      var localized = $.Localize(token);
+      if (localized && localized !== token) return localized;
+      return label || name;
+    },
+  };
+
+  type OSCState = CustomNetTableDeclarations["osc_state"];
+
+  export const Net = {
+    // fn(значение) сразу (переподключение, поздняя загрузка HUD) и при каждом
+    // изменении ключа osc_state. key-функция — для ключей, зависящих от игрока
+    // или команды: они читаются заново на каждое изменение.
+    Watch: function <K extends keyof OSCState>(
+      key: K | (() => K),
+      fn: (value: NetworkedData<OSCState[K]> | null) => void,
+    ) {
+      function current() {
+        return typeof key === "function" ? key() : key;
+      }
+      CustomNetTables.SubscribeNetTableListener("osc_state", function (tableName, changed, value) {
+        if (changed === current()) fn(value as NetworkedData<OSCState[K]>);
+      });
+      fn(CustomNetTables.GetTableValue("osc_state", current()));
+    },
   };
 
   // Подсказки об отказе (казино, «Якорь» и др.): сервер шлёт osc_hud_error с

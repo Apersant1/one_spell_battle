@@ -15,18 +15,6 @@ namespace OSC {
       return `shop_${Players.GetTeam(Players.GetLocalPlayer())}`;
     }
 
-    // Lua-массив приходит объектом { "1": ..., "2": ... }
-    function ToList<T>(table: { [key: number]: T } | null | undefined): T[] {
-      if (!table) return [];
-      return Object.keys(table)
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          return table[Number(key)];
-        });
-    }
-
     // Только подсветка: золото и остаток проверяет сервер, клик по
     // недоступному товару вернёт его ошибку
     function UpdateTiles() {
@@ -85,7 +73,7 @@ namespace OSC {
       var list = $("#ChaosShopItems");
       list.RemoveAndDeleteChildren();
       rows = [];
-      ToList(data && data.items).forEach(function (item) {
+      OSC.Util.LuaArray(data && data.items).forEach(function (item) {
         BuildTile(list, item);
       });
       UpdateTiles();

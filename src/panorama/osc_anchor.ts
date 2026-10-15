@@ -31,17 +31,12 @@ namespace OSC {
       $.DispatchEvent("DOTAHideTitleTextTooltip", $("#AnchorBadge"));
     }
 
-    function OnNetTableChanged(tableName: string, key: string, data: any) {
-      if (key === NetTableKey()) Apply(data);
-    }
-
     function Init() {
       var badge = $("#AnchorBadge");
       badge.SetPanelEvent("onmouseover", ShowTooltip);
       badge.SetPanelEvent("onmouseout", HideTooltip);
-      CustomNetTables.SubscribeNetTableListener("osc_state", OnNetTableChanged);
-      // Переподключение: якорь мог быть поставлен до загрузки HUD
-      Apply(CustomNetTables.GetTableValue("osc_state", NetTableKey()));
+      // Сразу и текущее значение: якорь мог быть поставлен до загрузки HUD
+      OSC.Net.Watch(NetTableKey, Apply);
     }
 
     return { Init: Init };

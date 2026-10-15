@@ -33,27 +33,15 @@ namespace OSC {
       return text && text !== token ? text : fallback;
     }
 
-    // Lua-таблица { "1": x, "2": y } -> массив по возрастанию ключей
-    function SortedValues<T>(raw: { [key: number]: T } | null | undefined): T[] {
-      if (!raw) return [];
-      return Object.keys(raw)
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          return raw[Number(key)];
-        });
-    }
-
     function Questions() {
-      return SortedValues(vote && vote.questions)
+      return OSC.Util.LuaArray(vote && vote.questions)
         .filter(function (q) {
           return q && q.id;
         })
         .map(function (q) {
           return {
             id: String(q.id),
-            options: SortedValues(q.options).map(String),
+            options: OSC.Util.LuaArray(q.options).map(String),
             def: q["default"] !== undefined ? String(q["default"]) : "",
           };
         });
@@ -232,24 +220,18 @@ namespace OSC {
       Update();
     }
 
-    function OnNetTableChanged(tableName: string, key: string, data: any) {
-      if (key === "vote") {
-        vote = data;
-        Refresh();
-        Update();
-      } else if (key === MyVotesKey()) {
-        OnMyVotes(data);
-      }
+    function OnVote(data: NetworkedData<OSCVoteState> | null) {
+      vote = data;
+      Refresh();
+      Update();
     }
 
     function Init() {
-      CustomNetTables.SubscribeNetTableListener("osc_state", OnNetTableChanged);
-      // Переподключение / поздняя загрузка: читаем текущее состояние
-      vote = CustomNetTables.GetTableValue("osc_state", "vote");
-      serverVotes = CustomNetTables.GetTableValue("osc_state", MyVotesKey()) || {};
       ($("#VoteTitle") as LabelPanel).text = $.Localize("#osc_hud_vote_title");
       ($("#VoteHint") as LabelPanel).text = $.Localize("#osc_hud_vote_hint");
-      Refresh();
+      // Watch сразу отдаёт текущее состояние: переподключение / поздняя загрузка
+      OSC.Net.Watch("vote", OnVote);
+      OSC.Net.Watch(MyVotesKey, OnMyVotes);
       OSC.Util.Loop(STATE_POLL, Update);
     }
 

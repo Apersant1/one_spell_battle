@@ -7,34 +7,6 @@ namespace OSC {
   export const ChaosSphere = (function () {
     var ultimateAllowed = false;
 
-    // Lua-таблица { "1": {...}, "2": {...} } -> массив по возрастанию ключей
-    function ToOptionList(raw: { [key: number]: Partial<OSCAbilityOption> } | null | undefined): OSCAbilityOption[] {
-      if (!raw) return [];
-      return Object.keys(raw)
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          var option = raw[Number(key)] || {};
-          return {
-            name: String(option.name || ""),
-            label: String(option.label || ""),
-            rarity: String(option.rarity || "common"),
-          };
-        })
-        .filter(function (option) {
-          return option.name !== "";
-        });
-    }
-
-    // Имя способности из локализации Dota; если ключа нет — подпись из пула
-    function AbilityDisplayName(option: OSCAbilityOption) {
-      var token = "#DOTA_Tooltip_Ability_" + option.name;
-      var localized = $.Localize(token);
-      if (localized && localized !== token) return localized;
-      return option.label || option.name;
-    }
-
     function Send(mode: string, ability?: string) {
       GameEvents.SendCustomGameEventToServer("osc_sphere_pick", {
         mode: mode,
@@ -64,7 +36,7 @@ namespace OSC {
       nameLabel.AddClass("ChoiceName");
       nameLabel.AddClass("OSCTextSmall");
       nameLabel.AddClass("OSCBold");
-      nameLabel.text = AbilityDisplayName(option);
+      nameLabel.text = OSC.Util.AbilityName(option.name, option.label);
       nameLabel.hittest = false;
 
       card.SetPanelEvent("onactivate", function () {
@@ -81,7 +53,7 @@ namespace OSC {
 
     function OnOffer(event: NetworkedData<CustomGameEventDeclarations["osc_sphere_offer"]>) {
       if (!event) return;
-      var options = ToOptionList(event.options);
+      var options = OSC.Util.AbilityOptions(event.options);
       var levelOk = Number(event.ultimate_allowed) === 1;
       ultimateAllowed = levelOk && options.length > 0;
 

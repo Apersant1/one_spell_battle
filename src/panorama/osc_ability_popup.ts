@@ -18,14 +18,9 @@ namespace OSC {
       });
     }
 
-    // Имя способности из локализации Dota; если ключа нет — подпись из пула
-    function AbilityDisplayName(event: NetworkedData<CustomGameEventDeclarations["osc_ability_changed"]>) {
-      var token = "#DOTA_Tooltip_Ability_" + event.ability;
-      var localized = $.Localize(token);
-      return localized && localized !== token ? localized : event.label;
-    }
-
-    function OnAbilityChanged(event: NetworkedData<CustomGameEventDeclarations["osc_ability_changed"]>) {
+    function OnAbilityChanged(
+      event: NetworkedData<CustomGameEventDeclarations["osc_ability_changed"]>,
+    ) {
       if (Number(event.player_id) !== Players.GetLocalPlayer()) return;
 
       var popup = $("#Popup");
@@ -38,14 +33,18 @@ namespace OSC {
       flipHandle = $.Schedule(FLIP_DURATION, function () {
         flipHandle = null;
         ($("#PopupIcon") as AbilityImage).abilityname = event.ability;
-        ($("#PopupTitle") as LabelPanel).text = $.Localize("#osc_hud_popup_title");
-        ($("#PopupName") as LabelPanel).text = AbilityDisplayName(event);
+        ($("#PopupTitle") as LabelPanel).text = $.Localize(
+          "#osc_hud_popup_title",
+        );
+        ($("#PopupName") as LabelPanel).text = OSC.Util.AbilityName(event.ability, event.label);
         card.RemoveClass("FlipHidden"); // новая разворачивается
         Flash();
         card.SetHasClass("RarityRare", event.rarity === "rare");
         card.SetHasClass("RarityLegendary", event.rarity === "legendary");
         OSC.Util.PlaySound(
-          event.rarity === "legendary" ? OSC.Sounds.legendaryAbility : OSC.Sounds.abilityChanged,
+          event.rarity === "legendary"
+            ? OSC.Sounds.legendaryAbility
+            : OSC.Sounds.abilityChanged,
         );
       });
 

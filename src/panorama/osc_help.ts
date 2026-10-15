@@ -70,18 +70,6 @@ namespace OSC {
       return (CustomNetTables.GetTableValue("osc_state", key) || {}) as Partial<NetworkedData<OSCState[K]>>;
     }
 
-    // Lua-массив приходит объектом { "1": ..., "2": ... }
-    function ToList<T>(table: { [key: number]: T } | null | undefined): T[] {
-      if (!table) return [];
-      return Object.keys(table)
-        .sort(function (a, b) {
-          return Number(a) - Number(b);
-        })
-        .map(function (key) {
-          return table[Number(key)];
-        });
-    }
-
     // Локализация с переменными {s:имя}: $.Localize без панели вырезает их,
     // поэтому значения кладём dialog variables на саму панель справки
     function L(key: string, vars?: Record<string, unknown>) {
@@ -435,7 +423,7 @@ namespace OSC {
           "osc_hud_help_anchor_col_rotations",
           "osc_hud_help_col_cost",
         ],
-        ToList(anchor.levels).map(function (level, index) {
+        OSC.Util.LuaArray(anchor.levels).map(function (level, index) {
           return {
             icon: { item: level.name },
             cells: [ItemName(level.name), String(index + 1), String(level.cost)],
@@ -446,7 +434,7 @@ namespace OSC {
     }
 
     function BuildShop(page: Panel) {
-      var items = ToList(
+      var items = OSC.Util.LuaArray(
         Table(`shop_${Players.GetTeam(Players.GetLocalPlayer())}`).items,
       );
       if (items.length === 0) {
@@ -486,7 +474,7 @@ namespace OSC {
       });
       Cards(
         page,
-        ToList(chaos.events).map(function (ev) {
+        OSC.Util.LuaArray(chaos.events).map(function (ev) {
           return { title: L(ev.title_key), text: L(ev.desc_key, ev.params) };
         }),
         3,
@@ -506,7 +494,7 @@ namespace OSC {
       if (Number(casino.item_bets) === 1) {
         Text(page, "osc_hud_help_casino_items", { pct: casino.item_value_pct });
       }
-      var outcomes = ToList(casino.outcomes);
+      var outcomes = OSC.Util.LuaArray(casino.outcomes);
       var win = 0;
       var expected = 0;
       var rows: { icon?: HelpIcon; cells: string[] }[] = outcomes.map(function (outcome) {
@@ -574,7 +562,7 @@ namespace OSC {
       Text(page, "osc_hud_help_couriers_text", { count: couriers.count });
       Cards(
         page,
-        ToList(couriers.abilities).map(function (ability) {
+        OSC.Util.LuaArray(couriers.abilities).map(function (ability) {
           var interval = ability.interval_min + "–" + ability.interval_max;
           return {
             title: $.Localize("#" + ability.name_token),
@@ -607,7 +595,7 @@ namespace OSC {
       Text(page, "osc_hud_help_summary_text");
       Cards(
         page,
-        ToList(summary.titles).map(function (id) {
+        OSC.Util.LuaArray(summary.titles).map(function (id) {
           return {
             title: L("osc_hud_title_" + id),
             text: L("osc_hud_help_title_" + id),
