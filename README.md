@@ -48,6 +48,7 @@ npm run launch
 | `npm run lint` / `npm run format` | ESLint и Prettier для `src/panorama` |
 | `python tools/tests/run_tests.py` | офлайн-тесты: Lua, типы, локализация, контракт клиент–сервер ([подробнее](tools/tests/README.md)) |
 | `python tools/hud_assets.py` | пересобрать подложки и рамки HUD из исходных картинок |
+| `npm run release -- minor` | выпуск версии: проверки, новая версия в `config.lua`, коммит и тег (`patch` / `minor` / `major` / `X.Y.Z`; `--dry-run` — только показать) |
 
 Python-пакеты для тестов и картинок: `pip install -r tools/requirements.txt`.
 

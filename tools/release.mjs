@@ -21,7 +21,12 @@ function fail(message) {
 }
 
 function git(...args) {
-  return execFileSync("git", args, { cwd: REPO, encoding: "utf8" }).trim();
+  // stderr не показываем: «нет тегов» — обычная ситуация до первого выпуска
+  return execFileSync("git", args, {
+    cwd: REPO,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
 }
 
 function step(title, exe, args) {
