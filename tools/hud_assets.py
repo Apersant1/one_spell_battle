@@ -154,6 +154,8 @@ save("help_wide_shadow.png", help_wide((2560, 1600)))
 # Итоги матча: два окна рядом (пьедестал 700x830 и статистика 980x830 на экране)
 save("summary_podium_shadow.png", help_wide((1400, 1660), 0.7))
 save("summary_stats_shadow.png", help_wide((1960, 1660), 0.7))
+# Окно сферы хаоса: 640x420 на экране, рамка 0.6
+save("sphere_bg_shadow.png", help_wide((1280, 840), 0.6))
 
 # Плашка таймера: зоны — участки рамки между гнездом, центральным камнем и правым концом
 for src_name, zones in [

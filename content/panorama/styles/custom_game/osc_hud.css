@@ -936,12 +936,19 @@
 }
 
 /* ---------- Сфера хаоса ---------- */
-/* Карточки — классы выбора из трёх (.ChoiceCard и рамки редкости) */
+/* sphere_bg_shadow 1280x840 в 2x (tools/hud_assets.py): рамка справки в
+   масштабе 0.6, поля — как у #HelpPanel, умноженные на 0.6. Карточки
+   ультимейтов — классы выбора из трёх (.ChoiceCard и рамки редкости) */
 #ChaosSpherePanel {
+  width: 640px;
+  height: 420px;
+  padding: 74px 70px 56px 70px;
   horizontal-align: center;
   vertical-align: center;
-  padding: 16px;
   flow-children: down;
+  background-image: url("file://{images}/custom_game/hud/sphere_bg_shadow.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   visibility: collapse;
 }
 
@@ -952,54 +959,142 @@
   animation-timing-function: ease-out;
 }
 
-#ChaosSphereTitle {
+#ChaosSphereHeader {
   horizontal-align: center;
-  margin-bottom: 12px;
+  flow-children: right;
+}
+
+/* Иконка сферы мерцает фиолетовым, как сам предмет */
+@keyframes 'OSCSphereGlow' {
+  0% {
+    wash-color: #bd72e800;
+  }
+  50% {
+    wash-color: #bd72e855;
+  }
+  100% {
+    wash-color: #bd72e800;
+  }
+}
+
+#ChaosSphereIcon {
+  width: 52px;
+  height: 38px;
+  vertical-align: center;
+  margin-right: 12px;
+  border: 1px solid #bd72e8;
+  border-radius: 4px;
+  animation-name: OSCSphereGlow;
+  animation-duration: 2.4s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+#ChaosSphereTitle {
+  vertical-align: center;
+  font-size: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 #ChaosSphereModes {
   horizontal-align: center;
+  margin-top: 14px;
   flow-children: right;
 }
 
-#ChaosSphereModes Button {
-  min-width: 180px;
-  min-height: 40px;
+/* Плитка режима: иконка в рамке редкости, название, описание */
+.SphereMode {
+  width: 236px;
+  height: 196px;
   margin: 0px 6px;
+  padding: 10px 12px;
+  flow-children: down;
+  background-color: gradient(linear, 0% 0%, 0% 100%, from(#2a1838e6), to(#0c0912e6));
+  border: 1px solid #bd72e860;
+  border-radius: 6px;
+  transition-property: transform, border, background-color;
+  transition-duration: 0.15s;
 }
 
-#ChaosSphereModes Button:disabled {
-  opacity: 0.45;
+.SphereMode:hover {
+  transform: translateY(-3px);
+  border: 1px solid #efc96c;
+  background-color: gradient(linear, 0% 0%, 0% 100%, from(#3a2350e6), to(#140e1ce6));
 }
 
-#ChaosSphereLevelHint {
+.SphereMode:disabled {
+  saturation: 0.2;
+  brightness: 0.7;
+}
+
+.SphereMode:disabled:hover {
+  transform: none;
+  border: 1px solid #bd72e860;
+}
+
+/* Рамка редкости 92x92 вокруг иконки 56px — как у .ChoiceCard */
+.SphereModeFrame {
+  width: 92px;
+  height: 92px;
   horizontal-align: center;
+  background-size: 100% 100%;
+}
+
+.SphereModeFrame.Legendary {
+  background-image: url("file://{images}/custom_game/hud/ability_border_legendary.png");
+}
+
+.SphereModeFrame.Rare {
+  background-image: url("file://{images}/custom_game/hud/ability_border_rare.png");
+}
+
+.SphereModeIcon {
+  width: 56px;
+  height: 56px;
+  horizontal-align: center;
+  vertical-align: center;
+}
+
+.SphereModeTitle {
+  width: 100%;
   margin-top: 6px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: bold;
+  color: #efc96c;
+  text-shadow: #000000 1px 1px 3px 0px;
 }
 
-#ChaosSphereLevelHint.Hidden,
-#ChaosSphereChoose,
-#ChaosSphereCards,
-#ChaosSpherePanel.Cards #ChaosSphereModes,
-#ChaosSpherePanel.Cards #ChaosSphereLevelHint {
-  visibility: collapse;
+.SphereModeText {
+  width: 100%;
+  margin-top: 4px;
+  text-align: center;
+  font-size: 13px;
+  color: #d5c9df;
 }
 
-#ChaosSpherePanel.Cards #ChaosSphereChoose {
-  visibility: visible;
+/* Режим закрыт до нужного уровня — вместо описания причина */
+.SphereModeText.Lock {
+  color: #ff9a8a;
+  font-weight: bold;
+}
+
+#ChaosSphereCards {
   horizontal-align: center;
-  margin-bottom: 6px;
-}
-
-#ChaosSpherePanel.Cards #ChaosSphereCards {
-  visibility: visible;
-  horizontal-align: center;
+  margin-top: 18px;
   flow-children: right;
 }
 
-#ChaosSphereCancel {
+#ChaosSphereBack {
   horizontal-align: center;
-  margin-top: 12px;
+  margin-top: 16px;
+  min-width: 140px;
+  min-height: 36px;
+}
+
+#ChaosSphereBack Label {
+  font-size: 16px;
 }
 
 /* ---------- Хаос-раунд ---------- */
@@ -2435,6 +2530,7 @@
    margin-bottom возвращает заголовок на место (absolute в Panorama нет) */
 #HelpClose,
 #ChaosShopClose,
+#ChaosSphereClose,
 #CasinoCloseButton {
   width: 42px;
   height: 42px;
@@ -2454,6 +2550,11 @@
   margin-right: -8px;
 }
 
+#ChaosSphereClose {
+  margin-top: -14px;
+  margin-right: -6px;
+}
+
 #CasinoCloseButton {
   margin-top: 10px;
   margin-right: -1px;
@@ -2461,6 +2562,7 @@
 
 #HelpClose Label,
 #ChaosShopClose Label,
+#ChaosSphereClose Label,
 #CasinoCloseButton Label {
   font-size: 40px;
   color: #efc96c;
@@ -2469,6 +2571,7 @@
 
 #HelpClose:hover Label,
 #ChaosShopClose:hover Label,
+#ChaosSphereClose:hover Label,
 #CasinoCloseButton:hover Label {
   color: #ffffff;
 }
