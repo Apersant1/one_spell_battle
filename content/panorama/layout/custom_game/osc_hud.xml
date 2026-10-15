@@ -10,12 +10,13 @@
         <include src="file://{resources}/scripts/custom_game/osc_timer.js" />
         <include src="file://{resources}/scripts/custom_game/osc_chaos_round.js" />
         <include src="file://{resources}/scripts/custom_game/osc_ability_popup.js" />
-        <include src="file://{resources}/scripts/custom_game/osc_rotation_choice.js" />
-        <include src="file://{resources}/scripts/custom_game/osc_chaos_sphere.js" />
-        <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <!-- React (UMD, кладёт npm run build) — до модулей на React -->
         <include src="file://{resources}/scripts/custom_game/libraries/react.js" />
         <include src="file://{resources}/scripts/custom_game/libraries/react-panorama.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_components.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_rotation_choice.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_chaos_sphere.js" />
+        <include src="file://{resources}/scripts/custom_game/osc_anchor.js" />
         <include src="file://{resources}/scripts/custom_game/osc_casino.js" />
         <include src="file://{resources}/scripts/custom_game/osc_chaos_shop.js" />
         <include src="file://{resources}/scripts/custom_game/osc_help.js" />
@@ -127,41 +128,11 @@
              магазином и панель товаров -->
         <Panel id="ChaosShopRoot" hittest="false" />
 
-        <!-- Сфера хаоса (osc_chaos_sphere.js): выбор режима, затем карточки
-             ультимейтов (создаются из JS) -->
-        <Panel id="ChaosSpherePanel" class="OSCSurface OSCChaos" hittest="true">
-            <Label id="ChaosSphereTitle" class="OSCTextTitle OSCGold" text="#osc_sphere_title" />
-            <Panel id="ChaosSphereModes">
-                <Button id="ChaosSphereUltimateButton" class="OSCButton OSCButtonPrimary"
-                    onactivate="OSC.ChaosSphere.ChooseUltimate()">
-                    <Label text="#osc_sphere_mode_ultimate" />
-                </Button>
-                <Button id="ChaosSphereEnemiesButton" class="OSCButton OSCButtonPrimary"
-                    onactivate="OSC.ChaosSphere.ChooseEnemies()">
-                    <Label text="#osc_sphere_mode_enemies" />
-                </Button>
-            </Panel>
-            <Label id="ChaosSphereLevelHint" class="OSCTextSmall OSCMuted" text="" />
-            <Label id="ChaosSphereChoose" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
-                text="#osc_sphere_choose" />
-            <Panel id="ChaosSphereCards" />
-            <Button id="ChaosSphereCancel" class="OSCButton" onactivate="OSC.ChaosSphere.Cancel()">
-                <Label text="#osc_sphere_cancel" />
-            </Button>
-        </Panel>
+        <!-- Сфера хаоса (osc_chaos_sphere.tsx, React): выбор режима, затем карточки ультимейтов -->
+        <Panel id="ChaosSphereRoot" hittest="false" />
 
-        <!-- Выбор следующей способности: последним, поверх затемнения казино
-             (иначе #CasinoPanel перехватывает клики). Кликабельны только карточки -->
-        <Panel id="ChoicePanel" class="OSCSurface OSCChaos" hittest="false">
-            <Panel id="ChoiceHeaderRow" hittest="false">
-                <Label id="ChoiceHeader" class="OSCTextSmall OSCCaps OSCBold OSCChaosText"
-                    hittest="false" />
-                <Label id="ChoiceTimer" class="OSCTextSmall OSCBold OSCGold" hittest="false" />
-            </Panel>
-            <Panel id="ChoiceCards" hittest="false" />
-            <Panel id="ChoiceProgress" hittest="false">
-                <Panel id="ChoiceProgressFill" hittest="false" />
-            </Panel>
-        </Panel>
+        <!-- Выбор следующей способности (osc_rotation_choice.tsx, React): последним, поверх
+             затемнения казино (иначе #CasinoPanel перехватывает клики) -->
+        <Panel id="ChoiceRoot" hittest="false" />
     </Panel>
 </root>

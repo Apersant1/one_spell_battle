@@ -1,8 +1,9 @@
 namespace OSC {
-  // Выбор следующей способности из трёх. Сервер присылает предложение событием
-  // osc_rotation_choice_offer и дублирует его в osc_state/choice_<playerID>
+  // Выбор следующей способности из трёх (React). Сервер присылает предложение
+  // событием osc_rotation_choice_offer и дублирует его в osc_state/choice_<playerID>
   // (для переподключения); клик по карточке отправляет osc_rotation_choice_pick,
-  // выбор можно менять до дедлайна.
+  // выбор можно менять до дедлайна. Состояние — переменные модуля: их меняют
+  // события и таймеры, после чего Render() перерисовывает окно.
   export const RotationChoice = (function () {
     var UPDATE_INTERVAL = 0.1;
     var CHOSEN_FLASH = 1.2; // сколько держать подсвеченную выбранную карточку после смены
@@ -23,21 +24,16 @@ namespace OSC {
     var serverPick = ""; // picked из net table
     var localPick = ""; // последний клик в этом раунде, пока сервер не подтвердил
     var pendingPicks: string[] = []; // все неподтверждённые клики (подтверждения приходят по порядку)
+    var chosen = ""; // итог раунда из osc_rotation_choice_closed — подсвечен, пока окно гаснет
     var confirmHandle: ScheduleID | null = null;
     var visible = false;
     var closing = false;
     var hideHandle: ScheduleID | null = null;
 
+    var Render = function () {}; // перерисовка окна; задаёт ChoiceWindow
+
     function NetTableKey(): `choice_${number}` {
       return `choice_${Players.GetLocalPlayer()}`;
-    }
-
-    function OptionsSignature(list: OSCAbilityOption[]) {
-      return list
-        .map(function (option) {
-          return option.name;
-        })
-        .join(",");
     }
 
     function CancelHide() {
@@ -49,11 +45,11 @@ namespace OSC {
 
     function SetVisible(show: boolean) {
       visible = show;
-      $("#ChoicePanel").SetHasClass("Visible", show);
       if (!show) {
         // Окно скрыто — тултип над исчезнувшей карточкой не нужен
         $.DispatchEvent("DOTAHideAbilityTooltip", $("#ChoicePanel"));
       }
+      Render();
     }
 
     function CancelConfirm() {
@@ -73,8 +69,8 @@ namespace OSC {
       CancelHide();
       ResetLocalPick();
       closing = false;
+      chosen = "";
       SetVisible(false);
-      $("#ChoicePanel").RemoveClass("Closing");
     }
 
     function ScheduleHide(delay: number) {
@@ -85,28 +81,14 @@ namespace OSC {
       });
     }
 
-    function CurrentPick() {
-      return localPick || serverPick;
-    }
-
-    function UpdateHighlight(chosen?: string) {
-      var picked = chosen || CurrentPick();
-      var cards = $("#ChoiceCards").Children();
-      for (var i = 0; i < cards.length; i++) {
-        var name = cards[i].GetAttributeString("osc_ability", "");
-        cards[i].SetHasClass("Picked", name !== "" && name === picked);
-        cards[i].SetHasClass("Chosen", !!chosen && name === chosen);
-      }
-    }
-
     function Pick(abilityName: string) {
       if (!visible || closing || round < 0) return;
       if (Game.GetGameTime() > deadline) return;
       localPick = abilityName;
       pendingPicks.push(abilityName);
-      UpdateHighlight();
       CancelConfirm();
       confirmHandle = $.Schedule(PICK_CONFIRM_TIMEOUT, OnConfirmTimeout);
+      Render();
       // Шлём каждый клик: прежний выбор мог ещё не дойти до сервера
       GameEvents.SendCustomGameEventToServer("osc_rotation_choice_pick", {
         round: round,
@@ -123,7 +105,7 @@ namespace OSC {
         serverPick = String(data.picked || "");
       }
       ResetLocalPick();
-      UpdateHighlight();
+      Render();
     }
 
     // Обновление picked из net table для текущего раунда
@@ -137,46 +119,6 @@ namespace OSC {
       }
       // picked совпал с более ранним кликом (подтверждение ещё в пути) или
       // пуст (запись не о выборе) — ждём дальше, решит таймаут
-    }
-
-    function CreateCard(container: Panel, option: OSCAbilityOption) {
-      var card = $.CreatePanel("Button", container, "");
-      card.AddClass("ChoiceCard");
-      card.SetAttributeString("osc_ability", option.name);
-      // Рамка редкости (osc_hud.css): обычная — без рамки
-      card.SetHasClass("RarityRare", option.rarity === "rare");
-      card.SetHasClass("RarityLegendary", option.rarity === "legendary");
-
-      var image = $.CreatePanel("DOTAAbilityImage", card, "");
-      image.AddClass("ChoiceIcon");
-      image.abilityname = option.name;
-      image.hittest = false;
-
-      var displayName = OSC.Util.AbilityName(option.name, option.label);
-      var nameLabel = $.CreatePanel("Label", card, "");
-      nameLabel.AddClass("ChoiceName");
-      nameLabel.AddClass("OSCTextSmall");
-      nameLabel.AddClass("OSCBold");
-      nameLabel.text = displayName;
-      nameLabel.hittest = false;
-
-      card.SetPanelEvent("onactivate", function () {
-        Pick(option.name);
-      });
-      card.SetPanelEvent("onmouseover", function () {
-        $.DispatchEvent("DOTAShowAbilityTooltip", card, option.name);
-      });
-      card.SetPanelEvent("onmouseout", function () {
-        $.DispatchEvent("DOTAHideAbilityTooltip", card);
-      });
-    }
-
-    function BuildCards() {
-      var container = $("#ChoiceCards");
-      container.RemoveAndDeleteChildren();
-      for (var i = 0; i < options.length; i++) {
-        CreateCard(container, options[i]);
-      }
     }
 
     // Общая точка для события-предложения и net table.
@@ -200,8 +142,6 @@ namespace OSC {
       if (closing && newRound === round) return;
 
       var isNewRound = newRound !== round;
-      var isNewOptions = OptionsSignature(list) !== OptionsSignature(options);
-
       if (isNewRound) {
         ResetLocalPick();
         serverPick = "";
@@ -219,16 +159,11 @@ namespace OSC {
       options = list;
       if (picked !== undefined) OnServerPick(picked);
 
-      if (isNewRound || isNewOptions || !visible) {
-        BuildCards();
-      }
       if (isNewRound || !visible) {
         CancelHide();
         closing = false;
-        $("#ChoicePanel").RemoveClass("Closing");
+        chosen = "";
       }
-      UpdateHighlight();
-      UpdateTimer();
       SetVisible(true);
     }
 
@@ -241,7 +176,7 @@ namespace OSC {
         return;
       }
       closing = true;
-      $("#ChoicePanel").AddClass("Closing");
+      Render();
       ScheduleHide(CLOSE_GRACE);
     }
 
@@ -260,8 +195,8 @@ namespace OSC {
       closing = true;
       ResetLocalPick();
       serverPick = String(event.chosen || "");
-      $("#ChoicePanel").AddClass("Closing");
-      UpdateHighlight(serverPick);
+      chosen = serverPick;
+      Render();
       ScheduleHide(CHOSEN_FLASH);
     }
 
@@ -273,30 +208,83 @@ namespace OSC {
       ApplyOffer(data, data.picked);
     }
 
-    function UpdateTimer() {
-      var left = Math.max(0, deadline - Game.GetGameTime());
-      var timer = $("#ChoiceTimer") as LabelPanel;
-      timer.SetDialogVariable("time", OSC.Util.FormatTime(left));
-      timer.text = $.Localize("#osc_hud_choice_time_left", timer);
-      var progress = duration > 0 ? Math.min(1, left / duration) : 0;
-      $("#ChoiceProgressFill").style.width = (progress * 100).toFixed(1) + "%";
-      $("#ChoicePanel").SetHasClass("Urgent", left <= URGENT_AT);
-      return left;
-    }
-
     function Update() {
       if (OSC.Util.IsPostGame()) {
         Hide();
         return false;
       }
       if (!visible || closing) return;
-      UpdateTimer();
       // Страховка: смена не пришла — не держим окно вечно
-      if (Game.GetGameTime() > deadline + STALE_AFTER) Hide();
+      if (Game.GetGameTime() > deadline + STALE_AFTER) {
+        Hide();
+        return;
+      }
+      Render(); // отсчёт и полоса времени
+    }
+
+    function ChoiceWindow() {
+      var [, bump] = React.useReducer(function (n: number) {
+        return n + 1;
+      }, 0);
+      Render = bump;
+
+      var left = Math.max(0, deadline - Game.GetGameTime());
+      var progress = duration > 0 ? Math.min(1, left / duration) : 0;
+      var picked = chosen || localPick || serverPick;
+      var classes = ["OSCSurface", "OSCChaos"];
+      if (visible) classes.push("Visible");
+      if (closing) classes.push("Closing");
+      if (visible && left <= URGENT_AT) classes.push("Urgent");
+
+      // Кликабельны только карточки
+      return (
+        <Panel id="ChoicePanel" className={classes.join(" ")} hittest={false}>
+          <Panel id="ChoiceHeaderRow" hittest={false}>
+            <Label
+              id="ChoiceHeader"
+              className="OSCTextSmall OSCCaps OSCBold OSCChaosText"
+              hittest={false}
+              text={$.Localize("#osc_hud_choice_header")}
+            />
+            <Label
+              id="ChoiceTimer"
+              className="OSCTextSmall OSCBold OSCGold"
+              hittest={false}
+              text={OSC.Localized("osc_hud_choice_time_left", {
+                time: OSC.Util.FormatTime(left),
+              })}
+            />
+          </Panel>
+          <Panel id="ChoiceCards" hittest={false}>
+            {options.map(function (option) {
+              var state: string[] = [];
+              if (option.name === picked) state.push("Picked");
+              if (chosen && option.name === chosen) state.push("Chosen");
+              return (
+                <OSC.AbilityCard
+                  key={round + ":" + option.name}
+                  option={option}
+                  className={state.join(" ")}
+                  onactivate={function () {
+                    Pick(option.name);
+                  }}
+                />
+              );
+            })}
+          </Panel>
+          <Panel id="ChoiceProgress" hittest={false}>
+            <Panel
+              id="ChoiceProgressFill"
+              hittest={false}
+              style={{ width: (progress * 100).toFixed(1) + "%" }}
+            />
+          </Panel>
+        </Panel>
+      );
     }
 
     function Init() {
-      ($("#ChoiceHeader") as LabelPanel).text = $.Localize("#osc_hud_choice_header");
+      ReactPanorama.render(<ChoiceWindow />, $("#ChoiceRoot"));
       GameEvents.Subscribe("osc_rotation_choice_offer", OnOffer);
       GameEvents.Subscribe("osc_rotation_choice_closed", OnClosed);
       // Сразу и текущее значение: предложение могло прийти, пока HUD не был загружен

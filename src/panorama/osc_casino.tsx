@@ -94,21 +94,6 @@ namespace OSC {
       }
     }
 
-    // Текст из resource/addon_<язык>.txt; vars подставляются в {d:...} и {s:...}
-    function Localized(token: string, vars?: Record<string, unknown>) {
-      return function (panel: LabelPanel) {
-        for (var key in vars || {}) {
-          var value = vars![key];
-          if (typeof value === "number") {
-            panel.SetDialogVariableInt(key, value);
-          } else {
-            panel.SetDialogVariable(key, String(value));
-          }
-        }
-        return $.Localize("#" + token, panel);
-      };
-    }
-
     function SetResult(token: string, vars?: Record<string, unknown>) {
       result = { token: token, vars: vars };
       Render();
@@ -767,14 +752,14 @@ namespace OSC {
             <Label
               id="CasinoResult"
               className="OSCTextBody"
-              text={Localized(result.token, result.vars)}
+              text={OSC.Localized(result.token, result.vars)}
             />
             <Paytable />
             <Label
               id="CasinoBalance"
               className="OSCTextBody OSCBold OSCGold"
               text={
-                isNaN(currentGold) ? "" : Localized("osc_casino_balance", { gold: currentGold })
+                isNaN(currentGold) ? "" : OSC.Localized("osc_casino_balance", { gold: currentGold })
               }
             />
             {/* Ставка либо золотом, либо предметами: переключатель с иконками,
@@ -816,7 +801,7 @@ namespace OSC {
                 className={selectedItems.length > 0 && selectedValue < stakeMinimum ? "Low" : ""}
                 text={String(selectedValue)}
                 {...Tooltip(function () {
-                  return Localized("osc_casino_items_hint", { min: stakeMinimum })(
+                  return OSC.Localized("osc_casino_items_hint", { min: stakeMinimum })(
                     $("#CasinoItemsTotal") as LabelPanel,
                   );
                 })}
