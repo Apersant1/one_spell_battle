@@ -26,7 +26,7 @@ Layer0
 	g_flWorldIlluminationScale "1.000"
 	g_vTexCoordOffset "[0.000 0.000]"
 	g_vTexCoordScale "[1.000 1.000]"
-	TextureColor "materials/models/osc/slot_machine/meshy_ai_ogre_jackpot_1010191433_texture.png"
+	TextureColor "materials/models/osc/slot_machine/slot_machine_color.png"
 
 	//---- Detail 1 ----
 	g_flDetailTexCoordRotation "0.000"
@@ -46,7 +46,7 @@ Layer0
 	g_vBloomColor "[1.000000 1.000000 1.000000 0.000000]"
 
 	//---- Normal Map ----
-	TextureNormal "materials/models/osc/slot_machine/meshy_ai_ogre_jackpot_1010191433_texture_normal.png"
+	TextureNormal "materials/models/osc/slot_machine/slot_machine_normal.png"
 
 	//---- Rim ----
 	g_flRimLightScale "1.000"

@@ -22,10 +22,6 @@ npm run setup
 npm run launch
 ```
 
-Если `git clone` падает с «Filename too long», папка для клона слишком
-глубокая для Windows: клонируйте ближе к корню диска или включите длинные пути
-(`git config --global core.longpaths true`).
-
 `npm run setup` делает всё сам:
 
 1. ставит зависимости (`npm install`);
