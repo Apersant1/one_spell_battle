@@ -288,6 +288,19 @@ namespace OSC {
     }
 
     // ================= Окно =================
+    // Эффект победы стандартного HUD рисуется поверх нашего слоя. z-index
+    // действует только среди соседей, поэтому поднимаем всю цепочку предков:
+    // на уровне общего с эффектом предка наша ветка окажется выше.
+    // Цепочка — в консоль, если эффект всё же окажется сверху
+    function RaiseAboveHud() {
+      var chain: string[] = [];
+      for (var panel: Panel | null = $.GetContextPanel(); panel; panel = panel.GetParent()) {
+        panel.style.zIndex = 100;
+        chain.push(panel.id || panel.paneltype);
+      }
+      $.Msg("[OSC] summary raised: " + chain.join(" < "));
+    }
+
     function SummaryWindow() {
       var data = ReactPanorama.useNetTableKey("osc_state", "summary");
       // Ждём POST_GAME: net table может обновиться раньше смены стадии
@@ -297,6 +310,12 @@ namespace OSC {
       var [closed, setClosed] = React.useState(false);
       // Итог может прийти с задержкой — до него окна нет
       var ready = postGame && !!data && !!data.players;
+      React.useEffect(
+        function () {
+          if (ready) RaiseAboveHud();
+        },
+        [ready],
+      );
 
       return (
         <>
