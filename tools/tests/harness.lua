@@ -51,6 +51,7 @@ DOTA_GAMERULES_STATE_GAME_IN_PROGRESS = 10
 DOTA_GAMERULES_STATE_POST_GAME = 11
 DOTA_ModifyGold_Unspecified = 0
 DOTA_ModifyGold_PurchaseItem = 4
+DOTA_ModifyGold_GameTick = 17
 DOTA_SHOP_HOME = 0
 -- Слоты тайника как в Dota: 0-5 инвентарь, 6-8 рюкзак, 9-14 тайник
 DOTA_STASH_SLOT_1 = 9
