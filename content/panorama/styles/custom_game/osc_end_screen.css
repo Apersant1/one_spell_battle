@@ -66,13 +66,50 @@
   text-transform: uppercase;
 }
 
-/* Много игроков — содержимое прокручивается внутри рамки */
+#SummaryTabs {
+  horizontal-align: center;
+  margin-top: 10px;
+  flow-children: right;
+}
+
+.SummaryTab {
+  width: 200px;
+  height: 36px;
+  margin: 0px 6px;
+  background-color: #382443cc;
+  border: 1px solid #bd72e880;
+  border-radius: 3px;
+}
+
+.SummaryTab:hover {
+  background-color: #4a2f59;
+}
+
+.SummaryTab.Selected {
+  background-color: #805225;
+  border: 1px solid #ffd36a;
+}
+
+.SummaryTab Label {
+  horizontal-align: center;
+  vertical-align: center;
+  color: #d5c9df;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.SummaryTab.Selected Label {
+  color: #ffffff;
+}
+
+/* Вкладка целиком помещается в рамку: 10 игроков в таблице — ~440px */
 #SummaryBody {
   width: 100%;
   height: fill-parent-flow(1);
-  margin-top: 8px;
+  margin-top: 12px;
   flow-children: down;
-  overflow: squish scroll;
 }
 
 /* «Итоги матча» после закрытия — на плашке кнопки Хаос-лавки (4:1), как
@@ -106,6 +143,7 @@
 /* ---- Пьедесталы: титулы или победители ---- */
 #SummaryPodiums {
   horizontal-align: center;
+  vertical-align: center;
   flow-children: right;
 }
 
@@ -206,7 +244,7 @@
 /* ---- Таблица по командам ---- */
 #SummaryTable {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 0px;
   flow-children: down;
 }
 

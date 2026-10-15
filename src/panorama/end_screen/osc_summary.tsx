@@ -24,6 +24,9 @@ namespace OSC {
     };
     TEAMS[DOTATeam_t.DOTA_TEAM_BADGUYS] = { className: "Dire", token: "osc_hud_summary_team_dire" };
 
+    // Вкладки окна: ключи osc_hud_summary_tab_<id>
+    var TABS = ["podium", "stats"];
+
     var COLUMNS: { key: string; field: keyof OSCSummaryRow; signed?: boolean }[] = [
       { key: "osc_hud_summary_col_rotations", field: "rotations" },
       { key: "osc_hud_summary_col_kills", field: "kills" },
@@ -308,6 +311,7 @@ namespace OSC {
         return post;
       });
       var [closed, setClosed] = React.useState(false);
+      var [tab, setTab] = React.useState(TABS[0]);
       // Итог может прийти с задержкой — до него окна нет
       var ready = postGame && !!data && !!data.players;
       React.useEffect(
@@ -338,9 +342,26 @@ namespace OSC {
               className="OSCTextTitle OSCGold"
               text={$.Localize("#osc_hud_summary_title")}
             />
+            {/* Пьедестал и таблица — на разных вкладках, чтобы таблица помещалась
+                целиком, без прокрутки */}
+            <Panel id="SummaryTabs">
+              {TABS.map(function (id) {
+                return (
+                  <Button
+                    key={id}
+                    className={OSC.Util.Classes("SummaryTab", id === tab && "Selected")}
+                    onactivate={function () {
+                      setTab(id);
+                    }}
+                  >
+                    <Label text={$.Localize("#osc_hud_summary_tab_" + id)} />
+                  </Button>
+                );
+              })}
+            </Panel>
             <Panel id="SummaryBody" hittest={false}>
-              {ready && <Podiums data={data!} />}
-              {ready && <Table data={data!} />}
+              {ready && tab === "podium" && <Podiums data={data!} />}
+              {ready && tab === "stats" && <Table data={data!} />}
             </Panel>
           </Panel>
           <Button
