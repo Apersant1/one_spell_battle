@@ -5,88 +5,18 @@
   </styles>
   <scripts>
     <include src="file://{resources}/scripts/custom_game/shared/osc_core.js" />
+    <!-- React (UMD, кладёт npm run build) — до модулей на React -->
+    <include src="file://{resources}/scripts/custom_game/libraries/react.js" />
+    <include src="file://{resources}/scripts/custom_game/libraries/react-panorama.js" />
+    <include src="file://{resources}/scripts/custom_game/shared/osc_components.js" />
+    <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_chat.js" />
+    <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_lobby.js" />
+    <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_cards.js" />
+    <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select_rules.js" />
+    <!-- Последним: в конце файла сам вызывает Init -->
     <include src="file://{resources}/scripts/custom_game/team_select/osc_team_select.js" />
   </scripts>
 
-  <Panel class="TeamSelectContext" hittest="false">
-    <Panel id="LBRoot" hittest="true">
-
-      <!-- Космический фон -->
-      <Panel id="Backdrop" hittest="false">
-        <Panel class="Nebula NebulaCenter" hittest="false" />
-        <Panel class="Nebula NebulaLeft" hittest="false" />
-        <Panel class="Nebula NebulaRight" hittest="false" />
-        <Panel id="Stars" hittest="false" />
-        <Panel class="Vignette" hittest="false" />
-      </Panel>
-
-      <!-- Центральная колонка: заголовок, команды, кнопки.
-           Все дети выровнены по центру, поэтому раскладка
-           остаётся симметричной на любом соотношении сторон. -->
-      <Panel id="Main" hittest="false">
-
-        <Panel id="Header" hittest="false">
-          <Panel id="TitleHalo" hittest="false" />
-          <Panel id="TitlePlaque" hittest="false" />
-          <Panel id="TitleContent" hittest="false">
-            <Label id="Title" text="#addon_game_name" />
-            <Label id="MapName" text="" />
-          </Panel>
-        </Panel>
-
-        <Panel id="TeamsRow">
-          <Panel id="TeamLeft" class="TeamSlot" />
-          <Panel id="TeamGap" />
-          <Panel id="TeamRight" class="TeamSlot" />
-        </Panel>
-
-        <Panel id="Footer">
-          <Label id="LockedBanner" text="#osc_ts_locked_banner" />
-          <Panel id="FooterDivider" hittest="false" />
-          <Panel id="HostControls">
-            <Button id="ShuffleButton" class="LBButton Ghost">
-              <Label text="#osc_ts_btn_shuffle" />
-            </Button>
-            <Button id="AutoButton" class="LBButton Ghost">
-              <Label text="#osc_ts_btn_auto" />
-            </Button>
-            <Button id="StartButton" class="LBButton Primary">
-              <Label id="StartLabel" text="#osc_ts_btn_start" />
-            </Button>
-          </Panel>
-        </Panel>
-      </Panel>
-
-      <!-- Таймер: правый верхний угол -->
-      <!-- Таймер: правый верхний угол -->
-      <Panel id="TimerWrap" hittest="false">
-        <Panel id="RingBox" hittest="false">
-          <Panel id="TimerFrame" hittest="false" />
-          <Panel id="TimerTrack" hittest="false" />
-          <Panel id="TimerRing" hittest="false" />
-          <Label id="TimerText" text="" />
-        </Panel>
-        <Label id="TimerCaption" text="#osc_ts_timer_caption" />
-      </Panel>
-
-      <!-- Игроки без команды: орбита в правом нижнем углу -->
-      <Panel id="Lobby" class="Empty" hittest="false">
-        <Panel id="Orbit" hittest="false">
-          <Panel id="OrbitRing" hittest="false" />
-          <Panel id="OrbitCenter" hittest="false">
-            <Label id="LobbyCount" text="0" />
-          </Panel>
-          <Panel id="OrbitItems" />
-        </Panel>
-        <Label id="LobbyTitle" text="#osc_ts_lobby_title" />
-      </Panel>
-
-      <!-- Последний слой: сюда переносится родной чат Dota -->
-      <Panel id="ChatLayer" hittest="false">
-        <Panel id="ChatFrame" class="Hidden" hittest="false">
-          <Panel id="ChatAccent" hittest="false" />
-        </Panel>
-      </Panel>
-    </Panel>
-  </Panel>
+  <!-- Весь экран рисует osc_team_select.tsx (React) -->
+  <Panel class="TeamSelectContext" hittest="false" />
 </root>

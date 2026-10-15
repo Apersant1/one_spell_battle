@@ -505,7 +505,9 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
   из трёх), `chaos/` (хаос-раунды, сфера хаоса, Хаос-лавка), `casino/` (окно, его части, инвентарь для ставки, зона по Alt),
   `help/` (окно, страницы тем, кирпичики страниц);
 - `vote/`, `team_select/`, `end_screen/` — окна `osc_vote.xml`,
-  `osc_team_select.xml`, `osc_end_screen.xml` (одномодульные, инициализируются сами).
+  `osc_team_select.xml`, `osc_end_screen.xml` (инициализируются сами). Выбор
+  команд разложен по частям: экран, карточки команд, правила матча, орбита и
+  перетаскивание игроков хостом (`osc_team_move`), родной чат Dota.
 
 Типы Panorama API — из `@moddota/panorama-types`. `npm install`, затем
 `npm run build` (или `npm run dev` — пересборка при сохранении) компилирует их
@@ -514,10 +516,10 @@ player_id, slot, ability, previous }, `chaos_started` / `chaos_ended`
 свой компонент в `namespace OSC`.
 
 Модули `.tsx` написаны на React (выбор из трёх, сфера хаоса, казино, Хаос-лавка,
-справка, голосование, итоги матча): `react@17` и
+справка, голосование, итоги матча, выбор команд): `react@17` и
 `@demon673/react-panorama` (форк react-panorama без `new Function`, который
 Panorama запрещает) подключаются UMD-сборками (`npm run build` копирует их в
-`scripts/custom_game/libraries/`, `osc_hud.xml`, `osc_vote.xml` и `osc_end_screen.xml` включают их перед модулями на
+`scripts/custom_game/libraries/`, все разметки включают их перед модулями на
 React), JSX компилирует тот же `tsc`. Компонент рисуется
 `ReactPanorama.render(...)` в пустую панель-контейнер из разметки; данные —
 хуки `useNetTableKey` и `useGameEvent`. После добавления новых `<include>`
