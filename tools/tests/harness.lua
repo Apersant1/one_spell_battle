@@ -149,6 +149,8 @@ GameRules = {
     SetCustomGameTeamMaxPlayers = function() end,
     SetCustomGameSetupAutoLaunchDelay = function() end,
     SetCustomGameSetupTimeout = function() end,
+    SetGoldPerTick = function(_, value) H.goldPerTick = value end,
+    SetGoldTickTime = function(_, value) H.goldTickTime = value end,
     LockCustomGameSetupTeamAssignment = function() end,
     SetCustomVictoryMessage = function(_, text) H.victoryMessage = text end,
 }

@@ -18,6 +18,8 @@ function OneSpellChaos:Init()
     GameRules:SetCustomGameSetupAutoLaunchDelay(15)
     GameRules:SetCustomGameSetupTimeout(-1) -- длительность фазы (0 = пропустить, -1 = без лимита)
     GameRules:LockCustomGameSetupTeamAssignment(false)
+    GameRules:SetGoldPerTick(OSC_Config.Get("PASSIVE_GOLD_PER_TICK"))
+    GameRules:SetGoldTickTime(OSC_Config.Get("PASSIVE_GOLD_TICK_TIME"))
 
     CustomNetTables:SetTableValue("osc_state", "version", {
         version = OSC_Config.Get("VERSION"),

@@ -1,5 +1,10 @@
 OSC_CONFIG = {
     VERSION = "1.5.0",
+    -- Пассивное золото: у кастомных игр движок по умолчанию его не начисляет.
+    -- PASSIVE_GOLD_PER_TICK золота раз в PASSIVE_GOLD_TICK_TIME секунд
+    -- (1 раз в 0.6 с — около 100 в минуту, как в обычной Dota); 0 — выключить
+    PASSIVE_GOLD_PER_TICK = 1,
+    PASSIVE_GOLD_TICK_TIME = 0.6,
     ROTATION_INTERVAL = 60,
     WARNING_TIME = 10,
     -- Сколько секунд снятая активная способность живёт скрытой, чтобы её
