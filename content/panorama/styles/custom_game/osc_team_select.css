@@ -37,7 +37,7 @@
   background-image: url("file://{images}/custom_game/team_select/bg_space.png");
   background-size: cover;
   animation-name: SpaceDrift;
-  animation-duration: 80s;
+  animation-duration: 40s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
@@ -45,37 +45,38 @@
 /* Звёзды дрейфуют в своём темпе — выходит параллакс */
 #Stars {
   animation-name: StarsDrift;
-  animation-duration: 120s;
+  animation-duration: 50s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
 
-/* Падающие звёзды: голова слева, хвост гаснет вправо. Пролёт — первые 7%
+/* Падающие звёзды: голова слева, хвост гаснет вправо. Пролёт — первые 8%
    цикла, остальное время метеор невидим; длительности разные, чтобы не
-   было заметного ритма */
+   было заметного ритма. Летят по боковым полосам — мимо заголовка и карточек */
 .Meteor {
-  width: 170px;
-  height: 2px;
+  width: 240px;
+  height: 3px;
   opacity: 0;
-  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffffee), to(#ffffff00));
+  background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff), to(#ffffff00));
+  box-shadow: #bfe4ff66 0px 0px 6px 0px;
   animation-name: MeteorFly;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 .MeteorA {
-  position: 72% 10% 0px;
-  animation-duration: 11s;
-  animation-delay: 2s;
+  position: 88% 30% 0px;
+  animation-duration: 7s;
+  animation-delay: 1s;
 }
 .MeteorB {
-  position: 46% 4% 0px;
-  animation-duration: 17s;
-  animation-delay: 7s;
+  position: 30% 18% 0px;
+  animation-duration: 11s;
+  animation-delay: 4s;
 }
 .MeteorC {
-  position: 88% 24% 0px;
-  animation-duration: 23s;
-  animation-delay: 13s;
+  position: 96% 52% 0px;
+  animation-duration: 15s;
+  animation-delay: 9s;
 }
 
 .Nebula {
@@ -806,7 +807,7 @@
     transform: scale3d(1, 1, 1) translate3d(0px, 0px, 0px);
   }
   50% {
-    transform: scale3d(1.05, 1.05, 1) translate3d(-28px, -14px, 0px);
+    transform: scale3d(1.1, 1.1, 1) translate3d(-60px, -30px, 0px);
   }
   100% {
     transform: scale3d(1, 1, 1) translate3d(0px, 0px, 0px);
@@ -817,13 +818,13 @@
     transform: translate3d(0px, 0px, 0px);
   }
   50% {
-    transform: translate3d(-40px, 18px, 0px);
+    transform: translate3d(-80px, 36px, 0px);
   }
   100% {
     transform: translate3d(0px, 0px, 0px);
   }
 }
-/* наклон -25deg совпадает с направлением полёта (-520, 240) */
+/* наклон -25deg совпадает с направлением полёта (-650, 300) */
 @keyframes 'MeteorFly' {
   0% {
     opacity: 0;
@@ -831,15 +832,15 @@
   }
   1% {
     opacity: 1;
-    transform: translate3d(-74px, 34px, 0px) rotateZ(-25deg);
+    transform: translate3d(-65px, 30px, 0px) rotateZ(-25deg);
   }
-  7% {
+  8% {
     opacity: 0;
-    transform: translate3d(-520px, 240px, 0px) rotateZ(-25deg);
+    transform: translate3d(-650px, 300px, 0px) rotateZ(-25deg);
   }
   100% {
     opacity: 0;
-    transform: translate3d(-520px, 240px, 0px) rotateZ(-25deg);
+    transform: translate3d(-650px, 300px, 0px) rotateZ(-25deg);
   }
 }
 @keyframes 'Twinkle' {

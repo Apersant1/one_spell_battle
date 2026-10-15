@@ -140,10 +140,11 @@ namespace OSC.TeamSelect {
         <Panel className="Nebula NebulaLeft" hittest={false} />
         <Panel className="Nebula NebulaRight" hittest={false} />
         <Stars />
+        <Panel className="Vignette" hittest={false} />
+        {/* Метеоры поверх виньетки: под ней у краёв экрана их не видно */}
         <Panel className="Meteor MeteorA" hittest={false} />
         <Panel className="Meteor MeteorB" hittest={false} />
         <Panel className="Meteor MeteorC" hittest={false} />
-        <Panel className="Vignette" hittest={false} />
       </Panel>
     );
   }
