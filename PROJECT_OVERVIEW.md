@@ -393,7 +393,7 @@ dota_launch_custom_game one_spell dota
 ### Справка
 
 - Кнопка «?» рядом с Хаос-лавкой открывает панель правил режима
-  (`osc_help.tsx`, React, `OSC.Help`, `#HelpPanel` в `#HelpRoot`). Только клиент; тексты разделов —
+  (`help/osc_help.tsx` — окно, `osc_help_pages.tsx` — страницы тем, `osc_help_blocks.tsx` — кирпичики; React, `OSC.Help`, `#HelpPanel` в `#HelpRoot`). Только клиент; тексты разделов —
   ключи `osc_hud_help_*` в XML.
 
 ### Уведомления и интерфейс
