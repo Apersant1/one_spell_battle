@@ -8,7 +8,9 @@ namespace OSC {
       return `anchor_${Players.GetLocalPlayer()}`;
     }
 
-    function Apply(data: NetworkedData<CustomNetTableDeclarations["osc_state"][`anchor_${number}`]> | null) {
+    function Apply(
+      data: NetworkedData<CustomNetTableDeclarations["osc_state"][`anchor_${number}`]> | null,
+    ) {
       var active = !!data && Number(data.active) === 1;
       rotations = (data && Number(data.rotations)) || 1;
       var badge = $("#AnchorBadge");
@@ -23,7 +25,7 @@ namespace OSC {
         "DOTAShowTitleTextTooltip",
         badge,
         $.Localize("#osc_hud_anchor_title"),
-        $.Localize("#osc_hud_anchor_tooltip").replace("{n}", String(rotations))
+        $.Localize("#osc_hud_anchor_tooltip").replace("{n}", String(rotations)),
       );
     }
 

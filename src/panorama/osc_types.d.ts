@@ -172,6 +172,6 @@ interface CustomGameEventDeclarations {
   osc_casino_spin: { machine_entindex: EntityIndex; stake?: number; item_entindices?: string };
   osc_casino_reopen: { machine_entindex: EntityIndex; quiet: number };
   osc_vote_cast: { question: string; option: string };
-  osc_team_shuffle: {};
+  osc_team_shuffle: Record<string, never>;
   osc_team_move: { player_id: PlayerID; team: DOTATeam_t }; // слушает team_shuffle.lua, клиент пока не шлёт
 }

@@ -64,7 +64,7 @@ namespace OSC {
       // Сервер публикует таблицы обеих команд, если лавка включена
       var enabled = !!CustomNetTables.GetTableValue(
         "osc_state",
-        `shop_${DOTATeam_t.DOTA_TEAM_GOODGUYS}`
+        `shop_${DOTATeam_t.DOTA_TEAM_GOODGUYS}`,
       );
       $("#ChaosShopButton").SetHasClass("Hidden", !enabled);
       if (!enabled && open) SetOpen(false);

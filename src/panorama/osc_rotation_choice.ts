@@ -181,7 +181,10 @@ namespace OSC {
 
     // Общая точка для события-предложения и net table.
     // picked === undefined — источник ничего не знает о выборе (событие).
-    function ApplyOffer(data: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_offer"]>, picked: string | undefined) {
+    function ApplyOffer(
+      data: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_offer"]>,
+      picked: string | undefined,
+    ) {
       var newRound = Number(data.round);
       var newDeadline = Number(data.deadline) || 0;
       var list = OSC.Util.AbilityOptions(data.options);
@@ -242,12 +245,16 @@ namespace OSC {
       ScheduleHide(CLOSE_GRACE);
     }
 
-    function OnOffer(event: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_offer"]>) {
+    function OnOffer(
+      event: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_offer"]>,
+    ) {
       if (!event) return;
       ApplyOffer(event, undefined);
     }
 
-    function OnClosed(event: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_closed"]>) {
+    function OnClosed(
+      event: NetworkedData<CustomGameEventDeclarations["osc_rotation_choice_closed"]>,
+    ) {
       if (!event || Number(event.round) !== round) return;
       if (!visible) return;
       closing = true;

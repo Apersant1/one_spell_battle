@@ -171,17 +171,12 @@ namespace OSC {
       var gold = currentGold;
       var busy = machine < 0 || waiting || animating;
       spinButton.enabled =
-        !busy &&
-        !isNaN(stake) &&
-        stake >= stakeMinimum &&
-        !isNaN(gold) &&
-        stake <= gold;
+        !busy && !isNaN(stake) && stake >= stakeMinimum && !isNaN(gold) && stake <= gold;
       // −/+ гаснут на краях диапазона
       var minus = $("#CasinoStakeMinus");
       var plus = $("#CasinoStakePlus");
       if (minus) minus.enabled = !busy && (isNaN(stake) || stake > stakeMinimum);
-      if (plus)
-        plus.enabled = !busy && (isNaN(stake) || isNaN(gold) || stake < gold);
+      if (plus) plus.enabled = !busy && (isNaN(stake) || isNaN(gold) || stake < gold);
     }
 
     // TextEntry не центрирует текст (text-align не действует) — сдвигаем его
@@ -192,8 +187,7 @@ namespace OSC {
       var entry = $("#CasinoStake") as TextEntry;
       if (!entry) return;
       var free = STAKE_TEXT_AREA - entry.text.length * STAKE_DIGIT_WIDTH;
-      entry.style.paddingLeft =
-        STAKE_COIN_WIDTH + Math.max(0, Math.floor(free / 2)) + "px";
+      entry.style.paddingLeft = STAKE_COIN_WIDTH + Math.max(0, Math.floor(free / 2)) + "px";
     }
 
     // Panorama не пускает текст по кривой — заголовок собран из букв: каждая
@@ -218,11 +212,7 @@ namespace OSC {
         label.AddClass("OSCGold");
         label.text = letter;
         label.style.transform =
-          "translateY(" +
-          y.toFixed(1) +
-          "px) rotateZ(" +
-          angle.toFixed(1) +
-          "deg)";
+          "translateY(" + y.toFixed(1) + "px) rotateZ(" + angle.toFixed(1) + "deg)";
       });
     }
 
@@ -285,8 +275,7 @@ namespace OSC {
     function GetItemRejectReason(item: ItemEntityIndex, hero: EntityIndex) {
       if (!Items.IsSellable(item) || GetItemValue(item) <= 0)
         return "osc_casino_err_item_unsellable";
-      if (Items.GetPurchaser(item) !== hero)
-        return "osc_casino_err_item_not_yours";
+      if (Items.GetPurchaser(item) !== hero) return "osc_casino_err_item_not_yours";
       return "";
     }
 
@@ -296,9 +285,7 @@ namespace OSC {
       var slots: InventorySlot[] = [];
       for (var slot = 0; slot < 6; slot++) {
         var item: ItemEntityIndex | -1 =
-          hero === undefined || hero === -1
-            ? -1
-            : Entities.GetItemInSlot(hero, slot);
+          hero === undefined || hero === -1 ? -1 : Entities.GetItemInSlot(hero, slot);
         if (item === undefined) item = -1;
         slots.push({
           item: item,
@@ -334,10 +321,7 @@ namespace OSC {
       if (total) {
         var value = GetSelectedValue();
         total.text = String(value);
-        total.SetHasClass(
-          "Low",
-          selectedItems.length > 0 && value < stakeMinimum,
-        );
+        total.SetHasClass("Low", selectedItems.length > 0 && value < stakeMinimum);
       }
     }
 
@@ -464,10 +448,7 @@ namespace OSC {
 
       // Без ставок предметами вкладок нет; ставить нечего — вкладка серая
       $("#CasinoModeTabs").SetHasClass("Hidden", !itemBets);
-      $("#CasinoModeSwitch").SetHasClass(
-        "ItemsUnavailable",
-        stakeable.length === 0,
-      );
+      $("#CasinoModeSwitch").SetHasClass("ItemsUnavailable", stakeable.length === 0);
       if (stakeMode === "items" && stakeable.length === 0) {
         SetMode("gold");
         return;
@@ -590,16 +571,12 @@ namespace OSC {
 
       var payout = result.payout || 0;
       var isJackpot =
-        result.reel1 === "seven" &&
-        result.reel2 === "seven" &&
-        result.reel3 === "seven";
+        result.reel1 === "seven" && result.reel2 === "seven" && result.reel3 === "seven";
 
       if (payout > 0) {
         win.AddClass(isJackpot ? "Jackpot" : "Win");
         MarkPayCell(result.reel1);
-        OSC.Util.PlaySound(
-          isJackpot ? OSC.Sounds.casinoJackpot : OSC.Sounds.casinoWin,
-        );
+        OSC.Util.PlaySound(isJackpot ? OSC.Sounds.casinoJackpot : OSC.Sounds.casinoWin);
         if (isJackpot) PlayJackpotParticles();
       }
 
@@ -646,14 +623,8 @@ namespace OSC {
 
       var stakeEntry = $("#CasinoStake") as TextEntry;
       var currentStake = parseInt(stakeEntry.text, 10);
-      if (
-        isNaN(currentStake) ||
-        currentStake < stakeMinimum ||
-        currentStake > event.gold
-      ) {
-        stakeEntry.text = String(
-          Math.min(event.default_stake, event.gold),
-        );
+      if (isNaN(currentStake) || currentStake < stakeMinimum || currentStake > event.gold) {
+        stakeEntry.text = String(Math.min(event.default_stake, event.gold));
       }
 
       if (!animating && !waiting) {
@@ -689,18 +660,12 @@ namespace OSC {
         return;
       }
 
-      outcome = event.error
-        ? { error: event.error, min_stake: event.min_stake }
-        : event;
+      outcome = event.error ? { error: event.error, min_stake: event.min_stake } : event;
       TryReveal();
     }
 
     function OnClosed(event: NetworkedData<CustomGameEventDeclarations["osc_casino_closed"]>) {
-      if (
-        event.machine_entindex !== undefined &&
-        machine !== event.machine_entindex
-      )
-        return;
+      if (event.machine_entindex !== undefined && machine !== event.machine_entindex) return;
       Close();
       SetResult("osc_casino_vanished");
     }
@@ -709,8 +674,7 @@ namespace OSC {
     function Spin() {
       if (stakeMode === "items") {
         if (machine < 0 || waiting || animating) return;
-        if (selectedItems.length === 0 || GetSelectedValue() < stakeMinimum)
-          return;
+        if (selectedItems.length === 0 || GetSelectedValue() < stakeMinimum) return;
         StartSpinVisuals();
         GameEvents.SendCustomGameEventToServer("osc_casino_spin", {
           machine_entindex: machine as EntityIndex,
@@ -720,14 +684,7 @@ namespace OSC {
       }
 
       var stake = parseInt(($("#CasinoStake") as TextEntry).text, 10);
-      if (
-        machine < 0 ||
-        waiting ||
-        animating ||
-        isNaN(stake) ||
-        stake < stakeMinimum
-      )
-        return;
+      if (machine < 0 || waiting || animating || isNaN(stake) || stake < stakeMinimum) return;
 
       StartSpinVisuals();
       GameEvents.SendCustomGameEventToServer("osc_casino_spin", {
@@ -780,8 +737,7 @@ namespace OSC {
 
     function FindMachines() {
       var result: EntityIndex[] = [];
-      var creatures =
-        Entities.GetAllEntitiesByClassname("npc_dota_creature") || [];
+      var creatures = Entities.GetAllEntitiesByClassname("npc_dota_creature") || [];
       for (var i = 0; i < creatures.length; i++) {
         if (Entities.GetUnitName(creatures[i]) === MACHINE_UNIT_NAME) {
           result.push(creatures[i]);
@@ -832,15 +788,10 @@ namespace OSC {
       GameEvents.Subscribe("osc_casino_closed", OnClosed);
       $("#CasinoStake").SetPanelEvent("ontextentrychange", UpdateSpinButton);
       ShowTooltipOnHover($("#CasinoModeSwitch"), function () {
-        if (
-          stakeMode === "gold" &&
-          $("#CasinoModeSwitch").BHasClass("ItemsUnavailable")
-        )
+        if (stakeMode === "gold" && $("#CasinoModeSwitch").BHasClass("ItemsUnavailable"))
           return $.Localize("#osc_casino_items_empty");
         return $.Localize(
-          stakeMode === "items"
-            ? "#osc_casino_mode_items"
-            : "#osc_casino_mode_gold",
+          stakeMode === "items" ? "#osc_casino_mode_items" : "#osc_casino_mode_gold",
         );
       });
       ShowTooltipOnHover($("#CasinoItemsTotal"), function () {

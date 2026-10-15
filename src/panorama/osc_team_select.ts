@@ -93,16 +93,11 @@ namespace OSC {
       // Ставит панель так, чтобы её центр оказался в точке (cx, cy)
       placeAt: function (p: Panel, cx: number, cy: number, size: number) {
         p.style.position =
-          (cx - size / 2).toFixed(1) +
-          "px " +
-          (cy - size / 2).toFixed(1) +
-          "px 0px";
+          (cx - size / 2).toFixed(1) + "px " + (cy - size / 2).toFixed(1) + "px 0px";
       },
 
       hGradient: function (color: string) {
-        return (
-          "gradient(linear, 0% 0%, 100% 0%, from(" + color + "), to(#00000000))"
-        );
+        return "gradient(linear, 0% 0%, 100% 0%, from(" + color + "), to(#00000000))";
       },
 
       sound: function (name: string) {
@@ -120,10 +115,7 @@ namespace OSC {
       },
 
       isSetupPhase: function () {
-        return (
-          Game.GetState() ===
-          DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP
-        );
+        return Game.GetState() === DOTA_GameState.DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP;
       },
 
       topPanel: function () {
@@ -172,10 +164,7 @@ namespace OSC {
         star.style.width = size + "px";
         star.style.height = size + "px";
         star.style.position =
-          (Math.random() * 100).toFixed(2) +
-          "% " +
-          (Math.random() * 100).toFixed(2) +
-          "% 0px";
+          (Math.random() * 100).toFixed(2) + "% " + (Math.random() * 100).toFixed(2) + "% 0px";
         star.style.animationDuration = (2 + Math.random() * 4).toFixed(2) + "s";
         star.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
       }
@@ -272,10 +261,7 @@ namespace OSC {
         slot.root.SetHasClass("Empty", !filled);
         slot.root.SetHasClass("Filled", filled);
         slot.root.SetHasClass("Local", filled && playerId === localId);
-        slot.root.SetHasClass(
-          "Host",
-          filled && !!info?.player_has_host_privileges,
-        );
+        slot.root.SetHasClass("Host", filled && !!info?.player_has_host_privileges);
 
         if (!info || playerId === undefined) {
           slot.playerId = -1;
@@ -305,9 +291,7 @@ namespace OSC {
         U.label(head, "TeamName", t.name).style.color = t.color;
         var count = U.label(head, "TeamCount", "");
 
-        U.panel(body, "Divider").style.backgroundColor = U.hGradient(
-          t.color + "aa",
-        );
+        U.panel(body, "Divider").style.backgroundColor = U.hGradient(t.color + "aa");
 
         var list = U.panel(body, "SlotList");
         var slots: TeamSlot[] = [];
@@ -349,8 +333,7 @@ namespace OSC {
 
           c.card.SetHasClass("Mine", mine);
           c.card.SetHasClass("Full", full && !mine);
-          c.count.text =
-            details.team_num_players + "/" + details.team_max_players;
+          c.count.text = details.team_num_players + "/" + details.team_max_players;
           c.hint.text = U.L(hintToken(s.locked, mine, full));
 
           for (var i = 0; i < c.slots.length; i++) {
@@ -490,15 +473,12 @@ namespace OSC {
           var target = (Math.PI * 2 * i) / n;
 
           item.offset =
-            item.offset === null
-              ? target
-              : item.offset + (target - item.offset) * o.ease;
+            item.offset === null ? target : item.offset + (target - item.offset) * o.ease;
 
           var a = angle + item.offset;
           item.x = center + Math.cos(a) * o.radius - half;
           item.y = center + Math.sin(a) * o.radius - half;
-          item.panel.style.position =
-            item.x.toFixed(1) + "px " + item.y.toFixed(1) + "px 0px";
+          item.panel.style.position = item.x.toFixed(1) + "px " + item.y.toFixed(1) + "px 0px";
         }
       }
 
@@ -629,8 +609,7 @@ namespace OSC {
             "  h=" +
             Math.round(p.actuallayoutheight / scale),
         );
-        for (var i = 0; i < p.GetChildCount(); i++)
-          dump(p.GetChild(i)!, depth + 1);
+        for (var i = 0; i < p.GetChildCount(); i++) dump(p.GetChild(i)!, depth + 1);
       }
 
       // позиция и ширина чата внутри рамки
@@ -639,11 +618,7 @@ namespace OSC {
         var pad = CFG.chat.padding;
         chat.style.width = f.width - pad.side * 2 + "px";
         chat.style.margin =
-          "0px 0px " +
-          (f.bottom + pad.bottom) +
-          "px " +
-          (f.left + pad.side) +
-          "px";
+          "0px 0px " + (f.bottom + pad.bottom) + "px " + (f.left + pad.side) + "px";
       }
 
       // каждый кадр: подложка повторяет высоту чата
@@ -659,8 +634,7 @@ namespace OSC {
         var h = chat.actuallayoutheight / scale;
         if (h > 0) {
           var pad = CFG.chat.padding;
-          $("#ChatFrame").style.height =
-            Math.round(h + pad.top + pad.bottom) + "px";
+          $("#ChatFrame").style.height = Math.round(h + pad.top + pad.bottom) + "px";
         }
       }
 

@@ -220,14 +220,11 @@ namespace OSC {
         var description = $("#ChaosRoundDescription") as LabelPanel;
         var descriptionParams: Record<string, string | number> = data.desc_params || {};
         for (var parameter in descriptionParams) {
-          description.SetDialogVariable(
-            parameter,
-            String(descriptionParams[parameter])
-          );
+          description.SetDialogVariable(parameter, String(descriptionParams[parameter]));
         }
         ($("#ChaosRoundTitle") as LabelPanel).text = LocalizeKey(
           data.title_key,
-          isActive ? "osc_hud_chaos_active_fallback" : "osc_hud_chaos_soon_fallback"
+          isActive ? "osc_hud_chaos_active_fallback" : "osc_hud_chaos_soon_fallback",
         );
         description.text =
           data.desc_key || !isActive
@@ -237,7 +234,7 @@ namespace OSC {
         timer.SetDialogVariable("time", OSC.Util.FormatTime(timeLeft));
         timer.text = $.Localize(
           isActive ? "#osc_hud_chaos_time_left" : "#osc_hud_chaos_time_until",
-          timer
+          timer,
         );
       }
 

@@ -33,18 +33,14 @@ namespace OSC {
       flipHandle = $.Schedule(FLIP_DURATION, function () {
         flipHandle = null;
         ($("#PopupIcon") as AbilityImage).abilityname = event.ability;
-        ($("#PopupTitle") as LabelPanel).text = $.Localize(
-          "#osc_hud_popup_title",
-        );
+        ($("#PopupTitle") as LabelPanel).text = $.Localize("#osc_hud_popup_title");
         ($("#PopupName") as LabelPanel).text = OSC.Util.AbilityName(event.ability, event.label);
         card.RemoveClass("FlipHidden"); // новая разворачивается
         Flash();
         card.SetHasClass("RarityRare", event.rarity === "rare");
         card.SetHasClass("RarityLegendary", event.rarity === "legendary");
         OSC.Util.PlaySound(
-          event.rarity === "legendary"
-            ? OSC.Sounds.legendaryAbility
-            : OSC.Sounds.abilityChanged,
+          event.rarity === "legendary" ? OSC.Sounds.legendaryAbility : OSC.Sounds.abilityChanged,
         );
       });
 

@@ -3,10 +3,16 @@
   "private": true,
   "scripts": {
     "build": "tsc --project src/panorama/tsconfig.json",
-    "dev": "tsc --project src/panorama/tsconfig.json --watch"
+    "dev": "tsc --project src/panorama/tsconfig.json --watch",
+    "lint": "eslint . && prettier --check \"src/panorama/**/*.ts\"",
+    "format": "prettier --write \"src/panorama/**/*.ts\" && eslint --fix ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@moddota/panorama-types": "^1.39.2",
-    "typescript": "~5.9.3"
+    "eslint": "^10.12.0",
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.2"
   }
 }

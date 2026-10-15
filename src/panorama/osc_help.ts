@@ -67,7 +67,9 @@ namespace OSC {
     // ================= Данные =================
 
     function Table<K extends keyof OSCState>(key: K) {
-      return (CustomNetTables.GetTableValue("osc_state", key) || {}) as Partial<NetworkedData<OSCState[K]>>;
+      return (CustomNetTables.GetTableValue("osc_state", key) || {}) as Partial<
+        NetworkedData<OSCState[K]>
+      >;
     }
 
     // Локализация с переменными {s:имя}: $.Localize без панели вырезает их,
@@ -150,10 +152,7 @@ namespace OSC {
       var row = Add(page, "Panel", ["HelpSlots"]);
       slots.forEach(function (slot) {
         var box = Add(row, "Panel", ["HelpSlot"]);
-        var frame = Add(box, "Panel", [
-          "HelpSlotFrame",
-          BORDER_CLASS[slot.rarity],
-        ]);
+        var frame = Add(box, "Panel", ["HelpSlotFrame", BORDER_CLASS[slot.rarity]]);
         var image = Add(frame, "DOTAAbilityImage", ["HelpSlotIcon"]);
         image.abilityname = slot.ability;
         var info = Add(box, "Panel", ["HelpSlotInfo"]);
@@ -305,8 +304,7 @@ namespace OSC {
         var head = Add(box, "Panel", ["HelpStepHead"]);
         Add(head, "Label", ["HelpStepNumber"], String(index + 1));
         if (step.icon) Add(head, "Panel", ["HelpStepIcon", step.icon]);
-        if (step.value !== undefined)
-          Add(head, "Label", ["HelpStepValue"], step.value);
+        if (step.value !== undefined) Add(head, "Label", ["HelpStepValue"], step.value);
         Add(box, "Label", ["HelpStepTitle"], step.title);
         Add(box, "Label", ["HelpStepCaption"], step.caption);
       });
@@ -316,8 +314,7 @@ namespace OSC {
       var rotation: HelpSection<"rotation"> = help.rotation || {};
       var interval = Number(rotation.interval) || 0;
       var choices = Number(rotation.choice_count) || 0;
-      var warning =
-        choices > 0 ? Math.min(Number(rotation.warning) || 0, interval) : 0;
+      var warning = choices > 0 ? Math.min(Number(rotation.warning) || 0, interval) : 0;
       Text(page, "osc_hud_help_rotation_text", { interval: interval });
       var steps: Parameters<typeof Steps>[1] = [
         {
@@ -345,9 +342,7 @@ namespace OSC {
           icon: { image: "HelpFacetDice" },
           title: L("osc_hud_help_rotation_card_choice"),
           text: L(
-            choices > 0
-              ? "osc_hud_help_rotation_choice"
-              : "osc_hud_help_rotation_no_choice",
+            choices > 0 ? "osc_hud_help_rotation_choice" : "osc_hud_help_rotation_no_choice",
             {
               warning: warning,
               count: choices,
@@ -444,11 +439,7 @@ namespace OSC {
       Text(page, "osc_hud_help_shop_text");
       Grid(
         page,
-        [
-          "osc_hud_help_shop_col_item",
-          "osc_hud_help_col_cost",
-          "osc_hud_help_shop_col_stock",
-        ],
+        ["osc_hud_help_shop_col_item", "osc_hud_help_col_cost", "osc_hud_help_shop_col_stock"],
         items.map(function (item) {
           var limited = Number(item.max) >= 0;
           return {
@@ -619,10 +610,7 @@ namespace OSC {
       $("#HelpTabs")
         .Children()
         .forEach(function (tab) {
-          tab.SetHasClass(
-            "Selected",
-            tab.GetAttributeString("topic", "") === topic.id,
-          );
+          tab.SetHasClass("Selected", tab.GetAttributeString("topic", "") === topic.id);
         });
 
       var page = $("#HelpPage");

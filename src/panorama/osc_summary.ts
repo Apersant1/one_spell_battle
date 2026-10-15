@@ -29,7 +29,10 @@ namespace OSC {
       return /^[a-z0-9_]+$/.test(name) ? name : "";
     }
 
-    function PlayerHero(playerId: PlayerID, stats: Partial<NetworkedData<OSCSummaryRow>> | undefined) {
+    function PlayerHero(
+      playerId: PlayerID,
+      stats: Partial<NetworkedData<OSCSummaryRow>> | undefined,
+    ) {
       var hero = stats && stats.hero ? stats.hero : Players.GetPlayerSelectedHero(playerId);
       return SafeHeroName(hero);
     }
@@ -167,7 +170,7 @@ namespace OSC {
           var cell = CreateLabel(
             row,
             "SummaryCell",
-            column.signed ? SignedNumber(value) : String(Math.round(value))
+            column.signed ? SignedNumber(value) : String(Math.round(value)),
           );
           if (column.signed) {
             cell.SetHasClass("Positive", value > 0);
