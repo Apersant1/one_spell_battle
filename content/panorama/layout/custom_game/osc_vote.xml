@@ -6,21 +6,14 @@
     </styles>
     <scripts>
         <include src="file://{resources}/scripts/custom_game/osc_core.js" />
+        <!-- React (UMD, кладёт npm run build) — до модулей на React -->
+        <include src="file://{resources}/scripts/custom_game/libraries/react.js" />
+        <include src="file://{resources}/scripts/custom_game/libraries/react-panorama.js" />
         <include src="file://{resources}/scripts/custom_game/osc_vote.js" />
     </scripts>
 
     <!-- Голосование на экране выбора героев (CustomUIElement type="HeroSelection").
          Окно компактное и прижато к правому краю, остальное не перехватывает клики. -->
-    <Panel class="VoteRoot" hittest="false">
-        <Panel id="VotePanel" hittest="true">
-            <!-- Клик по заголовку сворачивает окно, если оно что-то закрывает -->
-            <Button id="VoteHeader" onactivate="OSC.Vote.ToggleCollapsed()">
-                <Label id="VoteTitle" class="OSCTextBody OSCCaps OSCBold OSCChaosText"
-                    hittest="false" />
-                <Label id="VoteCollapse" class="OSCTextBody OSCBold OSCChaosText" hittest="false" />
-            </Button>
-            <Panel id="VoteQuestions" hittest="false" />
-            <Label id="VoteHint" class="OSCMuted" hittest="false" />
-        </Panel>
-    </Panel>
+    <!-- Окно рисует osc_vote.tsx (React) -->
+    <Panel class="VoteRoot" hittest="false" />
 </root>
