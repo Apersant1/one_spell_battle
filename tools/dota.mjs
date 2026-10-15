@@ -4,6 +4,7 @@
 // Папку Dota ищет по Steam (реестр + libraryfolders.vdf); переопределяется
 // переменной DOTA_PATH (папка "dota 2 beta"). Аддон должен быть подключён в
 // dota_addons ссылкой на content/ и game/ этого репозитория.
+// launch пишет консоль в game/dota/console.log (-condebug).
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -58,7 +59,16 @@ if (command === "compile") {
     (code) => process.exit(code ?? 1),
   );
 } else if (command === "launch") {
-  const args = ["-tools", "-addon", ADDON, "-novid", "+dota_launch_custom_game", ADDON, MAP];
+  const args = [
+    "-tools",
+    "-addon",
+    ADDON,
+    "-novid",
+    "-condebug",
+    "+dota_launch_custom_game",
+    ADDON,
+    MAP,
+  ];
   run(join(bin, "dota2.exe"), args, { detached: true, stdio: "ignore" }).unref();
 } else {
   console.error("Использование: node tools/dota.mjs compile [-f] | launch");
