@@ -136,6 +136,16 @@ function OSC_Notifications.PlayerEvent(player, eventName, data)
     return true
 end
 
+-- Красная подсказка внизу экрана, как у стандартных ошибок Dota; token —
+-- ключ локализации. Сервер не может вызвать её напрямую: шлём своё событие,
+-- клиент (OSC.HudError, shared/osc_core.ts) показывает стандартную ошибку.
+-- Игрока нет (отключился) — подсказку просто не показываем
+function OSC_Notifications.HudError(player, token)
+    if player then
+        CustomGameEventManager:Send_ServerToPlayer(player, "osc_hud_error", { message = token })
+    end
+end
+
 -- ================= Обёртки для существующего кода =================
 
 -- rarity — редкость записи (OSC_AbilitySelection.GetRarity) для рамки

@@ -173,7 +173,7 @@ function OSC_ChaosShop.OnBuy(sourceIndex, event)
 
     -- Отказ: золото не тронуто (или уже возвращено)
     local function Refuse(reason)
-        OSC_Notifications.PlayerEvent(player, "osc_hud_error", { message = reason })
+        OSC_Notifications.HudError(player, reason)
         OSC_Notifications.PlayerEvent(player, "osc_shop_result", {
             ok = 0, item = name, error = reason,
         })

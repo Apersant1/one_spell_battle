@@ -39,12 +39,6 @@ local function OwnerPlayer(hero)
     return PlayerResource:GetPlayer(hero:GetPlayerOwnerID())
 end
 
-local function HudError(player, reason)
-    if player then
-        OSC_Notifications.PlayerEvent(player, "osc_hud_error", { message = reason })
-    end
-end
-
 local function LogRefusal(senderKey, reason)
     OSC_ClientCommands.LogRefusal("Chaos sphere pick", tostring(senderKey), tostring(reason))
 end
@@ -101,12 +95,12 @@ end
 function OSC_ChaosSphere.Offer(hero, item)
     local player = IsValidEntity(hero) and OwnerPlayer(hero) or nil
     if not OSC_ChaosSphere.IsEnabled() then
-        HudError(player, "osc_sphere_err_disabled")
+        OSC_Notifications.HudError(player, "osc_sphere_err_disabled")
         return false, "disabled"
     end
     if not OSC_Heroes.IsMainHero(hero) then
         OSC_Logger.Log("Chaos sphere refused: not a main hero")
-        HudError(player, "osc_sphere_err_main_hero")
+        OSC_Notifications.HudError(player, "osc_sphere_err_main_hero")
         return false, "not main hero"
     end
 
@@ -196,11 +190,11 @@ function OSC_ChaosSphere.OnPick(sourceIndex, event)
     if not IsValidEntity(item) or not HeroHasItem(hero, item) then
         state.sphere_offer = nil
         LogRefusal(cmd.player_id, "no item")
-        HudError(player, "osc_sphere_err_no_item")
+        OSC_Notifications.HudError(player, "osc_sphere_err_no_item")
         return
     end
     if not OSC_ChaosSphere.IsEnabled() then
-        HudError(player, "osc_sphere_err_disabled")
+        OSC_Notifications.HudError(player, "osc_sphere_err_disabled")
         return
     end
 
@@ -214,7 +208,7 @@ function OSC_ChaosSphere.OnPick(sourceIndex, event)
     -- mode == "ultimate"
     if hero:GetLevel() < MinLevel() then
         LogRefusal(cmd.player_id, "level " .. hero:GetLevel())
-        HudError(player, "osc_sphere_err_level")
+        OSC_Notifications.HudError(player, "osc_sphere_err_level")
         return
     end
     local ability = event and event.ability

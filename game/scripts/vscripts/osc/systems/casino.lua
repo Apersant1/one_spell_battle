@@ -82,17 +82,6 @@ local function CanUseMachine(hero, playerID, machine)
     return true
 end
 
--- Красная подсказка внизу экрана, как у стандартных ошибок Dota.
--- Сервер не может вызвать её напрямую: шлём своё событие, а клиент
--- (osc_casino.ts, OnHudError) превращает его в стандартную ошибку HUD.
-local function ShowHudError(player, token)
-    if player then
-        CustomGameEventManager:Send_ServerToPlayer(player, "osc_hud_error", {
-            message = token,
-        })
-    end
-end
-
 local function SendOpen(player, playerID, hero, machine)
     local outcomes, loseChance = BuildOutcomes()
     -- Запоминаем, кому показано окно, чтобы всем сообщить о закрытии автомата
@@ -192,7 +181,7 @@ function OSC_Casino.OnReopen(sourceIndex, event)
         if tonumber(event.quiet) ~= 1 then
             OSC_Logger.Log("Casino reopen refused for player " .. tostring(playerID)
                 .. ": " .. tostring(reason))
-            ShowHudError(cmd.player, reason)
+            OSC_Notifications.HudError(cmd.player, reason)
         end
         return
     end
@@ -283,14 +272,14 @@ function OSC_Casino.SpawnMachine(hero)
 
     -- Казино выключено конфигом или голосованием в лобби
     if OSC_Config.Get("CASINO_ENABLED") ~= true then
-        ShowHudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_disabled")
+        OSC_Notifications.HudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_disabled")
         return false
     end
 
     local oldMachine = OSC_HeroState.Get(hero).casino_machine
     if IsValidEntity(oldMachine) then
         if oldMachine.osc_casino_is_spinning then
-            ShowHudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
+            OSC_Notifications.HudError(playerID and PlayerResource:GetPlayer(playerID), "osc_casino_err_spinning")
             return false
         end
         RemoveMachine(oldMachine)

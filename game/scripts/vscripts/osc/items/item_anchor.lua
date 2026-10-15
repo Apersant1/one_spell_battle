@@ -21,8 +21,5 @@ function item_osc_anchor:OnSpellStart()
     end
 
     OSC_Logger.Log("Anchor refused: " .. tostring(reason))
-    local player = hero and PlayerResource:GetPlayer(hero:GetPlayerOwnerID())
-    if player then
-        OSC_Notifications.PlayerEvent(player, "osc_hud_error", { message = reason })
-    end
+    OSC_Notifications.HudError(hero and PlayerResource:GetPlayer(hero:GetPlayerOwnerID()), reason)
 end
