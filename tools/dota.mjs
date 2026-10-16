@@ -12,12 +12,13 @@
 // launch пишет консоль в game/dota/console.log (-condebug).
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ADDON = "one_spell";
 const MAP = "dota";
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// Имя аддона — имя папки репозитория: клон шаблона в my_mod сразу даёт аддон my_mod
+const ADDON = basename(REPO);
 
 function steamPath() {
   const out = execFileSync("reg", ["query", "HKCU\\Software\\Valve\\Steam", "/v", "SteamPath"], {
@@ -55,13 +56,18 @@ function runSync(exe, args, options = {}) {
   if (result.status !== 0) fail(`Команда завершилась с кодом ${result.status}`);
 }
 
+// Dota принимает в имени аддона только строчные латинские буквы, цифры и _
+if (!/^[a-z0-9_]+$/.test(ADDON)) {
+  fail(`Папка репозитория "${ADDON}" не годится как имя аддона: нужны a-z, 0-9 и _`);
+}
+
 const dota = findDota();
 const bin = join(dota, "game", "bin", "win64");
 const resourceCompiler = join(bin, "resourcecompiler.exe");
 const addonContent = join(dota, "content", "dota_addons", ADDON);
 
 // Dota видит аддон через ссылки (junction, прав администратора не нужно):
-// <dota>/game/dota_addons/one_spell -> game/, <dota>/content/dota_addons/one_spell -> content/.
+// <dota>/game/dota_addons/<ADDON> -> game/, <dota>/content/dota_addons/<ADDON> -> content/.
 // Чужую папку или ссылку не трогаем — только сообщаем
 function link() {
   if (!existsSync(resourceCompiler)) {

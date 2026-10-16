@@ -16,13 +16,14 @@
 ## Первый запуск
 
 ```text
-git clone <адрес репозитория>
+git clone <адрес репозитория> one_spell
 cd one_spell
 npm run setup
 npm run launch
 ```
 
-`npm run setup` делает всё сам:
+Имя папки клона — это имя аддона для Dota (только `a-z`, `0-9`, `_`), поэтому
+оно указано явно. `npm run setup` делает всё сам:
 
 1. ставит зависимости (`npm install`);
 2. находит Dota через Steam и подключает аддон: ссылки
